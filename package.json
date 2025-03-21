@@ -1,0 +1,30 @@
+{
+  "name": "appbackend",
+  "version": "1.0.0",
+  "description": "SourceClassroom backend",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SourceClassroom/AppBackEnd.git"
+  },
+  "author": "ArelBLP",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/SourceClassroom/AppBackEnd/issues"
+  },
+  "homepage": "https://github.com/SourceClassroom/AppBackEnd#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.12.1",
+    "validator": "^13.12.0"
+  }
+}
