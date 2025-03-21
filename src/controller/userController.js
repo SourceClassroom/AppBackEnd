@@ -87,7 +87,7 @@ const createUser = async (req, res) => {
     } catch (error) {
         console.error('Kullanıcı oluşturma hatası:', error);
         res.status(500).json(
-            ApiResponse.serverError('Kullanıcı oluşturulurken bir hata oluştu')
+            ApiResponse.serverError('Kullanıcı oluşturulurken bir hata oluştu', error)
         );
     }
 }
@@ -145,7 +145,7 @@ const loginUser = async (req, res) => {
     } catch (error) {
         console.error('Giriş hatası:', error);
         res.status(500).json(
-            ApiResponse.serverError('Giriş yapılırken bir hata oluştu')
+            ApiResponse.serverError('Giriş yapılırken bir hata oluştu', error)
         );
     }
 };

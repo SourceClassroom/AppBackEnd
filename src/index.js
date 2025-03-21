@@ -2,7 +2,10 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cookieParser from "cookie-parser"
 import conn from "./database/connection.js";
+
+//Routes
 import userRouter from './routes/userRoute.js';
+import classRouter from './routes/classRoute.js';
 
 dotenv.config();
 
@@ -17,6 +20,7 @@ app.use(cookieParser())
 app.use(express.urlencoded({extended: true}))
 
 app.use('/api/users', userRouter)
+app.use('/api/class', classRouter)
 
 app.listen(port, () => {
     console.log((`Application running on port: ${port}`))

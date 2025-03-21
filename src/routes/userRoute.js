@@ -11,8 +11,6 @@ router.route("/:id").get(
     userController.getUsers
 )
 
-router.route("/test/:id").get(authenticateToken, userController.getUsers)
-
 router.route("/login").post(userController.loginUser)
 
 router.route("/register").post(

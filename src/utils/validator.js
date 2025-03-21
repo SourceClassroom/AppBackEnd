@@ -22,12 +22,12 @@ const userCreateValidationRules = [
     body('name')
         .notEmpty().withMessage('İsim alanı zorunludur')
         .isString().withMessage('İsim bir metin olmalıdır')
-        .isLength({ min: 2, max: 50 }).withMessage('İsim 2-50 karakter arasında olmalıdır')
+        .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
         .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir'),
     body('surname')
         .notEmpty().withMessage('Soyisim alanı zorunludur')
         .isString().withMessage('Soyisim bir metin olmalıdır')
-        .isLength({ min: 2, max: 50 }).withMessage('Soyisim 2-50 karakter arasında olmalıdır')
+        .isLength({ min: 2, max: 32 }).withMessage('Soyisim 2-32 karakter arasında olmalıdır')
         .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir'),
     body('email')
         .notEmpty().withMessage('E-posta alanı zorunludur')
@@ -42,6 +42,13 @@ const userCreateValidationRules = [
         .isIn(['student', 'teacher', 'sysadmin']).withMessage('Geçersiz rol. Rol student, teacher veya sysadmin olmalıdır')
 ];
 
+const classCreateValidationRules = [
+    body('title')
+        .notEmpty().withMessage('Sınıf ismi boş olamaz.')
+        .isString().withMessage('Sınıf ismi bir metin olmalıdır')
+        .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
+]
+
 /**
  * MongoDB ID formatını doğrulama
  */
@@ -53,5 +60,6 @@ const validateMongoId = (paramName = 'id') => [
 export default {
     validate,
     validateMongoId,
-    userCreateValidationRules
+    userCreateValidationRules,
+    classCreateValidationRules
 }
