@@ -44,7 +44,7 @@ const createClass = async (req, res) => {
             {new: true}
         );
 
-        return res.status(200).json(
+        return res.status(201).json(
             ApiResponse.success("Sınıf başarılı bir şekilde oluşturuldu.", {updatedTeacher, newClass})
         );
     } catch (error) {
@@ -55,6 +55,37 @@ const createClass = async (req, res) => {
     }
 }
 
+
+const joinClass = async (req, res) => {
+    try {
+        const classCode = req.params.classCode;
+        const userId = req.user.user.id;
+        //Get Class Data
+        const getClassData = await Class.findOne({code: classCode})
+        //Check Class is avalible
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."))
+        }
+        //Get user data
+        const userData = await User.findById(userId)
+        //Check for user already member of class
+        if (userData.enrolledClasses.includes(getClassData._id) || userData.teachingClasses.includes(getClassData._id)) {
+            return res.status(400).json(ApiResponse.error("Kullanıcı zaten bu sınıfa üye.",  null, 400))
+        }
+        //Update class students
+        const updateClass = await Class.findByIdAndUpdate(getClassData._id, { $push: { students: [userData._id] } }, {new: true})
+        //Update user classes
+        const updateUser = await User.findByIdAndUpdate(userId, { $push: { enrolledClasses: [getClassData._id] } }, {new: true})
+        //return data
+        res.status(200).json(ApiResponse.success("Başarıyla sınıfa katılındı.", {updateUser, updateClass}, 200))
+    } catch (error) {
+        console.error('Sınıf katılma hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Sınıfa katılırken bir hata meydana geldi', error)
+        );
+    }
+}
+
 export {
-    createClass, getClass
+    createClass, getClass, joinClass
 }

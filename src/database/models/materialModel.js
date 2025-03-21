@@ -7,6 +7,7 @@ const materialModel = new Schema({
     title: { type: String, required: true },
     description: { type: String },
     files: [{ type: String }],
+    week: { type: Schema.Types.ObjectId, ref: "Week" },
 }, { timestamps: true });
 
 const Material = mongoose.model("Material", materialModel);

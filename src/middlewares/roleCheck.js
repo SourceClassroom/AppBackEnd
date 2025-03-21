@@ -1,3 +1,5 @@
+import {Class} from "../database/models/classModel.js";
+
 /**
  * Kullanıcının belirli rollere sahip olup olmadığını kontrol eden middleware
  * @param {string[]} allowedRoles - İzin verilen roller dizisi ('sysadmin', 'teacher', 'student' vb.)
@@ -40,13 +42,13 @@ const roleCheck = (allowedRoles) => {
 };
 
 /**
- * Belirli bir sınıfta öğretmen veya sahibi olup olmadığını kontrol eden middleware
+ * Belirli bir sınıfta öğretmen veya sysadmin olup olmadığını kontrol eden middleware
  * @returns {Function} - Express middleware fonksiyonu
  */
 const isClassTeacherOrOwner = () => {
     return async (req, res, next) => {
         try {
-            const { user } = req;
+            const { user } = req.user;
             const classId = req.params.classId || req.body.classId;
 
             if (!classId) {
@@ -57,9 +59,6 @@ const isClassTeacherOrOwner = () => {
                 });
             }
 
-            // Class modelini import et - bu middleware'in üstünde tanımlanmalı
-            const Class = require('../database/models/classModel.js');
-
             const classDoc = await Class.findById(classId);
             if (!classDoc) {
                 return res.status(404).json({
@@ -69,9 +68,9 @@ const isClassTeacherOrOwner = () => {
                 });
             }
 
-            // Kullanıcı bu sınıfın öğretmeni veya sahibi mi kontrol et
+            // Kullanıcı bu sınıfın öğretmeni veya sysadmin mi kontrol et
             if (
-                (user.role === 'teacher' && classDoc.teacher.toString() === user._id.toString()) ||
+                (user.role === 'teacher' && classDoc.teacher.toString() === user.id) ||
                 (user.role === 'admin')
             ) {
                 // Sınıf nesnesini request'e ekle (sonraki middleware'ler için kullanışlı olabilir)
@@ -113,8 +112,6 @@ const isClassMember = () => {
             }
 
             // Class modelini import et
-            const Class = require('../database/models/classModel.js');
-
             const classDoc = await Class.findById(classId);
             if (!classDoc) {
                 return res.status(404).json({
@@ -124,11 +121,12 @@ const isClassMember = () => {
                 });
             }
 
-            // Kullanıcı bu sınıfın öğretmeni, üyesi veya admin mi kontrol et
-
+            // Kullanıcı bu sınıfın öğretmeni, üyesi veya sysadmin mi kontrol et
+            console.log(user)
+            console.log(classDoc.teacher.toString());
             if (
-                (user.role === 'teacher' && classDoc.teacher.toString() === user._id.toString()) ||
-                (user.role === 'student' && classDoc.students.includes(user._id)) ||
+                (user.role === 'teacher' && classDoc.teacher.toString() === user.id) ||
+                (user.role === 'student' && classDoc.students.includes(user.id)) ||
                 (user.role === 'sysadmin')
             ) {
                 // Sınıf nesnesini request'e ekle
@@ -159,7 +157,7 @@ const isClassMember = () => {
 const isResourceOwner = (userIdField = 'userId') => {
     return async (req, res, next) => {
         try {
-            const { user } = req;
+            const { user } = req.user;
             const resourceUserId = req.body[userIdField] || req.params[userIdField];
 
             // Admin her şeyi yapabilir
@@ -168,7 +166,7 @@ const isResourceOwner = (userIdField = 'userId') => {
             }
 
             // Kullanıcı kendi kaynağı üzerinde işlem yapıyor mu kontrol et
-            if (resourceUserId && resourceUserId.toString() === user._id.toString()) {
+            if (resourceUserId && resourceUserId.toString() === user.id) {
                 return next();
             }
 

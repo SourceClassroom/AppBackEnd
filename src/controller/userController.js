@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {User} from "../database/models/userModel.js";
@@ -150,4 +149,7 @@ const loginUser = async (req, res) => {
     }
 };
 
-export {getUsers, createUser, loginUser};
+
+export {
+    getUsers, createUser, loginUser
+};

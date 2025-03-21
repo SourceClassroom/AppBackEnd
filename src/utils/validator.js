@@ -42,11 +42,44 @@ const userCreateValidationRules = [
         .isIn(['student', 'teacher', 'sysadmin']).withMessage('Geçersiz rol. Rol student, teacher veya sysadmin olmalıdır')
 ];
 
+const validateCreateWeek = [
+    body('classId')
+        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
+        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
+    body('title')
+        .notEmpty().withMessage('Başlık alanı zorunludur.')
+        .isLength({ min: 3 }).withMessage('Başlık en az 3 karakter olmalıdır.'),
+    body('description')
+        .optional()
+        .isLength({ max: 500 }).withMessage('Açıklama en fazla 500 karakter olabilir.'),
+    body('startDate')
+        .notEmpty().withMessage('Başlangıç tarihi zorunludur.')
+        .isISO8601().withMessage('Geçerli bir başlangıç tarihi giriniz.'),
+    body('endDate')
+        .notEmpty().withMessage('Bitiş tarihi zorunludur.')
+        .isISO8601().withMessage('Geçerli bir bitiş tarihi giriniz.')
+        .custom((value, { req }) => {
+            const start = new Date(req.body.startDate);
+            const end = new Date(value);
+            if (start >= end) {
+                throw new Error('Başlangıç tarihi, bitiş tarihinden önce olmalıdır.');
+            }
+            return true;
+        }),
+];
+
 const classCreateValidationRules = [
     body('title')
         .notEmpty().withMessage('Sınıf ismi boş olamaz.')
         .isString().withMessage('Sınıf ismi bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
+]
+
+const validateClassCode = (paramName = 'classCode') => [
+    param(paramName)
+        .customSanitizer(value => value.toUpperCase())
+        .isLength({ min: 6, max: 6 }).withMessage('Sınıf kodu 6 karakter olmalıdır.')
+        .matches(/^[A-Z0-9]{6}$/).withMessage('Sınıf kodu sadece büyük harf ve rakamlardan oluşabilir.')
 ]
 
 /**
@@ -60,6 +93,8 @@ const validateMongoId = (paramName = 'id') => [
 export default {
     validate,
     validateMongoId,
+    validateClassCode,
+    validateCreateWeek,
     userCreateValidationRules,
     classCreateValidationRules
 }

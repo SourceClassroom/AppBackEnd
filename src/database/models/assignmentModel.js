@@ -10,6 +10,7 @@ const assignmentSchema = new Schema({
     dueDate: { type: Date, required: true },
     attachments: [{ type: String }],
     submissions: [{ type: Schema.Types.ObjectId, ref: "Submission" }],
+    week: { type: Schema.Types.ObjectId, ref: "Week" },
 }, { timestamps: true });
 
 const Assignment = mongoose.model("Assignment", assignmentSchema);
