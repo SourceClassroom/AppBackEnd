@@ -6,7 +6,7 @@ const submissionSchema = new Schema({
     assignment: { type: Schema.Types.ObjectId, ref: "Assignment", required: true },
     student: { type: Schema.Types.ObjectId, ref: "User", required: true },
     submittedAt: { type: Date, required: true },
-    files: [{ type: String }],
+    attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     grade: { type: Number },
 });
 

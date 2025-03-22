@@ -18,6 +18,13 @@ const validate = (req, res, next) => {
     next();
 };
 
+const newPasswordValidator = [
+    body('newPassword')
+        .notEmpty().withMessage('Şifre alanı zorunludur')
+        .isLength({ min: 8 }).withMessage('Şifre en az 8 karakter olmalıdır')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir')
+]
+
 const userCreateValidationRules = [
     body('name')
         .notEmpty().withMessage('İsim alanı zorunludur')
@@ -112,6 +119,7 @@ export default {
     validateMongoId,
     validateClassCode,
     validateCreateWeek,
+    newPasswordValidator,
     validateCreateAssignment,
     userCreateValidationRules,
     classCreateValidationRules

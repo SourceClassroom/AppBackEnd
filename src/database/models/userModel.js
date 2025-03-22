@@ -72,39 +72,25 @@ const UserSchema = new Schema({
             type: String,
             maxlength: [200, "Bio cannot exceed 200 characters"]
         },
-        phoneNumber: {
-            type: String,
-            validate: {
-                validator: function(v) {
-                    return v === null || v === '' || validator.isMobilePhone(v);
-                },
-                message: props => `${props.value} is not a valid phone number!`
-            },
-            default: null
-        },
-        dateOfBirth: {
-            type: Date
-        },
-        address: {
-            type: String
-        },
         // Öğrenci numarası veya öğretmen ID'si
         institutionId: {
             type: String
         }
     },
-
     // Son giriş bilgisi
     lastLogin: {
         type: Date,
         default: null
     },
-
     // Hesap durumu
     accountStatus: {
         type: String,
         enum: ['active', 'inactive', 'suspended', 'pending'],
         default: 'active'
+    },
+    tokenVersion: {
+        type: Number,
+        default: 0
     }
 }, {timestamps: true});
 

@@ -52,17 +52,10 @@ const createUser = async (req, res) => {
         // Kullanıcıyı kaydet
         await newUser.save();
 
-        // JWT token oluştur
-        const payload = {
-            user: {
-                id: newUser._id,
-                role: newUser.role
-            }
-        };
-
         const token = await TokenService.generateAccessToken({
             id: newUser._id,
-            role: newUser.role
+            role: newUser.role,
+            tokenVersion: newUser.tokenVersion
         });
         const userResponse = {
             _id: newUser._id,
@@ -120,7 +113,8 @@ const loginUser = async (req, res) => {
         // Token oluştur
         const token = await TokenService.generateAccessToken({
             id: user._id,
-            role: user.role
+            role: user.role,
+            tokenVersion: user.tokenVersion
         });
 
         // Hassas verileri kaldır
@@ -149,7 +143,86 @@ const loginUser = async (req, res) => {
     }
 };
 
+/**
+ * Kullanıcı şifresini değiştirme
+ * @route PUT /api/users/change-password
+ * @access Private (Kimlik doğrulama gerekli)
+ */
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { currentPassword, newPassword } = req.body;
+
+        // Giriş kontrolü
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json(
+                ApiResponse.error('Mevcut şifre ve yeni şifre gereklidir')
+            );
+        }
+
+        // Minimum şifre uzunluğu kontrolü
+        if (newPassword.length < 6) {
+            return res.status(400).json(
+                ApiResponse.error('Şifre en az 6 karakter uzunluğunda olmalıdır')
+            );
+        }
+
+        // Kullanıcıyı bul (şifre dahil)
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json(
+                ApiResponse.error('Kullanıcı bulunamadı')
+            );
+        }
+
+        // Mevcut şifreyi kontrol et
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json(
+                ApiResponse.error('Mevcut şifre yanlış')
+            );
+        }
+
+        // Şifreyi hashle
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Token sürümünü artır (JWT'leri geçersiz kılmak için)
+        // Eğer tokenVersion yoksa, 1 olarak başlat
+        const newTokenVersion = (user.tokenVersion || 0) + 1;
+
+        // Kullanıcıyı güncelle
+        user.password = hashedPassword;
+        user.tokenVersion = newTokenVersion;
+        await user.save();
+
+        // Yeni JWT token oluştur (yeni tokenVersion ile)
+        const token = await TokenService.generateAccessToken({
+            id: user.id,
+            role: user.role,
+            tokenVersion: newTokenVersion // Token'a sürüm ekle
+        });
+
+        res.status(200).json(
+            ApiResponse.success(
+                'Şifre başarıyla değiştirildi',
+                {
+                    token // Yeni token döndür
+                }
+            )
+        );
+
+    } catch (error) {
+        console.error('Şifre değiştirme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Şifre değiştirilirken bir hata oluştu', error)
+        );
+    }
+};
+
+
 
 export {
-    getUsers, createUser, loginUser
+    getUsers, createUser, loginUser,
+    changePassword,
 };

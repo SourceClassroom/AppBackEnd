@@ -6,9 +6,7 @@ const postSchema = new Schema({
     classroom: { type: Schema.Types.ObjectId, ref: "Class", required: true },
     author: { type: Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, required: true },
-    attachments: [{
-        type: String,
-    }],
+    attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
     week: { type: Schema.Types.ObjectId, ref: "Week" },
 }, { timestamps: true });

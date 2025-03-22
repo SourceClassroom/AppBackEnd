@@ -66,6 +66,7 @@ const joinClass = async (req, res) => {
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."))
         }
+        if (getClassData.forbiddenStudents.includes(userId)) return res.status(403).json(ApiResponse.forbidden("Bu sınıfa katılma izniniz yok."))
         //Get user data
         const userData = await User.findById(userId)
         //Check for user already member of class

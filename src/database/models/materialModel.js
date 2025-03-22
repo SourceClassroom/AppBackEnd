@@ -6,7 +6,7 @@ const materialModel = new Schema({
     classroom: { type: Schema.Types.ObjectId, ref: "Classroom", required: true },
     title: { type: String, required: true },
     description: { type: String },
-    files: [{ type: String }],
+    attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     week: { type: Schema.Types.ObjectId, ref: "Week" },
 }, { timestamps: true });
 

@@ -23,10 +23,12 @@ const createAssignment = async (req, res) => {
                 mimetype: file.mimetype,
                 path: file.path,
                 size: file.size,
+                classId,
+                userId: req.user?.id,
                 uploadDate: Date.now()
             }));
         }
-
+        console.log(files);
         let fileIds=[]
         for (const file of files) {
             const newAttach = await createAttachmentOnDB(file)

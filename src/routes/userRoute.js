@@ -6,6 +6,7 @@ import {authenticateToken} from "../middlewares/authMiddleware.js";
 const router = express.Router()
 
 router.route("/:id").get(
+    authenticateToken,
     apiValidator.validateMongoId("id"),
     apiValidator.validate,
     userController.getUsers
@@ -19,5 +20,11 @@ router.route("/register").post(
     userController.createUser
 );
 
+router.route("/change-password").put(
+    authenticateToken,
+    apiValidator.newPasswordValidator,
+    apiValidator.validate,
+    userController.changePassword
+);
 
 export default router;

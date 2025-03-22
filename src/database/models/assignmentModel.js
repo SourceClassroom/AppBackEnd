@@ -8,7 +8,7 @@ const assignmentSchema = new Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
     dueDate: { type: Date, required: true },
-    attachments: [{ type: String }],
+    attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     submissions: [{ type: Schema.Types.ObjectId, ref: "Submission" }],
     week: { type: Schema.Types.ObjectId, ref: "Week" },
 }, { timestamps: true });

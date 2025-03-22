@@ -40,8 +40,7 @@ const memoryStorage = multer.memoryStorage();
 const memoryUpload = multer({
     storage: memoryStorage,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-        files: 20 // Maksimum dosya sayısı
+        fileSize: 1024 * 1024 * 1024, // 10MB
     },
     fileFilter: (req, file, cb) => {
         const ext = path.extname(file.originalname).toLowerCase();
@@ -91,7 +90,7 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
             try {
                 const userId = req.user?.id || 'anonymous';
                 const uploadType = req.body?.uploadType || 'general';
-                const referenceId = req.body?.referenceId || 'general';
+                const referenceId = req.body?.classId || 'general';
 
                 const uploadPath = path.join(
                     __dirname,
@@ -172,7 +171,7 @@ const diskUpload = multer({
         cb(new Error('Bu dosya türü desteklenmiyor! Lütfen geçerli bir dosya yükleyin.'), false);
     },
     limits: {
-        fileSize: 10 * 1024 * 1024
+        fileSize: 1024 * 1024 * 1024
     }
 });
 
