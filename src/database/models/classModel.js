@@ -17,7 +17,7 @@ const ClassSchema = new Schema({
     teacher: { type: Schema.Types.ObjectId, ref: "User", required: true },
     students: [{ type: Schema.Types.ObjectId, ref: "User" }],
     posts: [{ type: Schema.Types.ObjectId, ref: "Posts" }],
-    assignment: [{ type: Schema.Types.ObjectId, ref: "Assignment" }],
+    assignments: [{ type: Schema.Types.ObjectId, ref: "Assignment" }],
     weeks: [{ type: Schema.Types.ObjectId, ref: "Weeks" }],
 }, { timestamps: true });
 

@@ -16,10 +16,8 @@ class TokenService {
     static generateAccessToken(user) {
         return new Promise((resolve, reject) => {
             const payload = {
-                user: {
-                    id: user.id,
-                    role: user.role
-                }
+                id: user.id,
+                role: user.role
             };
 
             jwt.sign(

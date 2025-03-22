@@ -68,6 +68,23 @@ const validateCreateWeek = [
         }),
 ];
 
+const validateCreateAssignment = [
+    body('classId')
+        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
+        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
+    body('title')
+        .notEmpty().withMessage('Başlık alanı zorunludur.')
+        .isLength({ min: 3 }).withMessage('Başlık en az 3 karakter olmalıdır.'),
+    body('description')
+        .optional()
+        .isLength({ max: 500 }).withMessage('Açıklama en fazla 500 karakter olabilir.'),
+    body('dueDate')
+        .notEmpty().withMessage('Son teslim tarihi zorunludur.'),
+    body('week')
+        .optional()
+        .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
+]
+
 const classCreateValidationRules = [
     body('title')
         .notEmpty().withMessage('Sınıf ismi boş olamaz.')
@@ -95,6 +112,7 @@ export default {
     validateMongoId,
     validateClassCode,
     validateCreateWeek,
+    validateCreateAssignment,
     userCreateValidationRules,
     classCreateValidationRules
 }

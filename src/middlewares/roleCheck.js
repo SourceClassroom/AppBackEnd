@@ -10,7 +10,7 @@ const roleCheck = (allowedRoles) => {
         try {
             // Auth middleware'inden gelen user nesnesine erişim
             // Auth middleware bu middleware'den önce çalıştırılmalıdır
-            const { user } = req.user;
+            const { user } = req;
             // Kullanıcı nesnesi yoksa hata dön
             if (!user) {
                 return res.status(401).json({
@@ -48,7 +48,7 @@ const roleCheck = (allowedRoles) => {
 const isClassTeacherOrOwner = () => {
     return async (req, res, next) => {
         try {
-            const { user } = req.user;
+            const { user } = req;
             const classId = req.params.classId || req.body.classId;
 
             if (!classId) {
@@ -71,7 +71,7 @@ const isClassTeacherOrOwner = () => {
             // Kullanıcı bu sınıfın öğretmeni veya sysadmin mi kontrol et
             if (
                 (user.role === 'teacher' && classDoc.teacher.toString() === user.id) ||
-                (user.role === 'admin')
+                (user.role === 'sysadmin')
             ) {
                 // Sınıf nesnesini request'e ekle (sonraki middleware'ler için kullanışlı olabilir)
                 req.classDoc = classDoc;
@@ -100,7 +100,7 @@ const isClassTeacherOrOwner = () => {
 const isClassMember = () => {
     return async (req, res, next) => {
         try {
-            const { user } = req.user;
+            const { user } = req;
             const classId = req.params.classId;
 
             if (!classId) {
@@ -157,7 +157,7 @@ const isClassMember = () => {
 const isResourceOwner = (userIdField = 'userId') => {
     return async (req, res, next) => {
         try {
-            const { user } = req.user;
+            const { user } = req;
             const resourceUserId = req.body[userIdField] || req.params[userIdField];
 
             // Admin her şeyi yapabilir

@@ -1,0 +1,227 @@
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
+import { fileURLToPath } from 'url';
+
+// __dirname'in ESM karşılığını elde etme
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Dosya yükleme dizinini oluştur
+const createUploadDir = (dirPath) => {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+};
+
+// İzin verilen dosya türleri
+const allowedFileTypes = [
+    // Dokümanlar
+    '.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt',
+    // Tablolar
+    '.xls', '.xlsx', '.csv', '.ods',
+    // Sunumlar
+    '.ppt', '.pptx', '.odp',
+    // Görseller
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp',
+    // Sıkıştırılmış dosyalar
+    '.zip', '.rar', '.7z',
+    // Programlama dosyaları
+    '.js', '.py', '.java', '.c', '.cpp', '.html', '.css',
+    // Diğer
+    '.md'
+];
+
+// Önce memory storage kullan - kontrol için
+const memoryStorage = multer.memoryStorage();
+
+// Memory'de dosyaları tutan multer örneği
+const memoryUpload = multer({
+    storage: memoryStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+        files: 20 // Maksimum dosya sayısı
+    },
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        if (allowedFileTypes.includes(ext)) {
+            return cb(null, true);
+        }
+
+        cb(new Error('Bu dosya türü desteklenmiyor! Lütfen geçerli bir dosya yükleyin.'), false);
+    }
+});
+
+// İki aşamalı upload fonksiyonu
+export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
+    return [
+        // 1. Aşama: Memory'ye al ve kontrol et
+        (req, res, next) => {
+            const uploadMiddleware = memoryUpload.array(fieldName, maxFiles);
+
+            uploadMiddleware(req, res, (err) => {
+                if (err) {
+                    return res.status(400).json({
+                        errors: [{
+                            msg: err.message,
+                            param: fieldName
+                        }]
+                    });
+                }
+
+                // Dosya sayısını kontrol et
+                if (!req.files || req.files.length === 0) {
+                    return res.status(400).json({
+                        errors: [{
+                            msg: 'Lütfen en az bir dosya yükleyin.',
+                            param: fieldName
+                        }]
+                    });
+                }
+
+                if (req.files.length < minFiles) {
+                    return res.status(400).json({
+                        errors: [{
+                            msg: `En az ${minFiles} dosya yüklemelisiniz.`,
+                            param: fieldName
+                        }]
+                    });
+                }
+                if (req.files.length > maxFiles) {
+                    console.log(1)
+                    return res.status(400).json({
+                        errors: [{
+                            msg: `En fazla ${maxFiles} dosya yüklemelisiniz.`,
+                            param: fieldName
+                        }]
+                    });
+                }
+                // Burada ek kontroller yapabilirsiniz
+                // Örneğin, toplam boyut kontrolü, tüm dosyaların aynı uzantıya sahip olma kontrolü vb.
+
+                next();
+            });
+        },
+
+        // 2. Aşama: Diske yaz
+        (req, res, next) => {
+            try {
+                const userId = req.user?.id || 'anonymous';
+                const uploadType = req.body?.uploadType || 'general';
+                const referenceId = req.body?.referenceId || 'general';
+
+                const uploadPath = path.join(
+                    __dirname,
+                    '../..',
+                    'public',
+                    'uploads',
+                    String(uploadType),
+                    String(referenceId),
+                    String(userId)
+                );
+
+                createUploadDir(uploadPath);
+
+                // Memory'deki tüm dosyaları diske yaz
+                req.files.forEach((file, index) => {
+                    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+                    const fileExt = path.extname(file.originalname);
+                    const filename = file.fieldname + '-' + uniqueSuffix + fileExt;
+                    const filePath = path.join(uploadPath, filename);
+
+                    // Dosyayı memory'den diske yaz
+                    fs.writeFileSync(filePath, file.buffer);
+
+                    // Dosya bilgilerini güncelle
+                    req.files[index].destination = uploadPath;
+                    req.files[index].path = filePath;
+                    req.files[index].filename = filename;
+                });
+
+                next();
+            } catch (error) {
+                return res.status(500).json({
+                    errors: [{
+                        msg: 'Dosya kaydedilirken bir hata oluştu: ' + error.message,
+                        param: fieldName
+                    }]
+                });
+            }
+        }
+    ];
+};
+
+// Orijinal multer yapılandırması (direkt kullanım için)
+const diskStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const userId = req.user?.id || 'anonymous';
+        const uploadType = req.body?.uploadType || 'general';
+        const referenceId = req.body?.referenceId || 'general';
+
+        const uploadPath = path.join(
+            __dirname,
+            '../..',
+            'public',
+            'uploads',
+            String(uploadType),
+            String(referenceId),
+            String(userId)
+        );
+
+        createUploadDir(uploadPath);
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const fileExt = path.extname(file.originalname);
+        cb(null, file.fieldname + '-' + uniqueSuffix + fileExt);
+    }
+});
+
+const diskUpload = multer({
+    storage: diskStorage,
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+
+        if (allowedFileTypes.includes(ext)) {
+            return cb(null, true);
+        }
+
+        cb(new Error('Bu dosya türü desteklenmiyor! Lütfen geçerli bir dosya yükleyin.'), false);
+    },
+    limits: {
+        fileSize: 10 * 1024 * 1024
+    }
+});
+
+// Standart multer fonksiyonlarını sarmalayan yapı
+const handleDiskUpload = (method, fieldName, options) => {
+    return (req, res, next) => {
+        const uploadMiddleware = diskUpload[method](fieldName, options);
+
+        uploadMiddleware(req, res, (err) => {
+            if (err) {
+                return res.status(400).json({
+                    errors: [{
+                        msg: err.message,
+                        param: fieldName
+                    }]
+                });
+            }
+            next();
+        });
+    };
+};
+
+// Klasik upload metotları
+const upload = {
+    single: (fieldName) => handleDiskUpload('single', fieldName),
+    array: (fieldName, maxCount) => handleDiskUpload('array', fieldName, maxCount),
+    fields: (fields) => handleDiskUpload('fields', fields),
+    none: () => handleDiskUpload('none'),
+    // Yeni iki aşamalı yükleme metodu
+    validateAndUpload
+};
+
+export default upload;

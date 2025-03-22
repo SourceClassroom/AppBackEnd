@@ -21,7 +21,7 @@ const createClass = async (req, res) => {
     try {
         const { title } = req.body;
         //Sınıfı oluşturan kullanıcının idsi
-        const teacher = req.user.user.id;
+        const teacher = req.user.id;
         //Daha önce oluşturulmamış bir kod al
         const newCode = await generateUniqueCode()
         //Oluşturualcak sınıf datası
@@ -59,7 +59,7 @@ const createClass = async (req, res) => {
 const joinClass = async (req, res) => {
     try {
         const classCode = req.params.classCode;
-        const userId = req.user.user.id;
+        const userId = req.user.id;
         //Get Class Data
         const getClassData = await Class.findOne({code: classCode})
         //Check Class is avalible
