@@ -9,7 +9,7 @@ const router = express.Router()
 
 router.route("/create").post(
     authenticateToken,
-    upload.validateAndUpload("files", 1, 5),
+    upload.validateAndUpload("files", 0, 20),
     apiValidator.validateCreateAssignment,
     apiValidator.validate,
     roleCheck.isClassTeacherOrOwner(),

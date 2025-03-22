@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
+import ApiResponse from "../utils/apiResponse.js";
 
 // __dirname'in ESM karşılığını elde etme
 const __filename = fileURLToPath(import.meta.url);
@@ -62,43 +63,22 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
 
             uploadMiddleware(req, res, (err) => {
                 if (err) {
-                    return res.status(400).json({
-                        errors: [{
-                            msg: err.message,
-                            param: fieldName
-                        }]
-                    });
+                    return res.status(400).json(ApiResponse.error(`Bir hata meydana geldi.`, err, 400));
                 }
 
-                // Dosya sayısını kontrol et
+                // Dosya gönderilmemişse ve minFiles 0 ise sorun değil, geç
                 if (!req.files || req.files.length === 0) {
-                    return res.status(400).json({
-                        errors: [{
-                            msg: 'Lütfen en az bir dosya yükleyin.',
-                            param: fieldName
-                        }]
-                    });
+                    if (minFiles === 0) return next();
+                    return res.status(400).json(ApiResponse.error(`En az ${minFiles} dosya yüklemelisiniz.`, null, 400));
                 }
 
                 if (req.files.length < minFiles) {
-                    return res.status(400).json({
-                        errors: [{
-                            msg: `En az ${minFiles} dosya yüklemelisiniz.`,
-                            param: fieldName
-                        }]
-                    });
+                    return res.status(400).json(ApiResponse.error(`En az ${minFiles} dosya yüklemelisiniz.`, null, 400));
                 }
+
                 if (req.files.length > maxFiles) {
-                    console.log(1)
-                    return res.status(400).json({
-                        errors: [{
-                            msg: `En fazla ${maxFiles} dosya yüklemelisiniz.`,
-                            param: fieldName
-                        }]
-                    });
+                    return res.status(400).json(ApiResponse.error(`Maksimum dosya sayısı (${maxFiles}) aşıldı.`, null, 400));
                 }
-                // Burada ek kontroller yapabilirsiniz
-                // Örneğin, toplam boyut kontrolü, tüm dosyaların aynı uzantıya sahip olma kontrolü vb.
 
                 next();
             });
@@ -106,6 +86,8 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
 
         // 2. Aşama: Diske yaz
         (req, res, next) => {
+            if (!req.files || req.files.length === 0) return next();
+
             try {
                 const userId = req.user?.id || 'anonymous';
                 const uploadType = req.body?.uploadType || 'general';
@@ -130,10 +112,8 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
                     const filename = file.fieldname + '-' + uniqueSuffix + fileExt;
                     const filePath = path.join(uploadPath, filename);
 
-                    // Dosyayı memory'den diske yaz
                     fs.writeFileSync(filePath, file.buffer);
 
-                    // Dosya bilgilerini güncelle
                     req.files[index].destination = uploadPath;
                     req.files[index].path = filePath;
                     req.files[index].filename = filename;
@@ -151,6 +131,7 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
         }
     ];
 };
+
 
 // Orijinal multer yapılandırması (direkt kullanım için)
 const diskStorage = multer.diskStorage({
