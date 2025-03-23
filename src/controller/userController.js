@@ -39,14 +39,16 @@ const createUser = async (req, res) => {
         // Şifreyi hashle
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
+        const accountStatus =  role === "teacher" ? 'pending' : 'active'
         // Yeni kullanıcı oluştur
         const newUser = new User({
             name,
             surname,
             email,
             password: hashedPassword,
-            role: role || 'student' // Varsayılan rol öğrenci
+            role: role || 'student', // Varsayılan rol öğrenci
+            accountStatus,
+            tokenVersion: TokenService.generateVersionCode(),
         });
 
         // Kullanıcıyı kaydet
@@ -63,7 +65,8 @@ const createUser = async (req, res) => {
             surname: newUser.surname,
             email: newUser.email,
             role: newUser.role,
-            createdAt: newUser.createdAt
+            createdAt: newUser.createdAt,
+            accountStatus
         };
 
         res.status(200).json(
@@ -101,7 +104,21 @@ const loginUser = async (req, res) => {
                 ApiResponse.error('Geçersiz kimlik bilgileri', null, 401)
             );
         }
-
+        //Check user account status
+        const {accountStatus} = user
+        if (accountStatus === "pending") {
+            return res.status(403).json(
+                ApiResponse.forbidden('Bu kullanıcı hesabı henüz onaylanmamış.')
+            );
+        } else if (accountStatus === "inactive") {
+            return res.status(403).json(
+                ApiResponse.forbidden('Bu kullanıcı hesabı aktif değil lütfen bir sistem yöneticisine danışın.')
+            );
+        } else if (accountStatus === "suspended") {
+            return res.status(403).json(
+                ApiResponse.forbidden("Bu kullanıcı hesabı'nın giriş yapma izni bulunmuyor.")
+            );
+        }
         // Şifre kontrolü
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -160,13 +177,6 @@ const changePassword = async (req, res) => {
             );
         }
 
-        // Minimum şifre uzunluğu kontrolü
-        if (newPassword.length < 6) {
-            return res.status(400).json(
-                ApiResponse.error('Şifre en az 6 karakter uzunluğunda olmalıdır')
-            );
-        }
-
         // Kullanıcıyı bul (şifre dahil)
         const user = await User.findById(userId);
         if (!user) {
@@ -182,6 +192,9 @@ const changePassword = async (req, res) => {
                 ApiResponse.error('Mevcut şifre yanlış')
             );
         }
+        if (currentPassword === newPassword) {
+            return res.status(400).json(ApiResponse.error("Eski şifre ile yeni şifre aynı olamaz."))
+        }
 
         // Şifreyi hashle
         const salt = await bcrypt.genSalt(10);
@@ -189,7 +202,7 @@ const changePassword = async (req, res) => {
 
         // Token sürümünü artır (JWT'leri geçersiz kılmak için)
         // Eğer tokenVersion yoksa, 1 olarak başlat
-        const newTokenVersion = (user.tokenVersion || 0) + 1;
+        const newTokenVersion = TokenService.generateVersionCode();
 
         // Kullanıcıyı güncelle
         user.password = hashedPassword;

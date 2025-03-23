@@ -24,6 +24,20 @@ router.route("/join/:classCode").post(
     classController.joinClass
 )
 
+//Kick student
+router.route("/kick/:classId/:userId").put(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    classController.kickStudent
+)
+
+//Ban student
+router.route("/ban/:classId/:userId").put(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    classController.banStudent
+)
+
 //Create Class
 router.route("/create").post(
     authenticateToken,

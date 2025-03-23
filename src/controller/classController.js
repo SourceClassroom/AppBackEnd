@@ -87,6 +87,102 @@ const joinClass = async (req, res) => {
     }
 }
 
+const kickStudent = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const classId = req.params.classId;
+
+        // Sınıf verisini al
+        const getClassData = await Class.findById(classId);
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
+        }
+
+        // Kullanıcı verisini al
+        const userData = await User.findById(userId);
+        if (!userData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir kullanıcı bulunamadı."));
+        }
+
+        // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
+        if (
+            !userData.enrolledClasses.includes(getClassData._id) ||
+            !getClassData.students.includes(userData._id)
+        ) {
+            return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
+        }
+
+        // Kullanıcıdan sınıfı kaldır
+        userData.enrolledClasses = userData.enrolledClasses.filter(
+            (classRef) => classRef.toString() !== getClassData._id.toString()
+        );
+        const newUserData = await userData.save();
+
+        // Sınıftan kullanıcıyı kaldır
+        getClassData.students = getClassData.students.filter(
+            (studentRef) => studentRef.toString() !== userData._id.toString()
+        );
+        const newClassData = await getClassData.save();
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı sınıftan başarıyla çıkarıldı.", {newClassData, newUserData}));
+    } catch (error) {
+        console.error('Hata:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Bir hata meydana geldi', error)
+        );
+    }
+};
+
+
+const banStudent = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const classId = req.params.classId;
+
+        // Sınıf verisini al
+        const getClassData = await Class.findById(classId);
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
+        }
+
+        // Kullanıcı verisini al
+        const userData = await User.findById(userId);
+        if (!userData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir kullanıcı bulunamadı."));
+        }
+
+        // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
+        if (
+            !userData.enrolledClasses.includes(getClassData._id) ||
+            !getClassData.students.includes(userData._id)
+        ) {
+            return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
+        }
+
+        // Kullanıcıdan sınıfı kaldır
+        userData.enrolledClasses = userData.enrolledClasses.filter(
+            (classRef) => classRef.toString() !== getClassData._id.toString()
+        );
+        const newUserData = await userData.save();
+
+        // Sınıftan kullanıcıyı kaldır
+        getClassData.students = getClassData.students.filter(
+            (studentRef) => studentRef.toString() !== userData._id.toString()
+        );
+        getClassData.forbiddenStudents.push(userData._id);
+
+        const newClassData = await getClassData.save();
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı sınıftan başarıyla çıkarıldı.", {newClassData, newUserData}));
+    } catch (error) {
+        console.error('Hata:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Bir hata meydana geldi', error)
+        );
+    }
+};
+
 export {
-    createClass, getClass, joinClass
+    createClass, getClass, joinClass,
+    kickStudent, banStudent
 }

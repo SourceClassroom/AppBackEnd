@@ -56,7 +56,7 @@ const authenticateToken = async (req, res, next) => {
 
         next();
     } catch (err) {
-        console.log('Auth middleware error:', err);
+        //console.log('Auth middleware error:', err);
 
         // Token süresi dolmuşsa veya geçersizse özel hata mesajı
         if (err.name === 'TokenExpiredError') {

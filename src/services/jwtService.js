@@ -6,6 +6,10 @@ import {User} from "../database/models/userModel.js";
  * JWT token oluşturma ve doğrulama işlemleri
  */
 class TokenService {
+    static generateVersionCode() {
+        const max = 100000000000
+        return Math.floor(Math.random() * max);
+    }
     /**
      * Kullanıcı için JWT erişim token'ı oluşturur
      *
@@ -64,12 +68,12 @@ class TokenService {
                     // Eğer token'daki sürüm, kullanıcının mevcut sürümünden küçükse token geçersizdir
                     if (decoded.version !== undefined && user.tokenVersion !== undefined &&
                         decoded.version < user.tokenVersion) {
-                        return reject(new Error('Token geçersiz: Şifre değiştirilmiş veya çıkış yapılmış'));
+                        return reject('Token geçersiz: Şifre değiştirilmiş veya çıkış yapılmış');
                     }
 
                     resolve(decoded);
                 } catch (error) {
-                    console.error('Token doğrulama sırasında veritabanı hatası:', error);
+                    //console.error('Token doğrulama sırasında veritabanı hatası:', error);
                     reject(error);
                 }
             });
@@ -77,5 +81,7 @@ class TokenService {
     }
 
 }
+
+
 
 export default TokenService;
