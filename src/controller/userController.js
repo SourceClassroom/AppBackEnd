@@ -5,7 +5,7 @@ import {User} from "../database/models/userModel.js";
 
 /**
  * Kullanıcı bilgisi alma
- * @route GET /users/:id
+ * @route GET /api/users/:id
  * @access Public
  * */
 const getUsers = async (req, res) => {

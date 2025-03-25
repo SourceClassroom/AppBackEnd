@@ -2,6 +2,12 @@ import ApiResponse from "../utils/apiResponse.js";
 import {Week} from "../database/models/weekModel.js";
 import {Class} from "../database/models/classModel.js";
 
+
+/**
+ * Hafta oluşturma
+ * @route POST /api/week/create
+ * @access Private [Class Teacher/sysadmin]
+ */
 const createWeek = async (req, res) => {
     try {
         const { classId, title, description, startDate, endDate } = req.body;

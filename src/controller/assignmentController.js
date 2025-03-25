@@ -4,6 +4,11 @@ import { Class } from "../database/models/classModel.js";
 import { Assignment } from '../database/models/assignmentModel.js';
 import {createAttachmentOnDB} from "../services/fileService.js";
 
+/**
+ * Ödev oluşturma
+ * @route POST /api/assignment/create
+ * @access Private [teacher, sysadmin]
+ */
 const createAssignment = async (req, res) => {
     try {
         const { classId, title, description, dueDate, week } = req.body;

@@ -17,6 +17,12 @@ const getClass = async (req, res) => {
     }
 }
 
+
+/**
+ * Sınıf oluşturma
+ * @route POST /api/class/create
+ * @access Private [Teacher/sysadmin]
+ */
 const createClass = async (req, res) => {
     try {
         const { title } = req.body;
@@ -56,6 +62,11 @@ const createClass = async (req, res) => {
 }
 
 
+/**
+ * Sınıfa katılma
+ * @route POST /api/class/join
+ * @access Private
+ */
 const joinClass = async (req, res) => {
     try {
         const classCode = req.params.classCode;
@@ -87,6 +98,11 @@ const joinClass = async (req, res) => {
     }
 }
 
+/**
+ * Öğrenci at
+ * @route POST /api/class/kick/:classId/:userId
+ * @access Private [Class Teacher/sysadmin]
+ */
 const kickStudent = async (req, res) => {
     try {
         const userId = req.params.userId;
@@ -133,7 +149,11 @@ const kickStudent = async (req, res) => {
     }
 };
 
-
+/**
+ * Öğrenci yasakla
+ * @route POST /api/class/kick/:classId/:userId
+ * @access Private [Class Teacher/sysadmin]
+ */
 const banStudent = async (req, res) => {
     try {
         const userId = req.params.userId;
