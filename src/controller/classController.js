@@ -201,8 +201,64 @@ const banStudent = async (req, res) => {
         );
     }
 };
+//TODO fonksiyonu test et
+/** Sınıftaki öğrencilerin bilgilerini döner
+ * @param {*} req 
+ * @param {*} res 
+ */
+const studentList = async (req, res) => {
+    try {
+        const classId = req.params.classId
+
+        // Sınıf verisini al
+        const getClassData = await Class.findById(classId);
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
+        }
+        
+        const classStudentData = await Class.aggregate([
+            {
+              $match: { _id: classId } // Belirli bir grubu seç
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "userIds",
+                foreignField: "_id",
+                as: "userDetails"
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                users: {
+                  $map: {
+                    input: "$userDetails",
+                    as: "user",
+                    in: {
+                      name: "$$user.name",
+                      surname: "$$user.surname",
+                      email: "$$user.email",
+                      profile: "$$user.profile"
+                    }
+                  }
+                }
+              }
+            }
+          ])
+          if (!classStudentData || classStudentData.length === 0) {
+            return res.status(404).json(ApiResponse.notFound("Bu sınıfa kayıtlı öğrenci bulunamadı."));
+          }
+          return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", classStudentData, 200))
+    } catch (error) {
+        console.error('Öğrenci bilgileri alınırken bir hata meydana geldi.:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Öğrenci bilgileri alınırken bir hata meydana geldi.', error)
+        );
+    }
+}
 
 export {
     createClass, getClass, joinClass,
-    kickStudent, banStudent
+    kickStudent, banStudent, studentList
 }

@@ -47,4 +47,10 @@ router.route("/create").post(
     classController.createClass
 )
 
+router.route("/students/:classId").get(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    classController.studentList
+)
+
 export default router
