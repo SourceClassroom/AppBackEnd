@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import ApiResponse from "../utils/ApiResponse.js";
 import {User} from "../database/models/userModel.js";
 import { Class } from "../database/models/classModel.js";
@@ -201,7 +202,6 @@ const banStudent = async (req, res) => {
         );
     }
 };
-//TODO fonksiyonu test et
 /** Sınıftaki öğrencilerin bilgilerini döner
  * @param {*} req 
  * @param {*} res 
@@ -215,41 +215,38 @@ const studentList = async (req, res) => {
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
-        
         const classStudentData = await Class.aggregate([
             {
-              $match: { _id: classId } // Belirli bir grubu seç
-            },
-            {
-              $lookup: {
-                from: "users",
-                localField: "userIds",
-                foreignField: "_id",
-                as: "userDetails"
-              }
-            },
-            {
-              $project: {
-                _id: 0,
-                users: {
-                  $map: {
-                    input: "$userDetails",
-                    as: "user",
-                    in: {
-                      name: "$$user.name",
-                      surname: "$$user.surname",
-                      email: "$$user.email",
-                      profile: "$$user.profile"
-                    }
-                  }
+                $match: {
+                    _id: new mongoose.Types.ObjectId(classId),
                 }
-              }
+            },
+            {
+                $lookup: {
+                    from: "users", // users collection adının doğru olduğundan emin olun
+                    localField: "students",
+                    foreignField: "_id",
+                    as: "studentDetails"
+                }
+            },
+            {
+                $unwind: "$studentDetails"
+            },
+            {
+                $project: {
+                    users: {
+                        name: "$studentDetails.name",
+                        surname: "$studentDetails.surname",
+                        email: "$studentDetails.email",
+                        profile: "$studentDetails.profile"
+                    }
+                }
             }
-          ])
-          if (!classStudentData || classStudentData.length === 0) {
+        ])
+        if (!classStudentData || classStudentData.length === 0) {
             return res.status(404).json(ApiResponse.notFound("Bu sınıfa kayıtlı öğrenci bulunamadı."));
-          }
-          return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", classStudentData, 200))
+        }
+        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", classStudentData, 200))
     } catch (error) {
         console.error('Öğrenci bilgileri alınırken bir hata meydana geldi.:', error);
         res.status(500).json(

@@ -49,7 +49,7 @@ router.route("/create").post(
 
 router.route("/students/:classId").get(
     authenticateToken,
-    roleCheck.isClassTeacherOrOwner(),
+    roleCheck.isClassMember(),
     classController.studentList
 )
 

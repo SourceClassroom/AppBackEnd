@@ -122,8 +122,6 @@ const isClassMember = () => {
             }
 
             // Kullanıcı bu sınıfın öğretmeni, üyesi veya sysadmin mi kontrol et
-            console.log(user)
-            console.log(classDoc.teacher.toString());
             if (
                 (user.role === 'teacher' && classDoc.teacher.toString() === user.id) ||
                 (user.role === 'student' && classDoc.students.includes(user.id)) ||
