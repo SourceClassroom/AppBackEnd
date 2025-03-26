@@ -43,14 +43,15 @@ const authenticateToken = async (req, res, next) => {
             );
         }
 
-        // İsteğe bağlı: Kullanıcı şifre değiştirdiyse token'ı geçersiz kılma
+        //Kullanıcı şifre değiştirdiyse token'ı geçersiz kılma
+        /* Token id eklenmesi ile bu özellik kaldırıldı
         if (currentUser.passwordChangedAt &&
             parseInt(currentUser.passwordChangedAt.getTime() / 1000) > decoded.iat) {
             return res.status(401).send(
                 ApiResponse.unauthorized("Şifreniz değiştirildi, lütfen tekrar giriş yapın.")
             );
         }
-
+        */
         // Kullanıcıyı request objesine ekle
         req.user = currentUser;
 
