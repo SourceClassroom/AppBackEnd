@@ -1,4 +1,5 @@
 import {Class} from "../database/models/classModel.js";
+import ApiResponse from "../utils/apiResponse.js";
 
 /**
  * Kullanıcının belirli rollere sahip olup olmadığını kontrol eden middleware
@@ -13,30 +14,19 @@ const roleCheck = (allowedRoles) => {
             const { user } = req;
             // Kullanıcı nesnesi yoksa hata dön
             if (!user) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Kimlik doğrulama gerekli',
-                    error: 'Kullanıcı oturumu bulunamadı'
-                });
+                return res.status(401).json(ApiResponse.unauthorized("Kullanıcı oturumu bulunamadı."))
+
             }
 
             // Kullanıcının rolü izin verilen roller arasında mı kontrol et
             if (!allowedRoles.includes(user.role)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Yetkisiz erişim',
-                    error: 'Bu işlem için gerekli izniniz bulunmamaktadır'
-                });
+                return res.status(403).json(ApiResponse.forbidden("Bu işlem için gerekli izniniz bulunmamaktadır"));
             }
 
             // Kullanıcı yetkili, sonraki middleware'e veya route handler'a geç
             next();
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: 'Rol kontrolü sırasında bir hata oluştu',
-                error: error.message
-            });
+            return res.status(500).json(ApiResponse.serverError("Rol kontrolü sırasında bir hata oluştu", error));
         }
     };
 };
@@ -52,20 +42,12 @@ const isClassTeacherOrOwner = () => {
             const classId = req.params.classId || req.body.classId;
 
             if (!classId) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Sınıf ID'si bulunamadı",
-                    error: "Lütfen geçerli bir sınıf ID'si belirtin"
-                });
+                return res.status(400).json(ApiResponse.error("Lütfen geçerli bir sınıf ID'si belirtin"));
             }
 
             const classDoc = await Class.findById(classId);
             if (!classDoc) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Sınıf bulunamadı',
-                    error: 'Belirtilen ID ile eşleşen sınıf bulunamadı'
-                });
+                return res.status(404).json(ApiResponse.error("Belirtilen ID ile eşleşen sınıf bulunamadı"));
             }
 
             // Kullanıcı bu sınıfın öğretmeni veya sysadmin mi kontrol et
@@ -78,17 +60,9 @@ const isClassTeacherOrOwner = () => {
                 return next();
             }
 
-            return res.status(403).json({
-                success: false,
-                message: 'Yetkisiz erişim',
-                error: 'Bu sınıf üzerinde işlem yapma yetkiniz bulunmamaktadır'
-            });
+            return res.status(403).json(ApiResponse.forbidden("Bu işlem için gerekli izniniz bulunmamaktadır"));
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: 'Sınıf yetkisi kontrolü sırasında bir hata oluştu',
-                error: error.message
-            });
+            return res.status(500).json(ApiResponse.serverError("Rol kontrolü sırasında bir hata oluştu", error));
         }
     };
 };
@@ -104,21 +78,13 @@ const isClassMember = () => {
             const classId = req.params.classId;
 
             if (!classId) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Sınıf ID'si bulunamadı",
-                    error: "Lütfen geçerli bir sınıf ID'si belirtin"
-                });
+                return res.status(400).json(ApiResponse.error("Lütfen geçerli bir sınıf ID'si belirtin"));
             }
 
             // Class modelini import et
             const classDoc = await Class.findById(classId);
             if (!classDoc) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Sınıf bulunamadı',
-                    error: 'Belirtilen ID ile eşleşen sınıf bulunamadı'
-                });
+                return res.status(404).json(ApiResponse.error("Belirtilen ID ile eşleşen sınıf bulunamadı"));
             }
 
             // Kullanıcı bu sınıfın öğretmeni, üyesi veya sysadmin mi kontrol et
@@ -132,17 +98,9 @@ const isClassMember = () => {
                 return next();
             }
 
-            return res.status(403).json({
-                success: false,
-                message: 'Yetkisiz erişim',
-                error: 'Bu sınıfın bir üyesi değilsiniz'
-            });
+            return res.status(403).json(ApiResponse.forbidden("Bu işlem için gerekli izniniz bulunmamaktadır"));
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: 'Sınıf üyeliği kontrolü sırasında bir hata oluştu',
-                error: error.message
-            });
+            return res.status(500).json(ApiResponse.serverError("Rol kontrolü sırasında bir hata oluştu", error));
         }
     };
 };
@@ -168,17 +126,9 @@ const isResourceOwner = (userIdField = 'userId') => {
                 return next();
             }
 
-            return res.status(403).json({
-                success: false,
-                message: 'Yetkisiz erişim',
-                error: 'Bu kaynak üzerinde işlem yapma yetkiniz bulunmamaktadır'
-            });
+            return res.status(403).json(ApiResponse.forbidden("Bu işlem için gerekli izniniz bulunmamaktadır"));
         } catch (error) {
-            return res.status(500).json({
-                success: false,
-                message: 'Kaynak sahibi kontrolü sırasında bir hata oluştu',
-                error: error.message
-            });
+            return res.status(500).json(ApiResponse.serverError("Rol kontrolü sırasında bir hata oluştu", error));
         }
     };
 };
