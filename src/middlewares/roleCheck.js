@@ -75,7 +75,7 @@ const isClassMember = () => {
     return async (req, res, next) => {
         try {
             const { user } = req;
-            const classId = req.params.classId;
+            const classId = req.params.classId || req.body.classId;
 
             if (!classId) {
                 return res.status(400).json(ApiResponse.error("Lütfen geçerli bir sınıf ID'si belirtin"));

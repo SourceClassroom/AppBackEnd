@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const attachmentSchema = new Schema({
     userId: { type: Schema.Types.ObjectId, ref: 'User' },
-    classroomId: { type: Schema.Types.ObjectId, ref: 'Class' },
+    classroom: { type: Schema.Types.ObjectId, ref: 'Class' },
     filename: {type: String, required: true,},
     originalname: {type: String, required: true,},
     mimetype: {type: String, required: true,},

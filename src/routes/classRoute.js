@@ -1,5 +1,5 @@
 import express from "express"
-import apiValidator from "../utils/validator.js"
+import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 import *as classController from "../controller/classController.js";

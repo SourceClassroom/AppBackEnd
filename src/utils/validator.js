@@ -1,7 +1,7 @@
 import ApiResponse from "../utils/ApiResponse.js";
 import {body, param, validationResult} from "express-validator";
 
-const validate = (req, res, next) => {
+export const validate = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -18,14 +18,14 @@ const validate = (req, res, next) => {
     next();
 };
 
-const newPasswordValidator = [
+export const newPasswordValidator = [
     body('newPassword')
         .notEmpty().withMessage('Şifre alanı zorunludur')
         .isLength({ min: 8 }).withMessage('Şifre en az 8 karakter olmalıdır')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir')
 ]
 
-const userCreateValidationRules = [
+export const userCreateValidationRules = [
     body('name')
         .notEmpty().withMessage('İsim alanı zorunludur')
         .isString().withMessage('İsim bir metin olmalıdır')
@@ -49,7 +49,7 @@ const userCreateValidationRules = [
         .isIn(['student', 'teacher', 'sysadmin']).withMessage('Geçersiz rol. Rol student, teacher veya sysadmin olmalıdır')
 ];
 
-const validateCreateWeek = [
+export const validateCreateWeek = [
     body('classId')
         .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
         .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
@@ -75,7 +75,7 @@ const validateCreateWeek = [
         }),
 ];
 
-const validateCreateAssignment = [
+export const validateCreateAssignment = [
     body('classId')
         .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
         .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
@@ -92,35 +92,33 @@ const validateCreateAssignment = [
         .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
 ]
 
-const classCreateValidationRules = [
+export const classCreateValidationRules = [
     body('title')
         .notEmpty().withMessage('Sınıf ismi boş olamaz.')
         .isString().withMessage('Sınıf ismi bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
 ]
 
-const validateClassCode = (paramName = 'classCode') => [
+export const validateClassCode = (paramName = 'classCode') => [
     param(paramName)
         .customSanitizer(value => value.toUpperCase())
         .isLength({ min: 6, max: 6 }).withMessage('Sınıf kodu 6 karakter olmalıdır.')
         .matches(/^[A-Z0-9]{6}$/).withMessage('Sınıf kodu sadece büyük harf ve rakamlardan oluşabilir.')
 ]
 
+export const validateSubmission = [
+    body('assignmentId')
+        .notEmpty().withMessage("Ödev ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir ödev ID giriniz."),
+    body('description')
+        .optional()
+        .isLength({ max: 500 }).withMessage('Açıklama en fazla 500 karakter olabilir.'),
+]
+
 /**
  * MongoDB ID formatını doğrulama
  */
-const validateMongoId = (paramName = 'id') => [
+export const validateMongoId = (paramName = 'id') => [
     param(paramName)
         .isMongoId().withMessage('Geçerli bir ID formatı değil')
 ];
-
-export default {
-    validate,
-    validateMongoId,
-    validateClassCode,
-    validateCreateWeek,
-    newPasswordValidator,
-    validateCreateAssignment,
-    userCreateValidationRules,
-    classCreateValidationRules
-}

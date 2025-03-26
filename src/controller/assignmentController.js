@@ -2,7 +2,7 @@ import ApiResponse from "../utils/apiResponse.js";
 import { Week } from "../database/models/weekModel.js";
 import { Class } from "../database/models/classModel.js";
 import { Assignment } from '../database/models/assignmentModel.js';
-import {createAttachmentOnDB} from "../services/fileService.js";
+import {createAttachmentOnDB, processMedia} from "../services/fileService.js";
 
 /**
  * Ödev oluşturma
@@ -19,26 +19,7 @@ const createAssignment = async (req, res) => {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        // Dosyaları işle
-        let files = [];
-        if (req.files && req.files.length > 0) {
-            files = req.files.map(file => ({
-                filename: file.filename,
-                originalname: file.originalname,
-                mimetype: file.mimetype,
-                path: file.path,
-                size: file.size,
-                classId,
-                userId: req.user?.id,
-                uploadDate: Date.now()
-            }));
-        }
-        console.log(files);
-        let fileIds=[]
-        for (const file of files) {
-            const newAttach = await createAttachmentOnDB(file)
-            fileIds.push(newAttach._id);
-        }
+        const fileIds = await processMedia(req);
 
         const newAssignmentData = {
             classroom: classId,

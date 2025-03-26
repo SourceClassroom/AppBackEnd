@@ -1,5 +1,5 @@
 import express from "express"
-import apiValidator from "../utils/validator.js"
+import *as apiValidator from "../utils/validator.js"
 import *as userController from "../controller/userController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 

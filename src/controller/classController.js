@@ -7,7 +7,6 @@ import { generateUniqueCode } from "../services/classCodeService.js";
 const getClass = async (req, res) => {
     try {
         const getClass = await Class.findById(req.params.classId)
-        console.log(getClass)
         if (!getClass) return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         return res.status(200).json(ApiResponse.success("Sınıf bilgisi.", getClass, 200));
     } catch (error) {

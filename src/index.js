@@ -11,6 +11,7 @@ import userRouter from './routes/userRoute.js';
 import weekRouter from './routes/weekRoute.js';
 import classRouter from './routes/classRoute.js';
 import assignmentRouter from './routes/assignmentRoute.js';
+import submissionRouter from './routes/submissionRoute.js';
 import notificationRouter from './routes/notificationRoute.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api/week', weekRouter)
 app.use('/api/users', userRouter)
 app.use('/api/class', classRouter)
 app.use('/api/assignment', assignmentRouter)
+app.use('/api/submission', submissionRouter)
 app.use('/api/notification', notificationRouter)
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
