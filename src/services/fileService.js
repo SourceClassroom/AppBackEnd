@@ -43,7 +43,7 @@ export const createAttachmentOnDB = async (data) => {
             originalname,
             mimetype,
             path,
-            classId,
+            classroom: classId,
             userId,
             size
         });
