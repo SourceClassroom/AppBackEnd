@@ -6,7 +6,7 @@ import *as attachmentController from "../controller/attachmentController.js"
 
 const router = express.Router()
 
-//TODO rolecheck for attachments
+//TODO better rolecheck for attachments
 router.route("/submission/download/:classId/:id").get(
     authenticateToken,
     apiValidator.validateMongoId("id"),
@@ -24,5 +24,8 @@ router.route("/material/download/:classId/:id").get(
     roleCheck.isClassMember(),
     attachmentController.downloadAttachment
 )
+
+//TODO ROLECHECK
+router.route("/view/:id").get(attachmentController.viewAttachment)
 
 export default router;
