@@ -6,7 +6,6 @@ import {authenticateToken} from "../middlewares/authMiddleware.js";
 const router = express.Router()
 
 router.route("/:id").get(
-    authenticateToken,
     apiValidator.validateMongoId("id"),
     apiValidator.validate,
     userController.getUsers

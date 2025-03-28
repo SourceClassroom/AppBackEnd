@@ -5,8 +5,8 @@ const conn = () => {
         dbName: "source_classroom"
     }).then(() => {
         console.log("Connected to the DB succesfully!")
-    }).catch((err) => {
-        console.log(`DB Connect Error: ${err}`)
+    }).catch((error) => {
+        console.log(`DB Connect Error: ${error}`)
     })
 }
 

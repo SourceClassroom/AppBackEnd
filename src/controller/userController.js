@@ -1,7 +1,9 @@
 import bcrypt from 'bcryptjs';
+import {client} from "../redis/redisClient.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {User} from "../database/models/userModel.js";
+
 
 /**
  * Kullanıcı bilgisi alma
@@ -10,11 +12,21 @@ import {User} from "../database/models/userModel.js";
  * */
 const getUsers = async (req, res) => {
     try {
+        const userId = req.params.id;
+
+        const cachedData = JSON.parse(await client.get(`user:${userId}`))
+        if (cachedData) {
+            return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", cachedData, 200));
+        }
+
         const user = await User.findById(req.params.id, {password: false})
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
+
+        await client.setEx(`user:${userId}`, 3600,  JSON.stringify(user))
+
         return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", user, 200));
     } catch (error) {
-        return res.status(500).json(ApiResponse.error("Kullanıcı bilgisi alınırken hata meydana geldi.", error));
+        return res.status(500).json(ApiResponse.serverError("Kullanıcı bilgisi alınırken hata meydana geldi.", error));
     }
 }
 

@@ -5,6 +5,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import cookieParser from "cookie-parser"
 import conn from "./database/connection.js";
+import {redisConnect} from "./redis/redisClient.js";
 
 //Routes
 import userRouter from './routes/userRoute.js';
@@ -20,6 +21,9 @@ dotenv.config();
 
 //Database Connection
 conn();
+
+//Redis connection
+redisConnect()
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
