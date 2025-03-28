@@ -3,6 +3,7 @@ import {client} from "../redis/redisClient.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {User} from "../database/models/userModel.js";
+import apiResponse from "../utils/ApiResponse.js";
 
 
 /**
@@ -10,7 +11,7 @@ import {User} from "../database/models/userModel.js";
  * @route GET /api/users/:id
  * @access Public
  * */
-const getUsers = async (req, res) => {
+export const getUsers = async (req, res) => {
     try {
         const userId = req.params.id;
 
@@ -35,7 +36,7 @@ const getUsers = async (req, res) => {
  * @route POST /api/users/register
  * @access Public
  */
-const createUser = async (req, res) => {
+export const createUser = async (req, res) => {
     try {
         // Request body'den verileri al
         const { name, surname, email, password, role } = req.body;
@@ -104,7 +105,7 @@ const createUser = async (req, res) => {
  * @route POST /api/users/login
  * @access Public
  */
-const loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
     try {
         // Request body'den verileri al
         const { email, password } = req.body;
@@ -177,7 +178,7 @@ const loginUser = async (req, res) => {
  * @route PUT /api/users/change-password
  * @access Private (Kimlik doğrulama gerekli)
  */
-const changePassword = async (req, res) => {
+export const changePassword = async (req, res) => {
     try {
         const userId = req.user.id;
         const { currentPassword, newPassword } = req.body;
@@ -213,7 +214,6 @@ const changePassword = async (req, res) => {
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
         // Token sürümünü artır (JWT'leri geçersiz kılmak için)
-        // Eğer tokenVersion yoksa, 1 olarak başlat
         const newTokenVersion = TokenService.generateVersionCode();
 
         // Kullanıcıyı güncelle
@@ -227,6 +227,13 @@ const changePassword = async (req, res) => {
             role: user.role,
             tokenVersion: newTokenVersion // Token'a sürüm ekle
         });
+
+        const oldToken =
+            req.cookies?.jsonwebtoken ||
+            req.headers?.authorization?.split(" ")[1] ||
+            req.query?.token;
+
+        await TokenService.blacklistToken(oldToken)
 
         res.status(200).json(
             ApiResponse.success(
@@ -245,9 +252,24 @@ const changePassword = async (req, res) => {
     }
 };
 
+export const logoutUser = async (req, res) => {
+    try {
+        const token =
+            req.cookies?.jsonwebtoken ||
+            req.headers?.authorization?.split(" ")[1] ||
+            req.query?.token;
 
+        if (!token) {
+            return res.status(400).send(ApiResponse.badRequest("Token bulunamadı."));
+        }
 
-export {
-    getUsers, createUser, loginUser,
-    changePassword,
-};
+        await TokenService.blacklistToken(token)
+
+        return res.status(200).json(apiResponse.success("Başarıyla çıkış yapıldı."))
+    } catch (error) {
+        console.log(error)
+        res.status(500).json(
+            ApiResponse.serverError('Çıkış yapılırken bir hata meydana geldi.', error)
+        );
+    }
+}

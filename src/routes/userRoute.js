@@ -13,6 +13,8 @@ router.route("/:id").get(
 
 router.route("/login").post(userController.loginUser)
 
+router.route("/logout").post(authenticateToken, userController.logoutUser)
+
 router.route("/register").post(
     apiValidator.userCreateValidationRules,
     apiValidator.validate,
