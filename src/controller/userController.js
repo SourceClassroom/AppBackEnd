@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs';
-import {client} from "../redis/redisClient.js";
+import apiResponse from "../utils/ApiResponse.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {User} from "../database/models/userModel.js";
-import apiResponse from "../utils/ApiResponse.js";
+import *as fileService from "../services/fileService.js";
+import {processMedia} from "../services/fileService.js";
 import *as cacheService from "../services/cacheService.js";
 
 
@@ -15,18 +16,11 @@ import *as cacheService from "../services/cacheService.js";
 export const getUsers = async (req, res) => {
     try {
         const userId = req.params.id;
-        const cacheKey = `user:${userId}`
+        const user = await cacheService.getUserFromCacheOrCheckDb(userId)
 
-        const cachedData = await cacheService.getFromCache(cacheKey)
-        if (cachedData) {
-            return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", cachedData, 200));
+        if (!user) {
+            return res.status(404).jsonp(ApiResponse.notFound("Bu id ile bir kullanic bulunamadi"))
         }
-
-        const user = await User.findById(req.params.id, {password: false})
-        if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
-
-        //await client.setEx(`user:${userId}`, 3600,  JSON.stringify(user))
-        await cacheService.writeToCache(cacheKey, user, 3600)
 
         return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", user, 200));
     } catch (error) {
@@ -273,6 +267,31 @@ export const logoutUser = async (req, res) => {
         console.log(error)
         res.status(500).json(
             ApiResponse.serverError('Çıkış yapılırken bir hata meydana geldi.', error)
+        );
+    }
+}
+
+export const changeAvatar = async (req, res) => {
+    try {
+        const userId = req.user.id
+        req.body.permission = 0;
+        //Check files even isn't required (check /middleware/upload.js)
+        if (req.files.length === 0 || !req.files) {
+            return res.status(400).json(ApiResponse.error("En az 1 dosya yüklenmeli."));
+        }
+        const currentUserData = await cacheService.getUserFromCacheOrCheckDb(userId)
+        const fileIds = await processMedia(req)
+
+        const updateUser = await User.findByIdAndUpdate(userId, {$set: {profile: {avatar:  fileIds[0]}}}, {new: true})
+
+        await cacheService.writeToCache(`user:${userId}`, updateUser, 3600)
+        await fileService.deleteAttachment(currentUserData.profile?.avatar)
+
+        return res.status(200).json(ApiResponse.success("Avatar başarılı bir şekilde değiştirildi."))
+    } catch (error) {
+        console.log(error)
+        res.status(500).json(
+            ApiResponse.serverError('Avatar değiştirilirken bir hata meydana geldi.', error)
         );
     }
 }

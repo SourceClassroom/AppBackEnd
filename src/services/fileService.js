@@ -1,4 +1,7 @@
+import fs from "fs";
+import {getFromCache} from "./cacheService.js";
 import {Attachment} from "../database/models/attachmentModel.js";
+
 
 export const processMedia = async (req) => {
     try {
@@ -54,6 +57,30 @@ export const createAttachmentOnDB = async (data) => {
         return await attachment.save();
     } catch (error) {
         console.log(error);
+        return error
+    }
+}
+
+export const deleteAttachment = async (attachmentId) => {
+    try {
+        if (!attachmentId) return;
+        let attachment;
+        const cacheKey = `attachment:${attachmentId}`
+        //Cacheden attachment bilgisini al
+        const getAttachmentDataFromCache = await getFromCache(cacheKey)
+        //Alinan veriyi degiskene ata
+        if (getAttachmentDataFromCache) attachment = getAttachmentDataFromCache
+        // Veritabanından attachment bilgisini al
+        else attachment = await Attachment.findById(attachmentId);
+        if (!attachment) {
+          //console.log("Attachment bulunamadı.");
+          return;
+        }
+        //Resimi Sil
+        fs.unlinkSync(attachment.path)
+        // Veritabanından kaldır
+        await Attachment.findByIdAndDelete(attachmentId);
+    } catch (error) {
         return error
     }
 }

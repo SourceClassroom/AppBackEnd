@@ -1,4 +1,6 @@
 import {client} from "../redis/redisClient.js";
+import {User} from "../database/models/userModel.js";
+import {Attachment} from "../database/models/attachmentModel.js";
 
 export const writeToCache = async (key, value, ttl) => {
     try {
@@ -13,6 +15,47 @@ export const writeToCache = async (key, value, ttl) => {
 export const getFromCache = async (key) => {
     try {
         return JSON.parse(await client.get(key))
+    } catch (error) {
+        return error
+    }
+}
+
+export const getUserFromCacheOrCheckDb = async (userId) => {
+    try {
+        const cacheKey = `user:${userId}`
+
+        const cachedData = await getFromCache(cacheKey)
+        if (cachedData) {
+            return cachedData
+        }
+
+        const user = await User.findById(userId, {password: false})
+        if (!user) return;
+
+        //await client.setEx(`user:${userId}`, 3600,  JSON.stringify(user))
+        await writeToCache(cacheKey, user, 3600)
+
+        return user
+    } catch (error) {
+        return error
+    }
+}
+
+export const getAttachmentFromCacheOrCheckDb = async (attachmentId) => {
+    try {
+        const cacheKey = `attachment:${attachmentId}`
+
+        const cachedData = await getFromCache(cacheKey)
+        if (cachedData) {
+            return cachedData
+        }
+
+        const attachment = await Attachment.findById(attachmentId)
+        if (!attachment) return;
+
+        await writeToCache(cacheKey, attachment, 3600)
+
+        return attachment
     } catch (error) {
         return error
     }

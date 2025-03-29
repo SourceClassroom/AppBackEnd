@@ -64,10 +64,7 @@ const UserSchema = new Schema({
 
     // Kullanıcı profil bilgileri
     profile: {
-        avatar: {
-            type: String,
-            default: null
-        },
+        avatar: { type: Schema.Types.ObjectId, ref: "Attachment"},
         bio: {
             type: String,
             maxlength: [200, "Bio cannot exceed 200 characters"]

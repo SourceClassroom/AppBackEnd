@@ -2,6 +2,7 @@ import express from "express"
 import *as apiValidator from "../utils/validator.js"
 import *as userController from "../controller/userController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
+import upload from "../middlewares/upload.js";
 
 const router = express.Router()
 
@@ -27,5 +28,11 @@ router.route("/change-password").put(
     apiValidator.validate,
     userController.changePassword
 );
+
+router.route("/change-avatar").put(
+    authenticateToken,
+    upload.validateAndUpload("files", 1, 1),
+    userController.changeAvatar
+)
 
 export default router;
