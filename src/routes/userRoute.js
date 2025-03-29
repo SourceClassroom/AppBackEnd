@@ -1,8 +1,10 @@
 import express from "express"
+import upload from "../middlewares/upload.js";
 import *as apiValidator from "../utils/validator.js"
 import *as userController from "../controller/userController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
-import upload from "../middlewares/upload.js";
+import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
+
 
 const router = express.Router()
 
@@ -31,7 +33,13 @@ router.route("/change-password").put(
 
 router.route("/change-avatar").put(
     authenticateToken,
-    upload.validateAndUpload("files", 1, 1),
+    upload.validateAndUpload({
+            fieldName: "files",
+            minFiles: 1,
+            maxFiled: 1,
+            fileSize: 10 * 1024 * 1024,
+            allowedTypes: fileTypes.images
+        }),
     userController.changeAvatar
 )
 

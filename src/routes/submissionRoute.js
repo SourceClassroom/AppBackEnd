@@ -11,7 +11,12 @@ const router = express.Router()
 
 router.route("/submit").post(
     authenticateToken,
-    upload.validateAndUpload("files", 0, 5),
+    upload.validateAndUpload({
+        fieldName: "files",
+        minFiles: 0,
+        maxFiled: 5,
+        fileSize: 1024 * 1024 * 1024,
+    }),
     roleCheck.isClassMember(),
     submissionCheck.checkUserSubmissions(),
     apiValidator.validateSubmission,

@@ -59,7 +59,7 @@ class TokenService {
                             ? parseInt(process.env.JWT_EXPIRE) * 60 * 60 * 24 // 1 gün
                             : 86400; // 1 gün (varsayılan)
 
-                        await client.setEx(`token:${user.id}`, expireSeconds, token);
+                        //await client.setEx(`token:${user.id}`, expireSeconds, token);
 
                         resolve(token);
                     } catch (redisErr) {

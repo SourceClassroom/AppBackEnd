@@ -7,7 +7,8 @@ import {downloadAttachment} from "../controller/attachmentController.js";
 
 const router = express.Router()
 
-//TODO better rolecheck for attachments
+//better rolecheck for attachments
+//I did i guess
 router.route("/submission/download/:classId/:id").get(
     authenticateToken,
     apiValidator.validateMongoId("id"),

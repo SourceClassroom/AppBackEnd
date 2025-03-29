@@ -3,6 +3,7 @@ import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 import ApiResponse from "../utils/apiResponse.js";
+import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
 
 // __dirname'in ESM karşılığını elde etme
 const __filename = fileURLToPath(import.meta.url);
@@ -15,54 +16,56 @@ const createUploadDir = (dirPath) => {
     }
 };
 
-// İzin verilen dosya türleri
-const allowedFileTypes = [
-    // Dokümanlar
-    '.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt',
-    // Tablolar
-    '.xls', '.xlsx', '.csv', '.ods',
-    // Sunumlar
-    '.ppt', '.pptx', '.odp',
-    // Görseller
-    '.jpg', '.jpeg', '.png', '.gif', '.bmp',
-    // Sıkıştırılmış dosyalar
-    '.zip', '.rar', '.7z',
-    // Programlama dosyaları
-    '.js', '.py', '.java', '.c', '.cpp', '.html', '.css',
-    // Diğer
-    '.md'
-];
-
 // Önce memory storage kullan - kontrol için
 const memoryStorage = multer.memoryStorage();
 
 // Memory'de dosyaları tutan multer örneği
-const memoryUpload = multer({
-    storage: memoryStorage,
-    limits: {
-        fileSize: 1024 * 1024 * 1024, // 10MB
-    },
-    fileFilter: (req, file, cb) => {
-        const ext = path.extname(file.originalname).toLowerCase();
 
-        if (allowedFileTypes.includes(ext)) {
-            return cb(null, true);
+const memoryUpload = (options = {}) => {
+    const {
+        fileSize = 1024 * 1024 * 1024, // Default 1GB
+        allowedTypes = allAllowedFileTypes // Default tüm izin verilen tipler
+    } = options;
+
+    return multer({
+        storage: memoryStorage,
+        limits: {
+            fileSize: fileSize,
+        },
+        fileFilter: (req, file, cb) => {
+            const ext = path.extname(file.originalname).toLowerCase();
+            if (allowedTypes.includes(ext)) {
+                return cb(null, true);
+            }
+            cb(new Error(`Bu dosya türü desteklenmiyor! İzin verilen dosya türleri: ${allowedTypes.join(', ')}`), false);
         }
-
-        cb(new Error('Bu dosya türü desteklenmiyor! Lütfen geçerli bir dosya yükleyin.'), false);
-    }
-});
+    });
+};
 
 // İki aşamalı upload fonksiyonu
-export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
+export const validateAndUpload = (options = {}) => {
+    const {
+        fieldName = "files",
+        minFiles = 1,
+        maxFiles = 10,
+        fileSize = 1024 * 1024 * 1024, // Default 1GB
+        allowedTypes = allAllowedFileTypes
+    } = options;
+
     return [
         // 1. Aşama: Memory'ye al ve kontrol et
         (req, res, next) => {
-            const uploadMiddleware = memoryUpload.array(fieldName, maxFiles);
+            const uploadMiddleware = memoryUpload({
+                fileSize,
+                allowedTypes
+            }).array(fieldName, maxFiles);
 
             uploadMiddleware(req, res, (err) => {
                 if (err) {
-                    return res.status(400).json(ApiResponse.error(`Bir hata meydana geldi.`, err, 400));
+                    if (err.code === 'LIMIT_FILE_SIZE') {
+                        return res.status(400).json(ApiResponse.error(`Dosya boyutu çok büyük. Maksimum ${(fileSize / (1024 * 1024)).toFixed(2)} MB yükleyebilirsiniz.`, err, 400));
+                    }
+                    return res.status(400).json(ApiResponse.error(err.message || `Bir hata meydana geldi.`, err, 400));
                 }
 
                 // Dosya gönderilmemişse ve minFiles 0 ise sorun değil, geç
@@ -82,16 +85,13 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
                 next();
             });
         },
-
         // 2. Aşama: Diske yaz
         (req, res, next) => {
             if (!req.files || req.files.length === 0) return next();
-
             try {
                 const userId = req.user?.id || 'anonymous';
                 const uploadType = req.body?.uploadType || 'general';
                 const referenceId = req.body?.classId || 'general';
-
                 const uploadPath = path.join(
                     __dirname,
                     '../..',
@@ -101,7 +101,6 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
                     String(referenceId),
                     String(userId)
                 );
-
                 createUploadDir(uploadPath);
 
                 // Memory'deki tüm dosyaları diske yaz
@@ -110,9 +109,7 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
                     const fileExt = path.extname(file.originalname);
                     const filename = file.fieldname + '-' + uniqueSuffix + fileExt;
                     const filePath = path.join(uploadPath, filename);
-
                     fs.writeFileSync(filePath, file.buffer);
-
                     req.files[index].destination = uploadPath;
                     req.files[index].path = filePath;
                     req.files[index].filename = filename;
@@ -130,8 +127,6 @@ export const validateAndUpload = (fieldName, minFiles = 1, maxFiles = 10) => {
         }
     ];
 };
-
-
 // Orijinal multer yapılandırması (direkt kullanım için)
 const diskStorage = multer.diskStorage({
     destination: (req, file, cb) => {

@@ -8,7 +8,7 @@ import *as cacheService from "../services/cacheService.js"
 export const downloadAttachment = async (req, res) => {
     try {
         const attachmentId = req.params.id;
-        const file = await Attachment.findById(attachmentId);
+        const file = await cacheService.getAttachmentFromCacheOrCheckDb(attachmentId);
 
         if (!file) {
             res.sendStatus(404).json(ApiResponse.json('Dosya bulunamadı.'))
@@ -29,7 +29,7 @@ export const downloadAttachment = async (req, res) => {
 export const viewAttachment = async (req, res) => {
     try {
         const attachmentId = req.params.id;
-        const file = await Attachment.findById(attachmentId);
+        const file = await cacheService.getAttachmentFromCacheOrCheckDb(attachmentId);
 
         if (!file) {
             return res.status(404).json(ApiResponse.notFound("Dosya bulunamadı."));

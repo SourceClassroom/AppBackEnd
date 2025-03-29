@@ -9,7 +9,12 @@ const router = express.Router()
 
 router.route("/create").post(
     authenticateToken,
-    upload.validateAndUpload("files", 0, 20),
+    upload.validateAndUpload({
+        fieldName: "files",
+        minFiles: 0,
+        maxFiled: 20,
+        fileSize: 1024 * 1024 * 1024,
+    }),
     apiValidator.validateCreateAssignment,
     apiValidator.validate,
     roleCheck.isClassTeacherOrOwner(),
