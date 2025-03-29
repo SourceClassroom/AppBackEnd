@@ -1,10 +1,13 @@
 import mongoose from "mongoose";
+import {client} from "../redis/redisClient.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import {User} from "../database/models/userModel.js";
 import { Class } from "../database/models/classModel.js";
+import {clearClassCache, getFromCache, writeToCache} from "../services/cacheService.js";
 import { generateUniqueCode } from "../services/classCodeService.js";
 
-const getClass = async (req, res) => {
+
+export const getClass = async (req, res) => {
     try {
         const getClass = await Class.findById(req.params.classId)
         if (!getClass) return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
@@ -23,7 +26,7 @@ const getClass = async (req, res) => {
  * @route POST /api/class/create
  * @access Private [Teacher/sysadmin]
  */
-const createClass = async (req, res) => {
+export const createClass = async (req, res) => {
     try {
         const { title } = req.body;
         //Sınıfı oluşturan kullanıcının idsi
@@ -67,7 +70,7 @@ const createClass = async (req, res) => {
  * @route POST /api/class/join
  * @access Private
  */
-const joinClass = async (req, res) => {
+export const joinClass = async (req, res) => {
     try {
         const classCode = req.params.classCode;
         const userId = req.user.id;
@@ -88,6 +91,9 @@ const joinClass = async (req, res) => {
         const updateClass = await Class.findByIdAndUpdate(getClassData._id, { $push: { students: [userData._id] } }, {new: true})
         //Update user classes
         const updateUser = await User.findByIdAndUpdate(userId, { $push: { enrolledClasses: [getClassData._id] } }, {new: true})
+
+        //Clear class cache
+        clearClassCache(getClassData._id)
         //return data
         res.status(200).json(ApiResponse.success("Başarıyla sınıfa katılındı.", {updateUser, updateClass}, 200))
     } catch (error) {
@@ -103,7 +109,7 @@ const joinClass = async (req, res) => {
  * @route POST /api/class/kick/:classId/:userId
  * @access Private [Class Teacher/sysadmin]
  */
-const kickStudent = async (req, res) => {
+export const kickStudent = async (req, res) => {
     try {
         const userId = req.params.userId;
         const classId = req.params.classId;
@@ -140,6 +146,9 @@ const kickStudent = async (req, res) => {
         );
         const newClassData = await getClassData.save();
 
+        //Clear class cache
+        clearClassCache(classId)
+
         return res.status(200).json(ApiResponse.success("Kullanıcı sınıftan başarıyla çıkarıldı.", {newClassData, newUserData}));
     } catch (error) {
         console.error('Hata:', error);
@@ -154,7 +163,7 @@ const kickStudent = async (req, res) => {
  * @route POST /api/class/kick/:classId/:userId
  * @access Private [Class Teacher/sysadmin]
  */
-const banStudent = async (req, res) => {
+export const banStudent = async (req, res) => {
     try {
         const userId = req.params.userId;
         const classId = req.params.classId;
@@ -193,6 +202,9 @@ const banStudent = async (req, res) => {
 
         const newClassData = await getClassData.save();
 
+        //Clear class cache
+        clearClassCache()
+
         return res.status(200).json(ApiResponse.success("Kullanıcı sınıftan başarıyla çıkarıldı.", {newClassData, newUserData}));
     } catch (error) {
         console.error('Hata:', error);
@@ -205,15 +217,22 @@ const banStudent = async (req, res) => {
  * @param {*} req 
  * @param {*} res 
  */
-const studentList = async (req, res) => {
+export const studentList = async (req, res) => {
     try {
         const classId = req.params.classId
+        const cacheKey = `class:${classId}:students`
+        //Öğrenci verisini cacheden al
+        const getStudentDataFromCache = await getFromCache(cacheKey)
+        if (getStudentDataFromCache) {
+            return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", getStudentDataFromCache, 200))
+        }
 
         // Sınıf verisini al
         const getClassData = await Class.findById(classId);
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
+
         const classStudentData = await Class.aggregate([
             {
                 $match: {
@@ -245,6 +264,10 @@ const studentList = async (req, res) => {
         if (!classStudentData || classStudentData.length === 0) {
             return res.status(404).json(ApiResponse.notFound("Bu sınıfa kayıtlı öğrenci bulunamadı."));
         }
+
+        //await client.setEx( `class:${classId}:students`, 3600, JSON.stringify(classStudentData))
+        await writeToCache(cacheKey, classStudentData, 3600)
+
         return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", classStudentData, 200))
     } catch (error) {
         console.error('Öğrenci bilgileri alınırken bir hata meydana geldi.:', error);
@@ -252,9 +275,4 @@ const studentList = async (req, res) => {
             ApiResponse.serverError('Öğrenci bilgileri alınırken bir hata meydana geldi.', error)
         );
     }
-}
-
-export {
-    createClass, getClass, joinClass,
-    kickStudent, banStudent, studentList
 }

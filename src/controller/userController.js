@@ -4,6 +4,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {User} from "../database/models/userModel.js";
 import apiResponse from "../utils/ApiResponse.js";
+import *as cacheService from "../services/cacheService.js";
 
 
 /**
@@ -14,8 +15,9 @@ import apiResponse from "../utils/ApiResponse.js";
 export const getUsers = async (req, res) => {
     try {
         const userId = req.params.id;
+        const cacheKey = `user:${userId}`
 
-        const cachedData = JSON.parse(await client.get(`user:${userId}`))
+        const cachedData = await cacheService.getFromCache(cacheKey)
         if (cachedData) {
             return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", cachedData, 200));
         }
@@ -23,7 +25,8 @@ export const getUsers = async (req, res) => {
         const user = await User.findById(req.params.id, {password: false})
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
 
-        await client.setEx(`user:${userId}`, 3600,  JSON.stringify(user))
+        //await client.setEx(`user:${userId}`, 3600,  JSON.stringify(user))
+        await cacheService.writeToCache(cacheKey, user, 3600)
 
         return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", user, 200));
     } catch (error) {
