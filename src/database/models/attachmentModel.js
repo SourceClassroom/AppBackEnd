@@ -11,6 +11,7 @@ const attachmentSchema = new Schema({
     path: {type: String, required: true,},
     size: {type: Number, required: true,},
     uploadDate: {type: Date, default: Date.now() },
+    permission: {type: Number, default: 0}
 });
 
 const Attachment = mongoose.model("Attachment", attachmentSchema);

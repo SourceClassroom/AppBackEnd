@@ -9,6 +9,7 @@ export const processMedia = async (req) => {
         }
         const classId = req?.body?.classId || req?.params?.classId || null;
         const userId = req?.user?.id;
+        const permission = req.body.permission || 0
 
         let files = unprocessedFiles.map(file => ({
             filename: file.filename,
@@ -19,6 +20,7 @@ export const processMedia = async (req) => {
             classId,
             userId,
             uploadDate: Date.now(),
+            permission
         }));
 
         let fileIds = [];
@@ -37,7 +39,7 @@ export const processMedia = async (req) => {
 
 export const createAttachmentOnDB = async (data) => {
     try {
-        const {filename,originalname,mimetype,path,classId,userId,size} = data
+        const {filename,originalname,mimetype,path,classId,userId,size,permission} = data
         const attachment = new Attachment({
             filename,
             originalname,
@@ -45,7 +47,8 @@ export const createAttachmentOnDB = async (data) => {
             path,
             classroom: classId,
             userId,
-            size
+            size,
+            permission
         });
 
         return await attachment.save();

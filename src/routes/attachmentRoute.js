@@ -12,7 +12,7 @@ router.route("/submission/download/:classId/:id").get(
     apiValidator.validateMongoId("id"),
     apiValidator.validateMongoId("classId"),
     apiValidator.validate,
-    roleCheck.isClassTeacherOrOwner(),
+    roleCheck.checkFilePermission(),
     attachmentController.downloadAttachment
 )
 
@@ -21,11 +21,17 @@ router.route("/material/download/:classId/:id").get(
     apiValidator.validateMongoId("id"),
     apiValidator.validateMongoId("classId"),
     apiValidator.validate,
-    roleCheck.isClassMember(),
+    roleCheck.checkFilePermission(),
     attachmentController.downloadAttachment
 )
 
 //TODO ROLECHECK
-router.route("/view/:id").get(attachmentController.viewAttachment)
+router.route("/view/:id").get(
+    authenticateToken,
+    apiValidator.validateMongoId("id"),
+    apiValidator.validate,
+    roleCheck.checkFilePermission(),
+    attachmentController.viewAttachment
+)
 
 export default router;

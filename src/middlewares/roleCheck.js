@@ -1,12 +1,14 @@
-import {Class} from "../database/models/classModel.js";
 import ApiResponse from "../utils/apiResponse.js";
+import {Class} from "../database/models/classModel.js";
+import {getFromCache, writeToCache} from "../services/cacheService.js";
+import {Attachment} from "../database/models/attachmentModel.js";
 
 /**
  * Kullanıcının belirli rollere sahip olup olmadığını kontrol eden middleware
  * @param {string[]} allowedRoles - İzin verilen roller dizisi ('sysadmin', 'teacher', 'student' vb.)
  * @returns {Function} - Express middleware fonksiyonu
  */
-const roleCheck = (allowedRoles) => {
+export const roleCheck = (allowedRoles) => {
     return (req, res, next) => {
         try {
             // Auth middleware'inden gelen user nesnesine erişim
@@ -35,7 +37,7 @@ const roleCheck = (allowedRoles) => {
  * Belirli bir sınıfta öğretmen veya sysadmin olup olmadığını kontrol eden middleware
  * @returns {Function} - Express middleware fonksiyonu
  */
-const isClassTeacherOrOwner = () => {
+export const isClassTeacherOrOwner = () => {
     return async (req, res, next) => {
         try {
             const { user } = req;
@@ -71,7 +73,7 @@ const isClassTeacherOrOwner = () => {
  * Kullanıcının sınıfın bir üyesi olup olmadığını kontrol eden middleware
  * @returns {Function} - Express middleware fonksiyonu
  */
-const isClassMember = () => {
+export const isClassMember = () => {
     return async (req, res, next) => {
         try {
             const { user } = req;
@@ -110,7 +112,7 @@ const isClassMember = () => {
  * @param {string} userIdField - Kullanıcı ID'sinin bulunduğu alan (örn: 'userId', 'createdBy')
  * @returns {Function} - Express middleware fonksiyonu
  */
-const isResourceOwner = (userIdField = 'userId') => {
+export const isResourceOwner = (userIdField = 'userId') => {
     return async (req, res, next) => {
         try {
             const { user } = req;
@@ -133,9 +135,51 @@ const isResourceOwner = (userIdField = 'userId') => {
     };
 };
 
-export {
-    roleCheck,
-    isClassTeacherOrOwner,
-    isClassMember,
-    isResourceOwner
+export const checkFilePermission = (userIdField = 'userId', attachmentIdField = 'id') => {
+    return async (req, res, next) => {
+        try {
+            const { user } = req;
+            const attachmentId = req.body[attachmentIdField] || req.params[attachmentIdField];
+            const cacheKey = `attachment:${attachmentId}`;
+
+            if (!attachmentId) {
+                return res.status(400).json(ApiResponse.error("Lütfen geçerli bir dosya ID'si belirtin"));
+            }
+
+            // Admin her şeyi yapabilir
+            if (user.role === 'sysadmin') {
+                return next();
+            }
+
+            // Cache kontrolü
+            let attachmentData = await getFromCache(cacheKey);
+
+            if (!attachmentData) {
+                attachmentData = await Attachment.findById(attachmentId);
+                if (!attachmentData) {
+                    return res.status(404).json(ApiResponse.error("Belirtilen dosya bulunamadı"));
+                }
+                await writeToCache(cacheKey, attachmentData, 3600);
+            }
+
+            const { permission, classroom } = attachmentData;
+
+            if (permission === 1) {
+                if (!classroom) return res.status(400).json(ApiResponse.error("Sınıf verisi bulunamadı lütfen bir sistem yöneticisi ile iletişime geçin."))
+                req.params.classId = classroom
+                return isClassMember()(req, res, next);
+            } else if (permission === 2) {
+                req.params.classId = classroom
+                if (!classroom) return res.status(400).json(ApiResponse.error("Sınıf verisi bulunamadı lütfen bir sistem yöneticisi ile iletişime geçin."))
+                return isClassTeacherOrOwner()(req, res, next);
+            }
+            // TODO: Chat dosyaları için yetkilendirme eklenebilir
+            return next();
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json(ApiResponse.serverError("Dosya yetkilendirme kontrolü sırasında bir hata oluştu", error));
+        }
+    };
 };
+
