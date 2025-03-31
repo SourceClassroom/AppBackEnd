@@ -1,6 +1,7 @@
 import {client} from "../redis/redisClient.js";
 import {User} from "../database/models/userModel.js";
 import {Attachment} from "../database/models/attachmentModel.js";
+import {Submission} from "../database/models/submissionsModel.js";
 
 export const writeToCache = async (key, value, ttl) => {
     try {
@@ -36,6 +37,33 @@ export const getUserFromCacheOrCheckDb = async (userId) => {
         await writeToCache(cacheKey, user, 3600)
 
         return user
+    } catch (error) {
+        return error
+    }
+}
+
+export const getASubmissionFromCacheOrCheckDb = async (submissionId) => {
+    try {
+        const cacheKey = `submission:${submissionId}`
+
+        const cachedData = await getFromCache(cacheKey)
+        if (cachedData) {
+            return cachedData
+        }
+
+        const submission = await Submission.findById(submissionId)
+            .populate({
+                path: 'student',
+                select: 'name surname avatar',
+            }).populate({
+                path: 'attachments',
+                select: 'originamName mimetype size',
+            })
+        if (!submission) return;
+
+        await writeToCache(cacheKey, submission, 3600)
+
+        return submission
     } catch (error) {
         return error
     }

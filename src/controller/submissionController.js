@@ -1,11 +1,25 @@
 import ApiResponse from "../utils/apiResponse.js";
 import {Class} from "../database/models/classModel.js";
 import {processMedia} from "../services/fileService.js";
+import *as cacheService from "../services/cacheService.js";
 import {Assignment} from "../database/models/assignmentModel.js";
 import {Submission} from "../database/models/submissionsModel.js";
 
 export const getASubmission = async (req, res) => {
+    try {
+        const submissionId = req.params.submissionId;
 
+        if (!submissionId) res.status(400).json(ApiResponse.error("Bir gönderim idsi zorunlu."))
+
+        const submissionData = await cacheService.getASubmissionFromCacheOrCheckDb(submissionId)
+        if (!submissionData) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
+
+        return res.status(200).json(ApiResponse.success("Gönderim verisi.", submissionData));
+    } catch (error) {
+        res.status(500).json(
+            ApiResponse.serverError('Gönderim verisi alinirken bir hata oluştu', error)
+        );
+    }
 }
 
 export const createSubmission = async (req, res) => {

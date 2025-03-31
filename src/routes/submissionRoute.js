@@ -9,7 +9,17 @@ import *as submissionController from "../controller/submissionController.js"
 
 const router = express.Router()
 
+//TODO rolecheck
 router.route("/all/:assignmentId").get(submissionController.getSubmissions)
+
+router.route("/:classId/:submissionId").get(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("submissionId"),
+    apiValidator.validate,
+    submissionController.getASubmission
+)
 
 router.route("/submit").post(
     authenticateToken,
