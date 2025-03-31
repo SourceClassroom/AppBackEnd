@@ -115,6 +115,31 @@ export const validateSubmission = [
         .isLength({ max: 500 }).withMessage('Açıklama en fazla 500 karakter olabilir.'),
 ]
 
+export const validateGrade = [
+    body("submissionId")
+        .notEmpty().withMessage("Gönderim ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir gönderim ID giriniz."),
+    body("classId")
+        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
+        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
+    body("grade")
+        .notEmpty().withMessage("Not alanı boş olamaz")
+        .isNumeric({ min: 0, max: 100 }).withMessage("Not değeri 0 ile 100 arasında olmalıdır.")
+]
+export const validateFeedback = [
+    body("submissionId")
+        .notEmpty().withMessage("Gönderim ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir gönderim ID giriniz."),
+    body("classId")
+        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
+        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
+    body("feedback")
+        .notEmpty().withMessage("Feedback analı boş olamaz.")
+        .isLength({ max: 500 }).withMessage('Feedback en fazla 500 karakter olabilir.'),
+]
+
+
+
 /**
  * MongoDB ID formatını doğrulama
  */

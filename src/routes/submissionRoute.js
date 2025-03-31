@@ -9,8 +9,14 @@ import *as submissionController from "../controller/submissionController.js"
 
 const router = express.Router()
 
-//TODO rolecheck
-router.route("/all/:assignmentId").get(submissionController.getSubmissions)
+router.route("/all/:classId/:assignmentId").get(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("assignmentId"),
+    apiValidator.validate,
+    submissionController.getSubmissions
+)
 
 router.route("/:classId/:submissionId").get(
     authenticateToken,
@@ -19,6 +25,22 @@ router.route("/:classId/:submissionId").get(
     apiValidator.validateMongoId("submissionId"),
     apiValidator.validate,
     submissionController.getASubmission
+)
+
+router.route("/grade").put(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    apiValidator.validateGrade,
+    apiValidator.validate,
+    submissionController.gradeSubmission
+)
+
+router.route("/feedback").put(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    apiValidator.validateFeedback,
+    apiValidator.validate,
+    submissionController.feedbackSubmission
 )
 
 router.route("/submit").post(

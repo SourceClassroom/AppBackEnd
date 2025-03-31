@@ -80,3 +80,45 @@ export const getSubmissions = async (req, res) => {
         );
     }
 }
+
+export const gradeSubmission = async (req, res) => {
+    try {
+        const { submissionId, grade } = req.body
+        const cacheKey = `submission:${submissionId}`
+
+        if (!grade) return res.status(400).json(ApiResponse.error("Not alanı boş olamaz"))
+
+        const submissionData = await cacheService.getASubmissionFromCacheOrCheckDb(submissionId)
+        if (!submissionData) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
+
+        const updateSubmission = await Submission.findByIdAndUpdate(submissionId, {$set: {grade: grade}}, {new: true})
+        await cacheService.removeFromCache(cacheKey)
+
+        return res.status(200).json(ApiResponse.success("Ödev notu başarı ile girildi.", updateSubmission))
+    } catch (error) {
+        res.status(500).json(
+            ApiResponse.serverError('Not verilirken bir hata meydana geldi.', error)
+        );
+    }
+}
+
+export const feedbackSubmission = async (req, res) => {
+    try {
+        const { submissionId, feedback } = req.body
+        const cacheKey = `submission:${submissionId}`
+
+        if (!feedback) return res.status(400).json(ApiResponse.error("Feedbakc alanı boş olamaz"))
+
+        const submissionData = await cacheService.getASubmissionFromCacheOrCheckDb(submissionId)
+        if (!submissionData) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
+
+        const updateSubmission = await Submission.findByIdAndUpdate(submissionId, {$set: {feedback: feedback}}, {new: true})
+        await cacheService.removeFromCache(cacheKey)
+
+        return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
+    } catch (error) {
+        res.status(500).json(
+            ApiResponse.serverError('Feedback girilirken bir hata meydana geldi.', error)
+        );
+    }
+}

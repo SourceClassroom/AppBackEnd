@@ -21,6 +21,14 @@ export const getFromCache = async (key) => {
     }
 }
 
+export const removeFromCache = async (key) => {
+    try {
+        return await client.del(key)
+    } catch (error) {
+        return error
+    }
+}
+
 export const getUserFromCacheOrCheckDb = async (userId) => {
     try {
         const cacheKey = `user:${userId}`
