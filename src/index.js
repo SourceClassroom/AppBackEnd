@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import cookieParser from "cookie-parser"
 import conn from "./database/connection.js";
 import {redisConnect} from "./redis/redisClient.js";
+import hostnameCheck from "./middlewares/hostnameCheck.js"
 
 //Routes
 import userRouter from './routes/userRoute.js';
@@ -30,6 +31,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT
+
+app.use(hostnameCheck)
 
 app.use(express.json())
 app.use(cors());
