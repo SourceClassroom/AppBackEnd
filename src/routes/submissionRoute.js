@@ -9,6 +9,8 @@ import *as submissionController from "../controller/submissionController.js"
 
 const router = express.Router()
 
+router.route("/all/:assignmentId").get(submissionController.getSubmissions)
+
 router.route("/submit").post(
     authenticateToken,
     upload.validateAndUpload({
