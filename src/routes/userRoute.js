@@ -9,6 +9,7 @@ import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
 const router = express.Router()
 
 router.route("/:id").get(
+    authenticateToken,
     apiValidator.validateMongoId("id"),
     apiValidator.validate,
     userController.getUsers
@@ -30,6 +31,13 @@ router.route("/change-password").put(
     apiValidator.validate,
     userController.changePassword
 );
+
+router.route("/update").put(
+    authenticateToken,
+    apiValidator.validateProfileUpdate,
+    apiValidator.validate,
+    userController.updateProfile
+)
 
 router.route("/change-avatar").put(
     authenticateToken,

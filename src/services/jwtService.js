@@ -89,7 +89,7 @@ class TokenService {
                 // Token'ı doğrula
                 jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
                     if (err) {
-                        console.error("Token doğrulama hatası:", err);
+                        //console.error("Token doğrulama hatası:", err);
                         return reject(err);
                     }
 

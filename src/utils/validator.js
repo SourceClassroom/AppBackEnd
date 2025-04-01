@@ -49,6 +49,25 @@ export const userCreateValidationRules = [
         .isIn(['student', 'teacher', 'sysadmin']).withMessage('Geçersiz rol. Rol student, teacher veya sysadmin olmalıdır')
 ];
 
+export const validateProfileUpdate = [
+    body('name')
+        .notEmpty().withMessage('İsim alanı zorunludur')
+        .isString().withMessage('İsim bir metin olmalıdır')
+        .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
+        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir'),
+    body('surname')
+        .notEmpty().withMessage('Soyisim alanı zorunludur')
+        .isString().withMessage('Soyisim bir metin olmalıdır')
+        .isLength({ min: 2, max: 32 }).withMessage('Soyisim 2-32 karakter arasında olmalıdır')
+        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir'),
+    body('profile.bio')
+        .optional()
+        .isString().withMessage('Bio must be a string')
+        .isLength({ max: 500 }).withMessage('Bio cannot exceed 500 characters'),
+    body('profile.institutionId')
+        .optional()
+]
+
 export const validateCreateWeek = [
     body('classId')
         .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')

@@ -16,13 +16,23 @@ import *as cacheService from "../services/cacheService.js";
 export const getUsers = async (req, res) => {
     try {
         const userId = req.params.id;
-        const user = await cacheService.getUserFromCacheOrCheckDb(userId)
+        const userData = await cacheService.getUserFromCacheOrCheckDb(userId)
 
-        if (!user) {
+        if (!userData) {
             return res.status(404).jsonp(ApiResponse.notFound("Bu id ile bir kullanic bulunamadi"))
         }
 
-        return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", user, 200));
+        const formattedData = {
+            profile: userData.profile,
+            name: userData.name,
+            surname: userData.surname,
+            role: userData.role,
+            accountStatus: userData.accountStatus,
+            createdAt: userData.createdAt,
+            lastLogin: userData.lastLogin
+        };
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", formattedData, 200));
     } catch (error) {
         return res.status(500).json(ApiResponse.serverError("Kullanıcı bilgisi alınırken hata meydana geldi.", error));
     }
@@ -151,7 +161,7 @@ export const loginUser = async (req, res) => {
             email: user.email,
             role: user.role
         };
-
+        await User.findOneAndUpdate({ email }, {$set: {lastLogin: new Date()}})
         // Başarılı yanıt
         res.status(200).json(
             ApiResponse.success(
@@ -282,7 +292,11 @@ export const changeAvatar = async (req, res) => {
         const currentUserData = await cacheService.getUserFromCacheOrCheckDb(userId)
         const fileIds = await processMedia(req)
 
-        const updateUser = await User.findByIdAndUpdate(userId, {$set: {profile: {avatar:  fileIds[0]}}}, {new: true})
+        const updateUser = await User.findByIdAndUpdate(
+            userId,
+            { $set: { "profile.avatar": fileIds[0] } }, // Sadece avatar'ı güncelle
+            { new: true }
+        );
 
         await cacheService.writeToCache(`user:${userId}`, updateUser, 3600)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
@@ -295,3 +309,36 @@ export const changeAvatar = async (req, res) => {
         );
     }
 }
+
+export const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { name, surname, profile } = req.body;
+        const cacheKey = `user:${userId}`;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json(ApiResponse.error("Kullanıcı bulunamadı."));
+        }
+
+        // Mevcut profil verisini koruyarak güncelle
+        const updatedProfile = {
+            avatar: user.profile.avatar,  // Eski avatarı koru
+            bio: profile?.bio ?? user.profile.bio,
+            institutionId: profile?.institutionId ?? user.profile.institutionId,
+        };
+
+        user.name = name ?? user.name;
+        user.surname = surname ?? user.surname;
+        user.profile = updatedProfile;
+
+        await user.save();
+        await cacheService.removeFromCache(cacheKey);
+
+        return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
+    } catch (error) {
+        res.status(500).json(
+            ApiResponse.serverError("Profil güncellenirken bir hata meydana geldi.", error)
+        );
+    }
+};

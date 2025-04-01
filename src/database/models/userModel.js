@@ -67,7 +67,7 @@ const UserSchema = new Schema({
         avatar: { type: Schema.Types.ObjectId, ref: "Attachment"},
         bio: {
             type: String,
-            maxlength: [200, "Bio cannot exceed 200 characters"]
+            maxlength: [500, "Bio cannot exceed 500 characters"]
         },
         // Öğrenci numarası veya öğretmen ID'si
         institutionId: {
