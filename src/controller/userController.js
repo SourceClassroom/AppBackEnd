@@ -259,6 +259,29 @@ export const changePassword = async (req, res) => {
     }
 };
 
+export const changeEmail = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { email } = req.body;
+        const cacheKey = `user:${userId}`;
+
+        if (!email) return res.status(400).json(ApiResponse.error("Email alanı zorunludur."))
+
+        const findUser = await cacheService.getUserFromCacheOrCheckDb(userId);
+        if(findUser.email === email) return res.status(400).json(ApiResponse.error("Yeni mail eskisi ile aynı olamaz."))
+
+        const updateUser = await User.findByIdAndUpdate(userId, {$set: {email}}, {new: true}).select("-password");
+        await cacheService.removeFromCache(cacheKey);
+
+        return res.status(200).json(ApiResponse.success("Email adresi başarıyla değişti.", updateUser));
+    } catch (error) {
+        console.error('Email değiştirme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Email değiştirilirken bir hata oluştu', error)
+        );
+    }
+}
+
 export const logoutUser = async (req, res) => {
     try {
         const token =
@@ -296,7 +319,7 @@ export const changeAvatar = async (req, res) => {
             userId,
             { $set: { "profile.avatar": fileIds[0] } }, // Sadece avatar'ı güncelle
             { new: true }
-        );
+        ).select("-password");
 
         await cacheService.writeToCache(`user:${userId}`, updateUser, 3600)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
@@ -316,7 +339,7 @@ export const updateProfile = async (req, res) => {
         const { name, surname, profile } = req.body;
         const cacheKey = `user:${userId}`;
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).select("-password");
         if (!user) {
             return res.status(404).json(ApiResponse.error("Kullanıcı bulunamadı."));
         }
@@ -339,6 +362,36 @@ export const updateProfile = async (req, res) => {
     } catch (error) {
         res.status(500).json(
             ApiResponse.serverError("Profil güncellenirken bir hata meydana geldi.", error)
+        );
+    }
+};
+
+export const updateNotificationPreferences = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { notificationPreferences } = req.body;
+        const cacheKey = `user:${userId}`;
+
+        // Kullanıcıyı bul
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
+        }
+
+        // Mevcut notificationPreferences'ı koruyarak güncelle
+        user.notificationPreferences = {
+            ...user.notificationPreferences,
+            ...notificationPreferences
+        };
+
+        await user.save();
+        await cacheService.removeFromCache(cacheKey);
+
+        return res.status(200).json(ApiResponse.success("Bildirim tercihleri başarıyla güncellendi.", user.notificationPreferences));
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json(
+            ApiResponse.serverError("Bildirim tercihleri güncellenirken bir hata meydana geldi.", error)
         );
     }
 };

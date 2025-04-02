@@ -32,6 +32,20 @@ router.route("/change-password").put(
     userController.changePassword
 );
 
+router.route("/change-mail").put(
+    authenticateToken,
+    apiValidator.newEmailValidator,
+    apiValidator.validate,
+    userController.changeEmail
+)
+
+router.route("/update-notifications").put(
+    authenticateToken,
+    apiValidator.validateNotificationPreferences,
+    apiValidator.validate,
+    userController.updateNotificationPreferences
+)
+
 router.route("/update").put(
     authenticateToken,
     apiValidator.validateProfileUpdate,

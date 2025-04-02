@@ -58,7 +58,7 @@ const UserSchema = new Schema({
             submission_reminder: true,
             // Bildirim kanalları için tercihler
             email_notifications: true,
-            push_notifications: false
+            push_notifications: true
         }
     },
 

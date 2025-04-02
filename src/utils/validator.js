@@ -25,6 +25,33 @@ export const newPasswordValidator = [
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir')
 ]
 
+export const newEmailValidator = [
+    body('email')
+        .notEmpty().withMessage('E-posta alanı zorunludur')
+        .isEmail().withMessage('Geçerli bir e-posta adresi girilmelidir')
+        .normalizeEmail()
+]
+
+export const validateNotificationPreferences = [
+    body('notificationPreferences').isObject().withMessage('notificationPreferences must be an object'),
+    body('notificationPreferences.new_assignment')
+        .optional().isBoolean().withMessage('new_assignment must be a boolean'),
+    body('notificationPreferences.assignment_graded')
+        .optional().isBoolean().withMessage('assignment_graded must be a boolean'),
+    body('notificationPreferences.new_announcement')
+        .optional().isBoolean().withMessage('new_announcement must be a boolean'),
+    body('notificationPreferences.new_material')
+        .optional().isBoolean().withMessage('new_material must be a boolean'),
+    body('notificationPreferences.new_comment')
+        .optional().isBoolean().withMessage('new_comment must be a boolean'),
+    body('notificationPreferences.assignment_due_reminder')
+        .optional().isBoolean().withMessage('assignment_due_reminder must be a boolean'),
+    body('notificationPreferences.submission_reminder')
+        .optional().isBoolean().withMessage('submission_reminder must be a boolean'),
+    body('notificationPreferences.email_notifications')
+        .optional().isBoolean().withMessage('email_notifications must be a boolean'),
+];
+
 export const userCreateValidationRules = [
     body('name')
         .notEmpty().withMessage('İsim alanı zorunludur')
