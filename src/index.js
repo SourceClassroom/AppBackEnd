@@ -11,6 +11,7 @@ import hostnameCheck from "./middlewares/hostnameCheck.js"
 //Routes
 import userRouter from './routes/userRoute.js';
 import weekRouter from './routes/weekRoute.js';
+import postRouter from './routes/postRoute.js';
 import classRouter from './routes/classRoute.js';
 import attachmentRoute from './routes/attachmentRoute.js'
 import assignmentRouter from './routes/assignmentRoute.js';
@@ -41,6 +42,7 @@ app.use(express.urlencoded({extended: true}))
 
 
 app.use('/api/week', weekRouter)
+app.use('/api/post', postRouter)
 app.use('/api/users', userRouter)
 app.use('/api/class', classRouter)
 app.use('/api/attachment', attachmentRoute)

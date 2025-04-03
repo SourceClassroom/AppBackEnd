@@ -184,6 +184,17 @@ export const validateFeedback = [
         .isLength({ max: 500 }).withMessage('Feedback en fazla 500 karakter olabilir.'),
 ]
 
+export const validateCreatePost = [
+    body("classId")
+        .notEmpty().withMessage("Sınıf ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir sınıf ID giriniz."),
+    body("content")
+        .notEmpty().withMessage("Duyuru içeriği boş olamaz.")
+        .isLength({max: 2048}).withMessage("Duyuru içeriği 2048 karakterden fazla olamaz."),
+    body("week")
+        .optional()
+        .isMongoId().withMessage("Geçerli bir hafta ID giriniz.")
+]
 
 
 /**

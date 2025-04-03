@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs';
-import apiResponse from "../utils/ApiResponse.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {User} from "../database/models/userModel.js";
@@ -295,7 +294,7 @@ export const logoutUser = async (req, res) => {
 
         await TokenService.blacklistToken(token)
 
-        return res.status(200).json(apiResponse.success("Başarıyla çıkış yapıldı."))
+        return res.status(200).json(ApiResponse.success("Başarıyla çıkış yapıldı."))
     } catch (error) {
         console.log(error)
         res.status(500).json(
@@ -356,7 +355,7 @@ export const updateProfile = async (req, res) => {
         user.profile = updatedProfile;
 
         await user.save();
-        await cacheService.removeFromCache(cacheKey);
+        await cacheService.writeToCache(cacheKey, user, 3600);
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
     } catch (error) {

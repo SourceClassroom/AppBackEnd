@@ -26,10 +26,10 @@ export const createSubmission = async (req, res) => {
     try {
         const { assignmentId, description } = req.body;
 
-        const fileIds = await processMedia(req);
-
         const getAssignment = await Assignment.findById(assignmentId)
         if (!getAssignment) return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı"))
+
+        const fileIds = await processMedia(req);
 
         const newSubmissionData = {
             assignment: assignmentId,
