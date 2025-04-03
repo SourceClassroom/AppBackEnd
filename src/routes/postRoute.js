@@ -21,4 +21,21 @@ router.route("/create").post(
     postController.createPost
 );
 
+router.route("/class/:classId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validate,
+    roleCheck.isClassMember(),
+    postController.getClassPosts
+)
+
+router.route("/week/:classId/:weekId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("weekId"),
+    apiValidator.validate,
+    roleCheck.isClassMember(),
+    postController.getWeekPosts
+)
+
 export default router

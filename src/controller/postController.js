@@ -25,7 +25,6 @@ export const createPost = async (req, res) => {
         }
 
         const createPost = await Post.create(newPostData)
-        //const updateClass = await Class.findByIdAndUpdate(classId, {$push: {posts: [createPost._id]}}, {new:true})
         if (week) {
             const updateWeek = await Week.findByIdAndUpdate(week, { $push: { posts: createPost._id } });
             await cacheService.writeToCache(weekCacheKey, updateWeek, 3600)
@@ -34,7 +33,6 @@ export const createPost = async (req, res) => {
             await cacheService.writeToCache(classCacheKey, updateClass, 3600)
 
         }
-
         res.status(201).json(ApiResponse.success("Duyuru başarıyla oluşturuldu.", createPost, 201));
     } catch (error) {
         console.error('Post oluşturma hatası:', error);
@@ -43,3 +41,64 @@ export const createPost = async (req, res) => {
         );
     }
 }
+
+export const getClassPosts = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const cacheKey = `class:${classId}:posts`;
+
+        const getPostsFromCache = await cacheService.getFromCache(cacheKey);
+        if (getPostsFromCache) {
+            return res.status(200).json(ApiResponse.success("Sınıf post verisi.", getPostsFromCache));
+        }
+
+        const getPosts = await Class.findById(classId)
+            .populate({
+                path: "posts",
+                populate: {
+                    path: 'author',
+                    select: "name surname profile.avatar"
+                },
+                select: "content attachments comments createdAt"
+            })
+
+        await cacheService.writeToCache(cacheKey, getPosts.posts, 3600);
+        return res.status(200).json(ApiResponse.success("Sınıf post verisi.", getPosts.posts));
+    } catch (error) {
+        console.error('Class post fetch hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Class post verisi alinirken bir hata meydana geldi.', error)
+        );
+    }
+}
+
+export const getWeekPosts = async (req, res) => {
+    try {
+        const { weekId } = req.params;
+        const cacheKey = `week:${weekId}:posts`;
+
+        const getPostsFromCache = await cacheService.getFromCache(cacheKey);
+        if (getPostsFromCache) {
+            return res.status(200).json(ApiResponse.success("Sınıf post verisi.", getPostsFromCache));
+        }
+
+        const getPosts = await Week.findById(weekId)
+            .populate({
+                path: "posts",
+                populate: {
+                    path: 'author',
+                    select: "name surname profile.avatar"
+                },
+                select: "content attachments comments createdAt"
+            })
+
+        await cacheService.writeToCache(cacheKey, getPosts.posts, 3600);
+        return res.status(200).json(ApiResponse.success("Hafta post verisi.", getPosts.posts));
+    } catch (error) {
+        console.error('Hafta post fetch hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Hafta post verisi alinirken bir hata meydana geldi.', error)
+        );
+    }
+}
+
