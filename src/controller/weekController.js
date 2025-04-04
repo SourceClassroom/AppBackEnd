@@ -36,7 +36,7 @@ const createWeek = async (req, res) => {
 
         // Veritabanına kaydet
         await newWeek.save();
-
+        //const updateClass = await Class.findByIdAndUpdate(classId, {$push: {weeks: newWeek.}})
         // Başarılı yanıt
         return res.status(201).json(ApiResponse.success("Hafta başarıyla oluşturuldu.", newWeek, 201));
 

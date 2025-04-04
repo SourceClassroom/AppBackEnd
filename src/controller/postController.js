@@ -55,11 +55,7 @@ export const getClassPosts = async (req, res) => {
         const getPosts = await Class.findById(classId)
             .populate({
                 path: "posts",
-                populate: {
-                    path: 'author',
-                    select: "name surname profile.avatar"
-                },
-                select: "content attachments comments createdAt"
+                select: "title content attachments comments createdAt"
             })
 
         await cacheService.writeToCache(cacheKey, getPosts.posts, 3600);

@@ -57,12 +57,14 @@ export const userCreateValidationRules = [
         .notEmpty().withMessage('İsim alanı zorunludur')
         .isString().withMessage('İsim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir'),
+        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir')
+        .toLowerCase(),
     body('surname')
         .notEmpty().withMessage('Soyisim alanı zorunludur')
         .isString().withMessage('Soyisim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('Soyisim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir'),
+        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir')
+        .toLowerCase(),
     body('email')
         .notEmpty().withMessage('E-posta alanı zorunludur')
         .isEmail().withMessage('Geçerli bir e-posta adresi girilmelidir')
@@ -81,12 +83,14 @@ export const validateProfileUpdate = [
         .notEmpty().withMessage('İsim alanı zorunludur')
         .isString().withMessage('İsim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir'),
+        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir')
+        .toLowerCase(),
     body('surname')
         .notEmpty().withMessage('Soyisim alanı zorunludur')
         .isString().withMessage('Soyisim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('Soyisim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir'),
+        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir')
+        .toLowerCase(),
     body('profile.bio')
         .optional()
         .isString().withMessage('Bio must be a string')

@@ -5,6 +5,7 @@ import {User} from "../database/models/userModel.js";
 import *as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
 import *as cacheService from "../services/cacheService.js";
+import {getDashboardFromCacheOrCheckDb, getUserFromCacheOrCheckDb} from "../services/cacheService.js";
 
 
 /**
@@ -46,7 +47,6 @@ export const createUser = async (req, res) => {
     try {
         // Request body'den verileri al
         const { name, surname, email, password, role } = req.body;
-
         // E-posta kontrolü
         const existingUser = await User.findOne({ email });
         if (existingUser) {
@@ -262,7 +262,7 @@ export const changeEmail = async (req, res) => {
     try {
         const userId = req.user.id;
         const { email } = req.body;
-        const cacheKey = `user:${userId}`;
+        //const cacheKey = `user:${userId}`;
 
         if (!email) return res.status(400).json(ApiResponse.error("Email alanı zorunludur."))
 
@@ -270,7 +270,7 @@ export const changeEmail = async (req, res) => {
         if(findUser.email === email) return res.status(400).json(ApiResponse.error("Yeni mail eskisi ile aynı olamaz."))
 
         const updateUser = await User.findByIdAndUpdate(userId, {$set: {email}}, {new: true}).select("-password");
-        await cacheService.removeFromCache(cacheKey);
+        await cacheService.clearUserCache(userId);
 
         return res.status(200).json(ApiResponse.success("Email adresi başarıyla değişti.", updateUser));
     } catch (error) {
@@ -384,7 +384,7 @@ export const updateNotificationPreferences = async (req, res) => {
         };
 
         await user.save();
-        await cacheService.removeFromCache(cacheKey);
+        await cacheService.clearUserCache(userId);
 
         return res.status(200).json(ApiResponse.success("Bildirim tercihleri başarıyla güncellendi.", user.notificationPreferences));
     } catch (error) {
@@ -394,3 +394,19 @@ export const updateNotificationPreferences = async (req, res) => {
         );
     }
 };
+
+export const userDashboard = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userData = await getDashboardFromCacheOrCheckDb(userId)
+
+        if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", userData, 200));
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json(
+            ApiResponse.serverError("Dashboard yüklenirken bir hata meydana geldi.", error)
+        );
+    }
+}

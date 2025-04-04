@@ -9,7 +9,7 @@ export const fileTypes = {
     presentations: ['.ppt', '.pptx', '.odp'],
 
     // Görseller
-    images: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'],
+    images: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'],
 
     // Sıkıştırılmış dosyalar
     archives: ['.zip', '.rar', '.7z'],

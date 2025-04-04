@@ -8,11 +8,16 @@ import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
 
 const router = express.Router()
 
-router.route("/:id").get(
+router.route("/profile/:id").get(
     authenticateToken,
     apiValidator.validateMongoId("id"),
     apiValidator.validate,
     userController.getUsers
+)
+
+router.route("/dashboard").get(
+    authenticateToken,
+    userController.userDashboard
 )
 
 router.route("/login").post(userController.loginUser)
