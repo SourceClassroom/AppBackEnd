@@ -25,7 +25,17 @@ router.route("/class/:classId").get(
     authenticateToken,
     apiValidator.validateMongoId("classId"),
     apiValidator.validate,
+    roleCheck.isClassMember(),
     assignmentController.getClassAssignments
+)
+
+router.route("/week/:classId/:weekId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("weekId"),
+    apiValidator.validate,
+    roleCheck.isClassMember(),
+    assignmentController.getWeekAssignments
 )
 
 export default router

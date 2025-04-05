@@ -92,3 +92,37 @@ export const getClassAssignments = async (req, res) => {
         );
     }
 };
+
+export const getWeekAssignments = async (req, res) => {
+    try {
+        const { weekId } = req.params;
+        const cacheKey = `week:${weekId}:assignments`;
+
+        const getAssigmentsFromCache = await cacheService.getFromCache(cacheKey);
+        if (getAssigmentsFromCache) {
+            return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getAssigmentsFromCache, 200));
+        }
+
+        const getWeekData = await Week.findById(weekId)
+            .populate({
+                path: 'assignments',
+                populate: {
+                    path: 'attachments',
+                    select: '_id size'
+                },
+                select: 'title description dueDate'
+            });
+        if (!getWeekData) {
+            return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
+        }
+
+        await cacheService.writeToCache(cacheKey, getWeekData.assignments, 3600)
+
+        return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getWeekData.assignments, 200));
+    } catch (error) {
+        console.error('Ödevleri getirme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Ödevler getirilirken bir hata oluştu', error)
+        );
+    }
+};
