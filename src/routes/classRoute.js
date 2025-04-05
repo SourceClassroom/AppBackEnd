@@ -24,6 +24,15 @@ router.route("/join/:classCode").post(
     classController.joinClass
 )
 
+//Leave class
+router.route("/leave/:classId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validate,
+    classController.leaveClass
+)
+
+
 //Kick student
 router.route("/kick/:classId/:userId").put(
     authenticateToken,

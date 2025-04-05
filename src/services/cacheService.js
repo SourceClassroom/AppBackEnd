@@ -138,14 +138,10 @@ export const getClassFromCacheOrCheckDb = async (classId) => {
             return cachedData
         }
 
-        const attachment = await Class.findById(classId, "title description")
+        const attachment = await Class.findById(classId, "title description code")
             .populate({
                 path: "teacher",
                 select: "name surname email",
-            })
-            .populate({
-                path: "assignments",
-                select: "title description dueDate createdAt",
             })
         if (!attachment) return;
 

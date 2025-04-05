@@ -3,7 +3,7 @@ import { Week } from "../database/models/weekModel.js";
 import { Class } from "../database/models/classModel.js";
 import { Assignment } from '../database/models/assignmentModel.js';
 import {createAttachmentOnDB, processMedia} from "../services/fileService.js";
-import {writeToCache} from "../services/cacheService.js";
+import *as cacheService from "../services/cacheService.js";
 
 /**
  * Ödev oluşturma
@@ -64,7 +64,7 @@ export const getClassAssignments = async (req, res) => {
         const { classId } = req.params;
         const cacheKey = `class:${classId}:assignments`;
 
-        const getAssigmentsFromCache = await cacheService.get(cacheKey);
+        const getAssigmentsFromCache = await cacheService.getFromCache(cacheKey);
         if (getAssigmentsFromCache) {
             return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getAssigmentsFromCache, 200));
         }
@@ -82,7 +82,7 @@ export const getClassAssignments = async (req, res) => {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        await writeToCache(cacheKey, getClassData.assignments, 3600)
+        await cacheService.writeToCache(cacheKey, getClassData.assignments, 3600)
 
         return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getClassData.assignments, 200));
     } catch (error) {

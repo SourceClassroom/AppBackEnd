@@ -14,7 +14,9 @@ export const getClass = async (req, res) => {
         const getClass = await cacheService.getClassFromCacheOrCheckDb(classId);
         if (!getClass) return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
 
-        if (req.user.id !== getClass.teacher) getClass.forbiddenStudents = [];
+        if (req.user.id !== getClass.teacher._id && req.user.role !== "sysadmin") {
+            getClass.forbiddenStudents = ["FORBIDDEN"]
+        }
 
         return res.status(200).json(ApiResponse.success("Sınıf bilgisi.", getClass, 200));
     } catch (error) {
@@ -256,3 +258,53 @@ export const studentList = async (req, res) => {
         );
     }
 }
+
+export const leaveClass = async (req, res) => {
+    try {
+        const classId = req.params.classId;
+        const userId = req.user.id;
+
+        // Sınıf verisini al
+        const getClassData = await Class.findById(classId);
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
+        }
+
+        // Kullanıcı verisini al
+        const userData = await User.findById(userId);
+        if (!userData) {
+            return res.status(404).json(ApiResponse.notFound("Böyle bir kullanıcı bulunamadı."));
+        }
+
+        // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
+        if (
+            !userData.enrolledClasses.includes(getClassData._id) ||
+            !getClassData.students.includes(userData._id)
+        ) {
+            return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
+        }
+
+        // Kullanıcıdan sınıfı kaldır
+        userData.enrolledClasses = userData.enrolledClasses.filter(
+            (classRef) => classRef.toString() !== getClassData._id.toString()
+        );
+        const newUserData = await userData.save();
+
+        // Sınıftan kullanıcıyı kaldır
+        getClassData.students = getClassData.students.filter(
+            (studentRef) => studentRef.toString() !== userData._id.toString()
+        );
+        const newClassData = await getClassData.save();
+
+        //Clear class cache
+        await cacheService.clearClassCache(classId)
+        await cacheService.clearUserCache(userId);
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı sınıftan başarıyla çıkarıldı.", {newClassData, newUserData}));
+    } catch (error) {
+        console.error('Sınıftan ayrılırken bir hata meydana geldi:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Sınıftan ayrılırken bir hata meydana geldi.', error)
+        );
+    }
+};
