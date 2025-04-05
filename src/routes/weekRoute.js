@@ -14,4 +14,11 @@ router.route("/create").post(
     weekController.createWeek
     );
 
+router.route("/get/:classId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validate,
+    weekController.getClassWeeks
+)
+
 export default router

@@ -21,4 +21,11 @@ router.route("/create").post(
     assignmentController.createAssignment
 )
 
+router.route("/class/:classId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validate,
+    assignmentController.getClassAssignments
+)
+
 export default router

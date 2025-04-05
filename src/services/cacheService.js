@@ -144,10 +144,6 @@ export const getClassFromCacheOrCheckDb = async (classId) => {
                 select: "name surname email",
             })
             .populate({
-                path: "weeks",
-                select: "title description startDate endDate",
-            })
-            .populate({
                 path: "assignments",
                 select: "title description dueDate createdAt",
             })

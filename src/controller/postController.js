@@ -10,7 +10,7 @@ import {Week} from "../database/models/weekModel.js";
 
 export const createPost = async (req, res) => {
     try {
-        const { classId, content, week } = req.body;
+        const { classId, content, week, title } = req.body;
         const fileIds = await processMedia(req);
 
         const classCacheKey = `class:${classId}`;
@@ -19,6 +19,7 @@ export const createPost = async (req, res) => {
         const newPostData = {
             classroom: classId,
             author: req.user.id,
+            title,
             content,
             attachments: fileIds,
             week

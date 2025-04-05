@@ -1,8 +1,8 @@
+import { ObjectId } from "mongoose";
 import ApiResponse from "../utils/apiResponse.js";
 import {Class} from "../database/models/classModel.js";
-import {getFromCache, writeToCache} from "../services/cacheService.js";
 import {Attachment} from "../database/models/attachmentModel.js";
-
+import {getFromCache, writeToCache} from "../services/cacheService.js";
 /**
  * Kullanıcının belirli rollere sahip olup olmadığını kontrol eden middleware
  * @param {string[]} allowedRoles - İzin verilen roller dizisi ('sysadmin', 'teacher', 'student' vb.)
@@ -41,6 +41,7 @@ export const isClassTeacherOrOwner = () => {
     return async (req, res, next) => {
         try {
             const { user } = req;
+            const userId = user._id.toString();
             const classId = req.params.classId || req.body.classId;
 
             if (!classId) {
@@ -54,7 +55,7 @@ export const isClassTeacherOrOwner = () => {
 
             // Kullanıcı bu sınıfın öğretmeni veya sysadmin mi kontrol et
             if (
-                (user.role === 'teacher' && classDoc.teacher.toString() === user.id) ||
+                (user.role === 'teacher' && classDoc.teacher.toString() === userId) ||
                 (user.role === 'sysadmin')
             ) {
                 // Sınıf nesnesini request'e ekle (sonraki middleware'ler için kullanışlı olabilir)
@@ -88,11 +89,10 @@ export const isClassMember = () => {
             if (!classDoc) {
                 return res.status(404).json(ApiResponse.error("Belirtilen ID ile eşleşen sınıf bulunamadı"));
             }
-
             // Kullanıcı bu sınıfın öğretmeni, üyesi veya sysadmin mi kontrol et
             if (
                 (user.role === 'teacher' && classDoc.teacher.toString() === user.id) ||
-                (user.role === 'student' && classDoc.students.includes(user.id)) ||
+                (classDoc.students.includes(user.id)) ||
                 (user.role === 'sysadmin')
             ) {
                 // Sınıf nesnesini request'e ekle

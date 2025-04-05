@@ -1,17 +1,18 @@
 import ApiResponse from "../utils/apiResponse.js";
 import {Week} from "../database/models/weekModel.js";
 import {Class} from "../database/models/classModel.js";
-
+import *as cacheService from "../services/cacheService.js";
 
 /**
  * Hafta oluşturma
  * @route POST /api/week/create
  * @access Private [Class Teacher/sysadmin]
  */
-const createWeek = async (req, res) => {
+export const createWeek = async (req, res) => {
     try {
         const { classId, title, description, startDate, endDate } = req.body;
-        console.log(classId, title, description, startDate, endDate);
+        const classCacheKey = `class:${classId}:weeks`;
+
         // Sınıfı getir
         const getClassData = await Class.findById(classId);
 
@@ -26,17 +27,17 @@ const createWeek = async (req, res) => {
         }
 
         // Hafta oluştur
-        const newWeek = new Week({
+        const newWeekData = {
             classroom: classId,
             title,
             description,
             startDate: new Date(startDate),
             endDate: new Date(endDate)
-        });
+        };
 
         // Veritabanına kaydet
-        await newWeek.save();
-        //const updateClass = await Class.findByIdAndUpdate(classId, {$push: {weeks: newWeek.}})
+        const newWeek = await Week.create(newWeekData);
+        const updateClass = await Class.findByIdAndUpdate(classId, {$push: {weeks: newWeek._id}})
         // Başarılı yanıt
         return res.status(201).json(ApiResponse.success("Hafta başarıyla oluşturuldu.", newWeek, 201));
 
@@ -48,6 +49,28 @@ const createWeek = async (req, res) => {
     }
 };
 
-export {
-    createWeek,
+export const getClassWeeks = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const cacheKey = `class:${classId}:weeks`;
+
+        const getWeeksFromCache = await cacheService.getFromCache(cacheKey);
+        if (getWeeksFromCache) {
+            return res.status(200).json(ApiResponse.success("Sınıf haftaları.", getWeeksFromCache));
+        }
+
+        const getWeeks = await Class.findById(classId)
+            .populate({
+                path: "weeks",
+                select: "title description startDate endDate"
+            })
+
+        await cacheService.writeToCache(cacheKey, getWeeks.weeks, 3600);
+        return res.status(200).json(ApiResponse.success("Sınıf haftaları.", getWeeks.weeks));
+    } catch (error) {
+        console.error('Class haftaları fetch hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Class haftaları alinirken bir hata meydana geldi.', error)
+        );
+    }
 }

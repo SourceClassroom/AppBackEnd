@@ -3,13 +3,14 @@ import { Week } from "../database/models/weekModel.js";
 import { Class } from "../database/models/classModel.js";
 import { Assignment } from '../database/models/assignmentModel.js';
 import {createAttachmentOnDB, processMedia} from "../services/fileService.js";
+import {writeToCache} from "../services/cacheService.js";
 
 /**
  * Ödev oluşturma
  * @route POST /api/assignment/create
  * @access Private [teacher, sysadmin]
  */
-const createAssignment = async (req, res) => {
+export const createAssignment = async (req, res) => {
     try {
         const { classId, title, description, dueDate, week } = req.body;
 
@@ -58,4 +59,36 @@ const createAssignment = async (req, res) => {
     }
 };
 
-export { createAssignment };
+export const getClassAssignments = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const cacheKey = `class:${classId}:assignments`;
+
+        const getAssigmentsFromCache = await cacheService.get(cacheKey);
+        if (getAssigmentsFromCache) {
+            return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getAssigmentsFromCache, 200));
+        }
+
+        const getClassData = await Class.findById(classId)
+            .populate({
+                path: 'assignments',
+                populate: {
+                    path: 'attachments',
+                    select: '_id size'
+                },
+                select: 'title description dueDate'
+            });
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
+        }
+
+        await writeToCache(cacheKey, getClassData.assignments, 3600)
+
+        return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getClassData.assignments, 200));
+    } catch (error) {
+        console.error('Ödevleri getirme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Ödevler getirilirken bir hata oluştu', error)
+        );
+    }
+};
