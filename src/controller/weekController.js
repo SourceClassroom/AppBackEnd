@@ -3,6 +3,10 @@ import {Week} from "../database/models/weekModel.js";
 import {Class} from "../database/models/classModel.js";
 import *as cacheService from "../services/cacheService.js";
 
+/*TODO
+* Sınıftaki diğer haftaların günleri kontrol edilecek ve haftalar üst üste binmeyecek
+*/
+
 /**
  * Hafta oluşturma
  * @route POST /api/week/create
@@ -48,6 +52,34 @@ export const createWeek = async (req, res) => {
         );
     }
 };
+
+export const updateWeek = async (req, res) => {
+    try {
+        const { weekId } = req.params;
+        const { title, description, startDate, endDate } = req.body;
+
+        const getWeekData = await Week.findById(weekId);
+        if (!getWeekData) {
+            return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
+        }
+
+        const updateWeekData = {
+            title,
+            description,
+            startDate: new Date(startDate),
+            endDate: new Date(endDate)
+        };
+
+        const updateWeek = await Week.findByIdAndUpdate(weekId, updateWeekData, { new: true });
+        return res.status(200).json(ApiResponse.success("Hafta başarıyla güncellendi.", updateWeek, 200));
+    } catch (error) {
+        console.error('Hafta güncelleme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Hafta güncellenirken bir hata oluştu', error)
+        );
+    }
+}
+
 
 export const getClassWeeks = async (req, res) => {
     try {

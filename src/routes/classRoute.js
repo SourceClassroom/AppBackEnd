@@ -3,6 +3,7 @@ import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 import *as classController from "../controller/classController.js";
+import {classValidate} from "../utils/validator.js";
 
 
 const router = express.Router()
@@ -51,9 +52,19 @@ router.route("/ban/:classId/:userId").put(
 router.route("/create").post(
     authenticateToken,
     roleCheck.roleCheck(["teacher", "sysadmin"]),
-    apiValidator.classCreateValidationRules,
+    apiValidator.classValidate,
     apiValidator.validate,
     classController.createClass
+)
+
+//Update Class
+router.route("/update/:classId").put(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    apiValidator.validateMongoId("classId"),
+    apiValidator.classValidate,
+    apiValidator.validate,
+    classController.updateClass
 )
 
 router.route("/students/:classId").get(

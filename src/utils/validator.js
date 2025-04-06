@@ -94,12 +94,12 @@ export const validateProfileUpdate = [
     body('profile.bio')
         .optional()
         .isString().withMessage('Bio must be a string')
-        .isLength({ max: 500 }).withMessage('Bio cannot exceed 500 characters'),
+        .isLength({ max: 1024 }).withMessage('Bio cannot exceed 1024 characters'),
     body('profile.institutionId')
         .optional()
 ]
 
-export const validateCreateWeek = [
+export const validateWeek = [
     body('classId')
         .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
         .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
@@ -134,7 +134,7 @@ export const validateCreateAssignment = [
         .isLength({ min: 3 }).withMessage('Başlık en az 3 karakter olmalıdır.'),
     body('description')
         .optional()
-        .isLength({ max: 500 }).withMessage('Açıklama en fazla 500 karakter olabilir.'),
+        .isLength({ max: 2048 }).withMessage('Açıklama en fazla 2048 karakter olabilir.'),
     body('dueDate')
         .notEmpty().withMessage('Son teslim tarihi zorunludur.'),
     body('week')
@@ -142,11 +142,15 @@ export const validateCreateAssignment = [
         .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
 ]
 
-export const classCreateValidationRules = [
+export const classValidate = [
     body('title')
         .notEmpty().withMessage('Sınıf ismi boş olamaz.')
         .isString().withMessage('Sınıf ismi bir metin olmalıdır')
-        .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
+        .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır'),
+    body('description')
+        .optional()
+        .isString().withMessage('Açıklama bir metin olmalıdır')
+        .isLength({ max: 1024 }).withMessage('Açıklama en fazla 1024 karakter olabilir.')
 ]
 
 export const validateClassCode = (paramName = 'classCode') => [
@@ -162,7 +166,7 @@ export const validateSubmission = [
         .isMongoId().withMessage("Geçerli bir ödev ID giriniz."),
     body('description')
         .optional()
-        .isLength({ max: 500 }).withMessage('Açıklama en fazla 500 karakter olabilir.'),
+        .isLength({ max: 1024 }).withMessage('Açıklama en fazla 1024 karakter olabilir.'),
 ]
 
 export const validateGrade = [

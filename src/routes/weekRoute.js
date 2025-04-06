@@ -9,10 +9,19 @@ const router = express.Router()
 router.route("/create").post(
     authenticateToken,
     roleCheck.isClassTeacherOrOwner(),
-    apiValidator.validateCreateWeek,
+    apiValidator.validateWeek,
     apiValidator.validate,
     weekController.createWeek
-    );
+);
+
+router.route("/update/:weekId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("weekId"),
+    apiValidator.validateWeek,
+    apiValidator.validate,
+    roleCheck.isClassTeacherOrOwner(),
+    weekController.updateWeek
+)
 
 router.route("/get/:classId").get(
     authenticateToken,

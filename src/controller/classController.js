@@ -52,6 +52,7 @@ export const createClass = async (req, res) => {
 
         //Class'ı kaydet
         await newClass.save();
+        await cacheService.removeFromCache(`user:${teacher}`);
 
         //Kullanıcının öğretim yaptığı sınıfları güncelle
         const updatedTeacher = await User.updateOne(
@@ -67,6 +68,32 @@ export const createClass = async (req, res) => {
         console.error('Sınıf oluşturma hatası:', error);
         res.status(500).json(
             ApiResponse.serverError('Sınıf oluşturulurken bir hata oluştu', error)
+        );
+    }
+}
+
+export const updateClass = async (req, res) => {
+    try {
+        const classId = req.params.classId;
+        const { title, description } = req.body;
+
+        const getClassData = await Class.findById(classId);
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
+        }
+
+        const updateClassData = {
+            title,
+            description
+        };
+
+        const updateClass = await Class.findByIdAndUpdate(classId, updateClassData, { new: true });
+        await cacheService.removeFromCache(`class:${classId}`);
+        return res.status(200).json(ApiResponse.success("Sınıf başarıyla güncellendi.", updateClass, 200));
+    } catch (error) {
+        console.error('Sınıf güncelleme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Sınıf güncellenirken bir hata oluştu', error)
         );
     }
 }
