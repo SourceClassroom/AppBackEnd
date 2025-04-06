@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { fileURLToPath } from 'url';
 import cookieParser from "cookie-parser"
-import conn from "./database/connection.js";
-import {redisConnect} from "./redis/redisClient.js";
+import conn from "./database/client/mongodbConnection.js";
+import {redisConnect} from "./cache/client/redisClient.js";
 import hostnameCheck from "./middlewares/hostnameCheck.js"
 
 //Routes

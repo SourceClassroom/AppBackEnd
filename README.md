@@ -13,7 +13,7 @@ src/
 │   ├── assignmentController.js   # Assignment handling
 │   └── submissionController.js   # Submission processing and grading
 ├── database/          # Database configuration and models
-│   ├── connection.js            # MongoDB connection setup
+│   ├── mongodbConnection.js            # MongoDB connection setup
 │   └── models/                  # Mongoose schemas and models
 ├── middlewares/       # Request processing middleware
 │   ├── authMiddleware.js        # JWT authentication
@@ -60,11 +60,11 @@ cp .env.example .env
 4. Start Redis server:
 ```bash
 # MacOS
-brew services start redis
+brew services start cache
 # Linux
-sudo service redis-server start
+sudo service cache-server start
 # Windows
-redis-server
+cache-server
 ```
 
 5. Start the application:

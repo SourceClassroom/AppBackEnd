@@ -46,12 +46,12 @@ export const createAssignment = async (req, res) => {
         // Hafta veya sınıfa ödev ID'sini ekle
         if (week) {
             const updateWeek = await Week.findByIdAndUpdate(week, { $push: { assignments: newAssignment._id } }, { new: true });
-            //await cacheService.removeFromCache(`week:${week}:assignments`);
-            await cacheService.writeToCache(`week:${week}:assignments`, updateWeek.assignments, 3600);
+            await cacheService.removeFromCache(`week:${week}:assignments`);
+            //await cacheService.writeToCache(`week:${week}:assignments`, updateWeek.assignments, 3600);
         } else {
             const updateClass = await Class.findByIdAndUpdate(classId, { $push: { assignments: newAssignment._id } });
-            //await cacheService.removeFromCache(`class:${classId}:assignments`);
-            await cacheService.writeToCache(`class:${classId}:assignments`, updateClass.assignments, 3600)
+            await cacheService.removeFromCache(`class:${classId}:assignments`);
+            //await cacheService.writeToCache(`class:${classId}:assignments`, updateClass.assignments, 3600)
         }
 
         return res.status(201).json(ApiResponse.success("Ödev başarılı bir şekilde oluşturuldu.", newAssignment, 201));
@@ -78,7 +78,7 @@ export const getClassAssignments = async (req, res) => {
                 path: 'assignments',
                 populate: {
                     path: 'attachments',
-                    select: '_id size'
+                    select: '_id size originalname'
                 },
                 select: 'title description dueDate createdAt'
             });
@@ -112,7 +112,7 @@ export const getWeekAssignments = async (req, res) => {
                 path: 'assignments',
                 populate: {
                     path: 'attachments',
-                    select: '_id size'
+                    select: '_id size originalname'
                 },
                 select: 'title description dueDate createdAt'
             });

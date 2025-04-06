@@ -1,5 +1,5 @@
-import {client} from "../redis/redisClient.js";
 import {User} from "../database/models/userModel.js";
+import {client} from "../cache/client/redisClient.js";
 import {Class} from "../database/models/classModel.js";
 import {Attachment} from "../database/models/attachmentModel.js";
 import {Submission} from "../database/models/submissionsModel.js";
@@ -165,7 +165,7 @@ export const clearClassCache = async (classId) => {
             let foundKeys;
 
             try {
-                // For redis@4.x and newer
+                // For cache@4.x and newer
                 const reply = await client.scan(cursor, {
                     MATCH: pattern,
                     COUNT: 100
@@ -173,7 +173,7 @@ export const clearClassCache = async (classId) => {
                 nextCursor = reply.cursor;
                 foundKeys = reply.keys;
             } catch (err) {
-                // For older redis versions or ioredis
+                // For older cache versions or ioredis
                 const reply = await client.scan(cursor, "MATCH", pattern, "COUNT", 100);
 
                 // Handle different return formats
