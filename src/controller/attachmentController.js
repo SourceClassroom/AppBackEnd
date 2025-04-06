@@ -2,13 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import ApiResponse from "../utils/apiResponse.js";
 import { streamFile } from "../utils/fileHelper.js";
-import {Attachment} from "../database/models/attachmentModel.js"
-import *as cacheService from "../services/cacheService.js"
+
+//Cache modules
+import *as userCacheModule from '../cache/modules/userModule.js';
+import *as attachmentCacheModule from '../cache/modules/attachmentModule.js';
+
+//Database Models
+import *as userDatabaseModule from '../database/modules/userModule.js';
+import *as attachmentDatabaseModule from '../database/modules/attachmentModule.js';
 
 export const downloadAttachment = async (req, res) => {
     try {
         const attachmentId = req.params.id;
-        const file = await cacheService.getAttachmentFromCacheOrCheckDb(attachmentId);
+        const file = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
 
         if (!file) {
             res.sendStatus(404).json(ApiResponse.json('Dosya bulunamadı.'))
@@ -29,8 +35,7 @@ export const downloadAttachment = async (req, res) => {
 export const viewAttachment = async (req, res) => {
     try {
         const attachmentId = req.params.id;
-        const file = await cacheService.getAttachmentFromCacheOrCheckDb(attachmentId);
-
+        const file = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
         if (!file) {
             return res.status(404).json(ApiResponse.notFound("Dosya bulunamadı."));
         }
@@ -45,12 +50,12 @@ export const viewAttachment = async (req, res) => {
 export const viewUserAvatar = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const user = await cacheService.getUserFromCacheOrCheckDb(userId)
+        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
 
         if (!user || !user.profile.avatar) {
             return res.status(404).json(ApiResponse.notFound("Avatar bulunamadı."));
         }
-        const attachmentData = await cacheService.getAttachmentFromCacheOrCheckDb(user.profile.avatar)
+        const attachmentData = await attachmentCacheModule.getCachedAttachmentData(user.profile.avatar, attachmentDatabaseModule.getAttachmentById)
 
         return streamFile(res, attachmentData.path, attachmentData.mimetype);
     } catch (error) {

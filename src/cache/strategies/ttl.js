@@ -1,12 +1,11 @@
-// cache/strategies/ttl.js
-const redis = require('../client/redis');
+import { client } from '../client/redisClient.js'
 
 async function setTTL(key, seconds) {
-    return await redis.expire(key, seconds);
+    return await client.expire(key, seconds);
 }
 
 async function getTTL(key) {
-    return await redis.ttl(key);
+    return await client.ttl(key);
 }
 
 module.exports = { setTTL, getTTL };

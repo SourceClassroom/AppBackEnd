@@ -1,20 +1,9 @@
-import { Assignment } from "../models/assignmentModel.js";
+import {Assignment} from '../models/assignmentModel.js';
 
-export const getAssignmentsByClassId = async (classId) => {
+export const createAssignment = async (data) => {
     try {
-        const classData = await Class.findById(classId)
-            .populate({
-                path: 'assignments',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title description dueDate createdAt'
-            });
-
-        return classData?.assignments || null;
+        return await Assignment.create(data);
     } catch (error) {
-        console.log(error)
-        return error
+        throw error;
     }
-}
+};

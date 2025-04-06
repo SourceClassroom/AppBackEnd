@@ -1,10 +1,10 @@
-const redis = require('../client/redis');
+import { client } from '../client/redisClient.js'
 
 export const invalidateKey = async (key) => {
-    return await redis.del(key);
+    return await client.del(key);
 }
 
 export const invalidateKeys = async (keys = []) => {
     if (keys.length === 0) return 0;
-    return await redis.del(...keys);
+    return await client.del(...keys);
 }

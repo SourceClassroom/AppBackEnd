@@ -1,9 +1,15 @@
 import ApiResponse from "../utils/apiResponse.js";
-import { Week } from "../database/models/weekModel.js";
-import { Class } from "../database/models/classModel.js";
-import { Assignment } from '../database/models/assignmentModel.js';
-import {createAttachmentOnDB, processMedia} from "../services/fileService.js";
-import *as cacheService from "../services/cacheService.js";
+import { processMedia } from "../services/fileService.js";
+
+//Cache Modules
+import *as weekCacheModule from '../cache/modules/weekModule.js';
+import *as classCacheModule from '../cache/modules/classModule.js';
+import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
+
+//Database Modules
+import *as weekDatabaseModule from '../database/modules/weekModule.js';
+import *as classDatabaseModule from '../database/modules/classModule.js';
+import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
 
 /**
  * Ödev oluşturma
@@ -15,9 +21,16 @@ export const createAssignment = async (req, res) => {
         const { classId, title, description, dueDate, week } = req.body;
 
         // Sınıfı getir
-        const getClassData = await Class.findById(classId);
-        if (!getClassData) {
+        const classExists = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        if (!classExists) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
+        }
+        //Hafta Kontrolu
+        if (week) {
+            const weekExists = await weekCacheModule.getCachedWeekData(week, weekDatabaseModule.getWeekById)
+            if (!weekExists) {
+                return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
+            }
         }
 
         const fileIds = await processMedia(req);
@@ -32,26 +45,18 @@ export const createAssignment = async (req, res) => {
             attachments: fileIds,
         };
 
-        // Hafta kontrolü
-        if (week) {
-            const getWeekData = await Week.findById(week);
-            if (!getWeekData) {
-                return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
-            }
-        }
-
         // Ödev oluştur
-        const newAssignment = await Assignment.create(newAssignmentData);
+        const newAssignment = await assignmentDatabaseModule.createAssignment(newAssignmentData);
 
         // Hafta veya sınıfa ödev ID'sini ekle
         if (week) {
-            const updateWeek = await Week.findByIdAndUpdate(week, { $push: { assignments: newAssignment._id } }, { new: true });
-            await cacheService.removeFromCache(`week:${week}:assignments`);
-            //await cacheService.writeToCache(`week:${week}:assignments`, updateWeek.assignments, 3600);
+            const updateWeek = await weekDatabaseModule.pushAssignmentToWeek(week, newAssignment._id)
+            const updatedAssignments = await assignmentDatabaseModule.getAssignmentsByWeekId(week);
+            await assignmentCacheModule.writeAssignmnetToCacheByWeek(week, updatedAssignments, 3600)
         } else {
-            const updateClass = await Class.findByIdAndUpdate(classId, { $push: { assignments: newAssignment._id } });
-            await cacheService.removeFromCache(`class:${classId}:assignments`);
-            //await cacheService.writeToCache(`class:${classId}:assignments`, updateClass.assignments, 3600)
+            const updateClass = await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
+            const updatedAssignments = await classDatabaseModule.getAssignmentsByClassId(classId);
+            await assignmentCacheModule.writeAssignmnetToCacheByClass(classId, updatedAssignments, 3600)
         }
 
         return res.status(201).json(ApiResponse.success("Ödev başarılı bir şekilde oluşturuldu.", newAssignment, 201));
@@ -66,29 +71,15 @@ export const createAssignment = async (req, res) => {
 export const getClassAssignments = async (req, res) => {
     try {
         const { classId } = req.params;
-        const cacheKey = `class:${classId}:assignments`;
 
-        const getAssigmentsFromCache = await cacheService.getFromCache(cacheKey);
-        if (getAssigmentsFromCache) {
-            return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getAssigmentsFromCache, 200));
-        }
-
-        const getClassData = await Class.findById(classId)
-            .populate({
-                path: 'assignments',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title description dueDate createdAt'
-            });
-        if (!getClassData) {
+        const assignments = await assignmentCacheModule.getCachedClassAssignments(classId, classDatabaseModule.getAssignmentsByClassId);
+        if (!assignments) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        await cacheService.writeToCache(cacheKey, getClassData.assignments, 3600)
-
-        return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getClassData.assignments, 200));
+        return res.status(200).json(
+            ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignments, 200)
+        );
     } catch (error) {
         console.error('Ödevleri getirme hatası:', error);
         res.status(500).json(
@@ -100,29 +91,15 @@ export const getClassAssignments = async (req, res) => {
 export const getWeekAssignments = async (req, res) => {
     try {
         const { weekId } = req.params;
-        const cacheKey = `week:${weekId}:assignments`;
 
-        const getAssigmentsFromCache = await cacheService.getFromCache(cacheKey);
-        if (getAssigmentsFromCache) {
-            return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getAssigmentsFromCache, 200));
-        }
-
-        const getWeekData = await Week.findById(weekId)
-            .populate({
-                path: 'assignments',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title description dueDate createdAt'
-            });
-        if (!getWeekData) {
+        const assignments = await assignmentCacheModule.getCachedWeekAssignments(weekId, weekDatabaseModule.getAssignmentsByWeekId);
+        if (!assignments) {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
 
-        await cacheService.writeToCache(cacheKey, getWeekData.assignments, 3600)
-
-        return res.status(200).json(ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", getWeekData.assignments, 200));
+        return res.status(200).json(
+            ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignments, 200)
+        );
     } catch (error) {
         console.error('Ödevleri getirme hatası:', error);
         res.status(500).json(
