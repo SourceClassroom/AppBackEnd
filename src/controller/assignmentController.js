@@ -10,6 +10,7 @@ import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
 import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
+import {invalidateKey} from "../cache/strategies/invalidate.js";
 
 /**
  * Ödev oluşturma
@@ -104,6 +105,37 @@ export const getWeekAssignments = async (req, res) => {
         console.error('Ödevleri getirme hatası:', error);
         res.status(500).json(
             ApiResponse.serverError('Ödevler getirilirken bir hata oluştu', error)
+        );
+    }
+};
+
+export const updateAssignment = async (req, res) => {
+    try {
+        const { assignmentId } = req.params;
+        const { title, description, dueDate } = req.body;
+
+        // Ödevi getir
+        const assignment = await assignmentDatabaseModule.getAssignmentById(assignmentId);
+        if (!assignment) {
+            return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı."));
+        }
+
+        // Ödevi güncelle
+        const updatedAssignmentData = {
+            title: title || assignment.title,
+            description: description || assignment.description,
+            dueDate: dueDate || assignment.dueDate,
+        };
+
+        const updatedAssignment = await assignmentDatabaseModule.updateAssignment(assignmentId, updatedAssignmentData);
+        if (updatedAssignment.week) await invalidateKey(`week:${updatedAssignment.week}:assignments`)
+        else await invalidateKey(`class:${updatedAssignment.classroom}:assignments`)
+
+        return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde güncellendi.", updatedAssignment, 200));
+    } catch (error) {
+        console.error('Ödev güncelleme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Ödev güncellenirken bir hata oluştu', error)
         );
     }
 };

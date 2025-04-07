@@ -55,9 +55,37 @@ export const getStudentsByClassId = async (classId) => {
     }
 }
 
+export const getClassPosts = async (classId) => {
+    try {
+        const classData = await Class.findById(classId)
+            .populate({
+                path: 'posts',
+                populate: {
+                    path: 'attachments',
+                    select: '_id size originalname'
+                },
+                select: 'title content attachments comments createdAt'
+            });
+
+        return classData?.posts || null;
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
 export const pushNewStudent = async (classId, studentId) => {
     try {
         return await Class.findByIdAndUpdate(classId, { $push: { students: studentId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
+export const pushPostToClass = async (classId, postId) => {
+    try {
+        return await Class.findByIdAndUpdate(classId, { $push: { posts: postId } }, { new: true });
     } catch (error) {
         console.log(error)
         return error

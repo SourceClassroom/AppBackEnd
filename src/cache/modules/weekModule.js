@@ -11,3 +11,12 @@ export const getCachedWeekData = async (weekId, fetchFn) => {
         return error
     }
 }
+
+export const getCachedWeekPosts = async (weekId, fetchFn) => {
+    try {
+        return await getOrSet(`${WEEK_KEY(weekId)}:posts`, () => fetchFn(weekId), 3600)
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}

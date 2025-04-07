@@ -61,7 +61,7 @@ export const getDashboardFromCacheOrCheckDb = async (userId) => {
             return cachedData
         }
 
-        const user = await User.findById(userId, "name surname email role")
+        const user = await User.findById(userId, "name surname email role profile")
             .populate({
                 path: "enrolledClasses",
                 select: "title description"

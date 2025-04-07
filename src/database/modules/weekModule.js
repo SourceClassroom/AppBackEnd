@@ -36,3 +36,31 @@ export const pushAssignmentToWeek = async (weekId, assignmentId) => {
         return error
     }
 }
+
+export const pushPostToWeek = async (weekId, postId) => {
+    try {
+        return await Week.findByIdAndUpdate(weekId, { $push: { posts: postId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
+export const getWeekPosts = async (weekId) => {
+    try {
+        const weekData = await Week.findById(weekId)
+            .populate({
+                path: 'posts',
+                populate: {
+                    path: 'attachments',
+                    select: '_id size originalname'
+                },
+                select: 'title content comments createdAt'
+            });
+
+        return weekData?.posts || null;
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}

@@ -38,4 +38,13 @@ router.route("/week/:classId/:weekId").get(
     postController.getWeekPosts
 )
 
+router.route("/update/:classId/:postId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("postId"),
+    apiValidator.validate,
+    roleCheck.isClassTeacherOrOwner(),
+    postController.updatePost
+)
+
 export default router

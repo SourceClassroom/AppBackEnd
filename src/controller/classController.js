@@ -1,9 +1,5 @@
-import mongoose from "mongoose";
-import {client} from "../cache/client/redisClient.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import {User} from "../database/models/userModel.js";
-import { Class } from "../database/models/classModel.js";
-import * as cacheService from "../services/cacheService.js";
 import { generateUniqueCode } from "../services/classCodeService.js";
 
 //Cache Strategies

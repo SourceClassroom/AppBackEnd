@@ -21,6 +21,15 @@ router.route("/create").post(
     assignmentController.createAssignment
 )
 
+router.route("/update/:classId/:assignmentId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("assignmentId"),
+    apiValidator.validate,
+    roleCheck.isClassTeacherOrOwner(),
+    assignmentController.updateAssignment
+)
+
 router.route("/class/:classId").get(
     authenticateToken,
     apiValidator.validateMongoId("classId"),
