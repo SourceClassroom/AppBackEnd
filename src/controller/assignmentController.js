@@ -1,6 +1,9 @@
 import ApiResponse from "../utils/apiResponse.js";
 import { processMedia } from "../services/fileService.js";
 
+//Cache Strategies
+import {invalidateKey} from "../cache/strategies/invalidate.js";
+
 //Cache Modules
 import *as weekCacheModule from '../cache/modules/weekModule.js';
 import *as classCacheModule from '../cache/modules/classModule.js';
@@ -10,7 +13,7 @@ import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
 import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
-import {invalidateKey} from "../cache/strategies/invalidate.js";
+
 
 /**
  * Ödev oluşturma
