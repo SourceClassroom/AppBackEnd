@@ -200,6 +200,18 @@ export const validateCreatePost = [
         .isMongoId().withMessage("Geçerli bir hafta ID giriniz.")
 ]
 
+export const validateComment = [
+    body("classId")
+        .notEmpty().withMessage("Sınıf ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir sınıf ID giriniz."),
+    body("postId")
+        .notEmpty().withMessage("Post ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir post ID giriniz."),
+    body("content")
+        .notEmpty().withMessage("Yorum içeriği boş olamaz.")
+        .isLength({max: 250}).withMessage("Yorum içeriği 250 karakterden fazla olamaz.")
+]
+
 
 /**
  * MongoDB ID formatını doğrulama

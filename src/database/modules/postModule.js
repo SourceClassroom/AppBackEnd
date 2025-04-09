@@ -15,3 +15,11 @@ export const updatePost = async (postId, updateData) => {
         throw new Error('Post güncellenirken bir hata meydana geldi.');
     }
 }
+
+export const pushCommentToPost = async (postId, commentId) => {
+    try {
+        return await Post.findByIdAndUpdate(postId, { $push: { comments: commentId } }, { new: true });
+    } catch (error) {
+        throw new Error('Post güncellenirken bir hata meydana geldi.');
+    }
+}

@@ -3,7 +3,6 @@ import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 import *as attachmentController from "../controller/attachmentController.js"
-import {downloadAttachment} from "../controller/attachmentController.js";
 
 const router = express.Router()
 
