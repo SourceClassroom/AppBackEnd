@@ -2,6 +2,12 @@ import jwt from "jsonwebtoken";
 import {client} from "../cache/client/redisClient.js";
 import {User} from "../database/models/userModel.js";
 
+//Cache Modules
+import *as tokenCacheModule from '../cache/modules/tokenModule.js';
+
+//Database Modules
+import *as userDatabaseModule from '../database/modules/userModule.js';
+
 /*
  * Token servis sınıfı
  * JWT token oluşturma ve doğrulama işlemleri
@@ -14,7 +20,7 @@ class TokenService {
             const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
 
             if (expiresIn > 0) {
-                await client.setEx(`blacklistToken:${token}`, expiresIn, "blacklisted");
+                await tokenCacheModule.blacklistToken(token, expiresIn)
             }
 
             return true
@@ -95,7 +101,8 @@ class TokenService {
 
                     try {
                         // Kullanıcıyı bul
-                        const user = await User.findById(decoded.id);
+                        //const user = await User.findById(decoded.id);
+                        const user = await userDatabaseModule.getUserById(decoded.id);
 
                         if (!user) {
                             return reject(new Error("Kullanıcı bulunamadı"));

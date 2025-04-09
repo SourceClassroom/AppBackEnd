@@ -73,18 +73,16 @@ export const getSubmissions = async (req, res) => {
     }
 }
 
+//TODO test new functions
+
 export const gradeSubmission = async (req, res) => {
     try {
         const { submissionId, grade } = req.body
-        const cacheKey = `submission:${submissionId}`
+        //TODO add validator
 
-        if (!grade) return res.status(400).json(ApiResponse.error("Not alanı boş olamaz"))
-
-        const submissionData = await cacheService.getASubmissionFromCacheOrCheckDb(submissionId)
-        if (!submissionData) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-
-        const updateSubmission = await Submission.findByIdAndUpdate(submissionId, {$set: {grade: grade}}, {new: true})
-        await cacheService.removeFromCache(cacheKey)
+        const updateSubmission = await submissionDatabaseModule.setGrade(submissionId, grade)
+        if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
+        await invalidateKeys([`submission:${submissionId}`, `assignmnet:${updateSubmission.assignment}:submissions`])
 
         return res.status(200).json(ApiResponse.success("Ödev notu başarı ile girildi.", updateSubmission))
     } catch (error) {
@@ -97,15 +95,10 @@ export const gradeSubmission = async (req, res) => {
 export const feedbackSubmission = async (req, res) => {
     try {
         const { submissionId, feedback } = req.body
-        const cacheKey = `submission:${submissionId}`
 
-        if (!feedback) return res.status(400).json(ApiResponse.error("Feedbakc alanı boş olamaz"))
-
-        const submissionData = await cacheService.getASubmissionFromCacheOrCheckDb(submissionId)
-        if (!submissionData) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-
-        const updateSubmission = await Submission.findByIdAndUpdate(submissionId, {$set: {feedback: feedback}}, {new: true})
-        await cacheService.removeFromCache(cacheKey)
+        const updateSubmission = await submissionDatabaseModule.setFeedback(submissionId, feedback)
+        if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
+        await invalidateKeys([`submission:${submissionId}`, `assignmnet:${updateSubmission.assignment}:submissions`])
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {

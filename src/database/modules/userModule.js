@@ -9,6 +9,15 @@ export const getUserById = async (userId) => {
     }
 }
 
+export const getUserLoginData = async (email) => {
+    try {
+        return await User.findOne({email}).select('_id email password accountStatus')
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
 export const pushNewEnrolledClass = async (userId, classId) => {
     try {
         return await User.findByIdAndUpdate(userId, { $push: { enrolledClasses: classId } }, { new: true });
@@ -21,6 +30,15 @@ export const pushNewEnrolledClass = async (userId, classId) => {
 export const removeClassFromEnrolledClasses = async (userId, classId) => {
     try {
         return await User.findByIdAndUpdate(userId, { $pull: { enrolledClasses: classId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
+export const updateLastLogin = async (userId) => {
+    try {
+        return await User.findByIdAndUpdate(userId, { $set: { lastLogin: new Date() } }, { new: true });
     } catch (error) {
         console.log(error)
         return error

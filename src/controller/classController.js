@@ -6,12 +6,12 @@ import { generateUniqueCode } from "../services/classCodeService.js";
 import { invalidateKey, invalidateKeys } from "../cache/strategies/invalidate.js";
 
 //Cache Modules
-import *as classCacheModule from '../cache/modules/classModule.js'
+import *as userCacheModule from "../cache/modules/userModule.js";
+import *as classCacheModule from '../cache/modules/classModule.js';
 
 //Database Modules
-import *as classDatabaseModule from '../database/modules/classModule.js'
-import * as userCacheModule from "../cache/modules/userModule.js";
-import * as userDatabaseModule from "../database/modules/userModule.js";
+import *as userDatabaseModule from "../database/modules/userModule.js";
+import *as classDatabaseModule from '../database/modules/classModule.js';
 
 export const getClass = async (req, res) => {
     try {

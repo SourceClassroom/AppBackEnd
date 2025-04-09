@@ -7,6 +7,14 @@ import {processMedia} from "../services/fileService.js";
 import *as cacheService from "../services/cacheService.js";
 import {getDashboardFromCacheOrCheckDb, getUserFromCacheOrCheckDb} from "../services/cacheService.js";
 
+//Cache Strategies
+import getOrSet from "../cache/strategies/getOrSet.js";
+
+//Cache Modules
+import *as userCacheModule from "../cache/modules/userModule.js";
+
+//Database Modules
+import *as userDatabaseModule from "../database/modules/userModule.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -117,7 +125,7 @@ export const loginUser = async (req, res) => {
         const { email, password } = req.body;
 
         // Kullanıcıyı bul
-        const user = await User.findOne({ email });
+        const user = await userDatabaseModule.getUserLoginData(email)
         if (!user) {
             return res.status(401).json(
                 ApiResponse.error('Geçersiz kimlik bilgileri', null, 401)
@@ -156,11 +164,13 @@ export const loginUser = async (req, res) => {
         // Hassas verileri kaldır
         const userResponse = {
             _id: user._id,
-            fullName: user.fullName,
+            name: user.name,
+            surname: user.surname,
             email: user.email,
             role: user.role
         };
-        await User.findOneAndUpdate({ email }, {$set: {lastLogin: new Date()}})
+        await userDatabaseModule.updateLastLogin(user._id)
+
         // Başarılı yanıt
         res.status(200).json(
             ApiResponse.success(
