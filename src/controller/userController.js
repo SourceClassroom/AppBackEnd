@@ -5,13 +5,14 @@ import {User} from "../database/models/userModel.js";
 import *as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
 import *as cacheService from "../services/cacheService.js";
-import {getDashboardFromCacheOrCheckDb, getUserFromCacheOrCheckDb} from "../services/cacheService.js";
+import { getDashboardFromCacheOrCheckDb } from "../services/cacheService.js";
 
 //Cache Strategies
 import getOrSet from "../cache/strategies/getOrSet.js";
 
 //Cache Modules
 import *as userCacheModule from "../cache/modules/userModule.js";
+import *as tokenCacheModule from "../cache/modules/tokenModule.js";
 
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
@@ -24,7 +25,7 @@ import *as userDatabaseModule from "../database/modules/userModule.js";
 export const getUsers = async (req, res) => {
     try {
         const userId = req.params.id;
-        const userData = await cacheService.getUserFromCacheOrCheckDb(userId)
+        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
 
         if (!userData) {
             return res.status(404).jsonp(ApiResponse.notFound("Bu id ile bir kullanic bulunamadi"))
@@ -56,7 +57,7 @@ export const createUser = async (req, res) => {
         // Request body'den verileri al
         const { name, surname, email, password, role } = req.body;
         // E-posta kontrolü
-        const existingUser = await User.findOne({ email });
+        const existingUser = await userDatabaseModule.getUserByEmail(email)
         if (existingUser) {
             return res.status(400).json(
                 ApiResponse.error('Bu e-posta adresi zaten kullanılıyor')
@@ -67,19 +68,19 @@ export const createUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const accountStatus =  role === "teacher" ? 'pending' : 'active'
+
         // Yeni kullanıcı oluştur
-        const newUser = new User({
+        const newUserData = {
             name,
             surname,
             email,
             password: hashedPassword,
-            role: role || 'student', // Varsayılan rol öğrenci
+            role: role || 'student',
             accountStatus,
-            tokenVersion: TokenService.generateVersionCode(),
-        });
+            tokenVersion: TokenService.generateVersionCode()
+        }
 
-        // Kullanıcıyı kaydet
-        await newUser.save();
+        const newUser = await userDatabaseModule.createUser(newUserData)
 
         const token = await TokenService.generateAccessToken({
             id: newUser._id,
@@ -207,7 +208,7 @@ export const changePassword = async (req, res) => {
         }
 
         // Kullanıcıyı bul (şifre dahil)
-        const user = await User.findById(userId);
+        const user = await userDatabaseModule.getUserById(userId)
         if (!user) {
             return res.status(404).json(
                 ApiResponse.error('Kullanıcı bulunamadı')
@@ -233,9 +234,7 @@ export const changePassword = async (req, res) => {
         const newTokenVersion = TokenService.generateVersionCode();
 
         // Kullanıcıyı güncelle
-        user.password = hashedPassword;
-        user.tokenVersion = newTokenVersion;
-        await user.save();
+        await userDatabaseModule.changePassword(userId, hashedPassword, newTokenVersion)
 
         // Yeni JWT token oluştur (yeni tokenVersion ile)
         const token = await TokenService.generateAccessToken({
@@ -249,7 +248,7 @@ export const changePassword = async (req, res) => {
             req.headers?.authorization?.split(" ")[1] ||
             req.query?.token;
 
-        await TokenService.blacklistToken(oldToken)
+        await tokenCacheModule.blacklistToken(oldToken)
 
         res.status(200).json(
             ApiResponse.success(
@@ -279,8 +278,8 @@ export const changeEmail = async (req, res) => {
         const findUser = await cacheService.getUserFromCacheOrCheckDb(userId);
         if(findUser.email === email) return res.status(400).json(ApiResponse.error("Yeni mail eskisi ile aynı olamaz."))
 
-        const updateUser = await User.findByIdAndUpdate(userId, {$set: {email}}, {new: true}).select("-password");
-        await cacheService.clearUserCache(userId);
+        const updateUser = await userDatabaseModule.changeEmail(userId, email)
+        await userCacheModule.clearUserCache(userId)
 
         return res.status(200).json(ApiResponse.success("Email adresi başarıyla değişti.", updateUser));
     } catch (error) {
@@ -317,20 +316,16 @@ export const changeAvatar = async (req, res) => {
     try {
         const userId = req.user.id
         req.body.permission = 0;
-        //Check files even isn't required (check /middleware/upload.js)
+
         if (req.files.length === 0 || !req.files) {
             return res.status(400).json(ApiResponse.error("En az 1 dosya yüklenmeli."));
         }
-        const currentUserData = await cacheService.getUserFromCacheOrCheckDb(userId)
+        const currentUserData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
         const fileIds = await processMedia(req)
 
-        const updateUser = await User.findByIdAndUpdate(
-            userId,
-            { $set: { "profile.avatar": fileIds[0] } }, // Sadece avatar'ı güncelle
-            { new: true }
-        ).select("-password");
+        await userDatabaseModule.changeAvatar(userId, fileIds[0])
 
-        await cacheService.writeToCache(`user:${userId}`, updateUser, 3600)
+        await userCacheModule.clearUserCache(userId)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
 
         return res.status(200).json(ApiResponse.success("Avatar başarılı bir şekilde değiştirildi."))
@@ -348,24 +343,24 @@ export const updateProfile = async (req, res) => {
         const { name, surname, profile } = req.body;
         const cacheKey = `user:${userId}`;
 
-        const user = await User.findById(userId).select("-password");
+        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById(userId))
         if (!user) {
             return res.status(404).json(ApiResponse.error("Kullanıcı bulunamadı."));
         }
 
         // Mevcut profil verisini koruyarak güncelle
-        const updatedProfile = {
-            avatar: user.profile.avatar,  // Eski avatarı koru
-            bio: profile?.bio ?? user.profile.bio,
-            institutionId: profile?.institutionId ?? user.profile.institutionId,
+        const updatedProfileData = {
+            name: name ?? user.name,
+            surname: surname ?? user.surname,
+            profile: {
+                avatar: user.profile.avatar,  // Eski avatarı koru
+                bio: profile?.bio ?? user.profile.bio,
+                institutionId: profile?.institutionId ?? user.profile.institutionId,
+            }
         };
 
-        user.name = name ?? user.name;
-        user.surname = surname ?? user.surname;
-        user.profile = updatedProfile;
-
-        await user.save();
-        await cacheService.writeToCache(cacheKey, user, 3600);
+        await userDatabaseModule.updateProfile(userId, updatedProfileData)
+        await userCacheModule.clearUserCache(userId)
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
     } catch (error) {
@@ -379,22 +374,21 @@ export const updateNotificationPreferences = async (req, res) => {
     try {
         const userId = req.user.id;
         const { notificationPreferences } = req.body;
-        const cacheKey = `user:${userId}`;
 
         // Kullanıcıyı bul
-        const user = await User.findById(userId);
+        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById(userId))
         if (!user) {
             return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
         }
 
         // Mevcut notificationPreferences'ı koruyarak güncelle
-        user.notificationPreferences = {
+        const newNotificationPreferences = {
             ...user.notificationPreferences,
             ...notificationPreferences
         };
 
-        await user.save();
-        await cacheService.clearUserCache(userId);
+        await userDatabaseModule.updateNotificationPreferences(userId, newNotificationPreferences)
+        await userCacheModule.clearUserCache(userId)
 
         return res.status(200).json(ApiResponse.success("Bildirim tercihleri başarıyla güncellendi.", user.notificationPreferences));
     } catch (error) {
@@ -408,7 +402,7 @@ export const updateNotificationPreferences = async (req, res) => {
 export const userDashboard = async (req, res) => {
     try {
         const userId = req.user.id;
-        const userData = await getDashboardFromCacheOrCheckDb(userId)
+        const userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard)
 
         if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
 

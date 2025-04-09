@@ -1,9 +1,5 @@
 import ApiResponse from "../utils/apiResponse.js";
-import {Class} from "../database/models/classModel.js";
 import {processMedia} from "../services/fileService.js";
-import *as cacheService from "../services/cacheService.js";
-import {Assignment} from "../database/models/assignmentModel.js";
-import {Submission} from "../database/models/submissionsModel.js";
 
 //Cache Modules
 import *as submissionCacheModule from '../cache/modules/submissionModule.js';
