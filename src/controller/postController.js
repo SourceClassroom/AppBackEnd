@@ -1,4 +1,4 @@
-import ApiResponse from "../utils/ApiResponse.js";
+import ApiResponse from "../utils/apiResponse.js";
 import {processMedia} from "../services/fileService.js";
 
 //Cache Strategies
@@ -34,12 +34,12 @@ export const createPost = async (req, res) => {
         const createPost = await postDatabaseModule.createPost(newPostData)
         if (week) {
             await invalidateKeys([weekCacheKey])
-            const updateWeek = await weekDatabaseModule.pushPostToWeek(week, createPost._id)
-            const getUpdatedWeek = await weekCacheModule.getCachedWeekPosts(week, weekDatabaseModule.getWeekPosts)
+            await weekDatabaseModule.pushPostToWeek(week, createPost._id)
+            await weekCacheModule.getCachedWeekPosts(week, weekDatabaseModule.getWeekPosts)
         } else {
             await invalidateKeys([classCacheKey])
-            const updateClass = await classDatabaseModule.pushPostToClass(classId, createPost._id)
-            const getUpdatedClass = await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
+            await classDatabaseModule.pushPostToClass(classId, createPost._id)
+            await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
         }
         res.status(201).json(ApiResponse.success("Duyuru başarıyla oluşturuldu.", createPost, 201));
     } catch (error) {

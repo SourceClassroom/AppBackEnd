@@ -55,7 +55,7 @@ export const createAssignment = async (req, res) => {
         // Hafta veya sınıfa ödev ID'sini ekle
         if (week) {
             const updateWeek = await weekDatabaseModule.pushAssignmentToWeek(week, newAssignment._id)
-            const updatedAssignments = await assignmentDatabaseModule.getAssignmentsByWeekId(week);
+            const updatedAssignments = await weekDatabaseModule.getAssignmentsByWeekId(week);
             await assignmentCacheModule.writeAssignmnetToCacheByWeek(week, updatedAssignments, 3600)
         } else {
             const updateClass = await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
@@ -131,7 +131,7 @@ export const updateAssignment = async (req, res) => {
         };
 
         const updatedAssignment = await assignmentDatabaseModule.updateAssignment(assignmentId, updatedAssignmentData);
-        await invalidateKeys([`class:${updatedAssignment.classroom}:assignments`, `week:${updatedAssignment.week}:assignments`])
+        await invalidateKeys([`class:${updatedAssignment.classroom}:assignments`, `week:${updatedAssignment?.week}:assignments`])
 
         return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde güncellendi.", updatedAssignment, 200));
     } catch (error) {

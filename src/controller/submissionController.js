@@ -92,7 +92,6 @@ export const feedbackSubmission = async (req, res) => {
 
         const updateSubmission = await submissionDatabaseModule.setFeedback(submissionId, feedback)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-        console.log(updateSubmission.assignment.toString())
         await invalidateKeys([`submission:${submissionId}`, `assignment:${updateSubmission.assignment.toString()}:submissions`])
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))

@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import ApiResponse from "../utils/ApiResponse.js";
+import ApiResponse from "../utils/apiResponse.js";
 import TokenService from "../services/jwtService.js";
 import *as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";

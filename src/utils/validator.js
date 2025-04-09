@@ -1,4 +1,3 @@
-import ApiResponse from "../utils/ApiResponse.js";
 import {body, param, validationResult} from "express-validator";
 
 export const validate = (req, res, next) => {
@@ -100,9 +99,6 @@ export const validateProfileUpdate = [
 ]
 
 export const validateWeek = [
-    body('classId')
-        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
-        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
     body('title')
         .notEmpty().withMessage('Başlık alanı zorunludur.')
         .isLength({ min: 3 }).withMessage('Başlık en az 3 karakter olmalıdır.'),

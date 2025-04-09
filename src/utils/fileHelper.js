@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import ApiResponse from "../utils/ApiResponse.js";
+import ApiResponse from "../utils/apiResponse.js";
 
 /**
  * Belirtilen dosya yolunu HTTP yanıtına akış olarak gönderir.
