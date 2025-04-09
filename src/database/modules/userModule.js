@@ -5,7 +5,7 @@ export const createUser = async (userData) => {
         return await User.create(userData)
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -14,7 +14,7 @@ export const getUserById = async (userId) => {
         return await User.findById(userId).select("-password")
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -23,7 +23,7 @@ export const getUserByEmail = async (email) => {
         return await User.findOne({ email }).select("_id")
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -32,7 +32,7 @@ export const changePassword = async (userId, password, tokenVersion) => {
         return await User.findByIdAndUpdate(userId, { $set: { password, tokenVersion } }, { new: true }).select("-password");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -41,7 +41,7 @@ export const changeEmail = async (userId, email) => {
         return await User.findByIdAndUpdate(userId, { $set: { email } }, { new: true }).select("-password");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -50,7 +50,7 @@ export const changeAvatar = async (userId, avatar) => {
         return await User.findByIdAndUpdate(userId, { $set: { "profile.avatar": avatar } }, { new: true }).select("-password");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -60,7 +60,7 @@ export const updateProfile = async (userId, data) => {
         return await User.findByIdAndUpdate(userId, { $set: { name, surname, profile } }, { new: true }).select("-password");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -69,7 +69,7 @@ export const updateNotificationPreferences = async (userId, notificationPreferen
         return await User.findByIdAndUpdate(userId, { $set: { notificationPreferences } }, { new: true }).select("-password");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -78,7 +78,7 @@ export const getUserLoginData = async (email) => {
         return await User.findOne({email}).select('_id email password accountStatus role')
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -96,7 +96,7 @@ export const getUserDashboard = async (userId) => {
 
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -105,7 +105,7 @@ export const pushNewEnrolledClass = async (userId, classId) => {
         return await User.findByIdAndUpdate(userId, { $push: { enrolledClasses: classId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -114,7 +114,7 @@ export const removeClassFromEnrolledClasses = async (userId, classId) => {
         return await User.findByIdAndUpdate(userId, { $pull: { enrolledClasses: classId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -123,6 +123,6 @@ export const updateLastLogin = async (userId) => {
         return await User.findByIdAndUpdate(userId, { $set: { lastLogin: new Date() } }, { new: true }).select("-password");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }

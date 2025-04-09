@@ -1,8 +1,13 @@
 import { ObjectId } from "mongoose";
 import ApiResponse from "../utils/apiResponse.js";
 import {Class} from "../database/models/classModel.js";
-import {Attachment} from "../database/models/attachmentModel.js";
-import {getFromCache, writeToCache} from "../services/cacheService.js";
+
+//Cache Modules
+import *as attachmentCacheModule from "../cache/modules/attachmentModule.js";
+
+//Database Modules
+import *as attachmentDatabaseModule from "../database/modules/attachmentModule.js";
+
 /**
  * Kullanıcının belirli rollere sahip olup olmadığını kontrol eden middleware
  * @param {string[]} allowedRoles - İzin verilen roller dizisi ('sysadmin', 'teacher', 'student' vb.)
@@ -152,15 +157,7 @@ export const checkFilePermission = (userIdField = 'userId', attachmentIdField = 
             }
 
             // Cache kontrolü
-            let attachmentData = await getFromCache(cacheKey);
-
-            if (!attachmentData) {
-                attachmentData = await Attachment.findById(attachmentId);
-                if (!attachmentData) {
-                    return res.status(404).json(ApiResponse.error("Belirtilen dosya bulunamadı"));
-                }
-                await writeToCache(cacheKey, attachmentData, 3600);
-            }
+            let attachmentData = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
 
             const { permission, classroom } = attachmentData;
 

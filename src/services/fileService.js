@@ -1,7 +1,11 @@
 import fs from "fs";
-import {getFromCache} from "./cacheService.js";
 import {Attachment} from "../database/models/attachmentModel.js";
 
+//Cache Modules
+import *as attachmentCacheModule from "../cache/modules/attachmentModule.js";
+
+//Database Modules
+import *as attachmentDatabaseModule from "../database/modules/attachmentModule.js";
 
 export const processMedia = async (req) => {
     try {
@@ -28,7 +32,7 @@ export const processMedia = async (req) => {
 
         let fileIds = [];
         for (const file of files) {
-            const newAttach = await createAttachmentOnDB(file);
+            const newAttach = await attachmentDatabaseModule.createAttachment(file);
             fileIds.push(newAttach._id);
         }
 
@@ -39,43 +43,12 @@ export const processMedia = async (req) => {
     }
 };
 
-
-export const createAttachmentOnDB = async (data) => {
-    try {
-        const {filename,originalname,mimetype,path,classId,userId,size,permission} = data
-        const attachment = new Attachment({
-            filename,
-            originalname,
-            mimetype,
-            path,
-            classroom: classId,
-            userId,
-            size,
-            permission
-        });
-
-        return await attachment.save();
-    } catch (error) {
-        console.log(error);
-        return error
-    }
-}
-
 export const deleteAttachment = async (attachmentId) => {
     try {
         if (!attachmentId) return;
         let attachment;
-        const cacheKey = `attachment:${attachmentId}`
         //Cacheden attachment bilgisini al
-        const getAttachmentDataFromCache = await getFromCache(cacheKey)
-        //Alinan veriyi degiskene ata
-        if (getAttachmentDataFromCache) attachment = getAttachmentDataFromCache
-        // Veritabanından attachment bilgisini al
-        else attachment = await Attachment.findById(attachmentId);
-        if (!attachment) {
-          //console.log("Attachment bulunamadı.");
-          return;
-        }
+        const getAttachmentDataFromCache = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
         //Resimi Sil
         fs.unlinkSync(attachment.path)
         // Veritabanından kaldır

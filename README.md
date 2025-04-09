@@ -7,6 +7,10 @@ The system is built using Node.js and Express.js, featuring a MongoDB database f
 ## Repository Structure
 ```
 src/
+├── cache/            # Caching implementation
+│   ├── client/       # Redis client configuration
+│   ├── modules/      # Cache modules for different entities
+│   └── strategies/   # Caching strategies implementation
 ├── controller/         # Business logic for handling API requests
 │   ├── userController.js         # User authentication and profile management
 │   ├── classController.js        # Class creation and management

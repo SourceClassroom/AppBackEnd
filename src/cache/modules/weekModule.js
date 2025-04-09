@@ -8,7 +8,7 @@ export const getCachedWeekData = async (weekId, fetchFn) => {
         return await getOrSet(WEEK_KEY(weekId), () => fetchFn(weekId), 3600)
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 

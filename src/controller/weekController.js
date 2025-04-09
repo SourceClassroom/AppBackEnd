@@ -1,7 +1,4 @@
 import ApiResponse from "../utils/apiResponse.js";
-import {Week} from "../database/models/weekModel.js";
-import {Class} from "../database/models/classModel.js";
-import *as cacheService from "../services/cacheService.js";
 
 //Cache Strategies
 import {invalidateKeys} from "../cache/strategies/invalidate.js";

@@ -3,10 +3,6 @@ import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
 import *as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
-import *as cacheService from "../services/cacheService.js";
-
-//Cache Strategies
-import getOrSet from "../cache/strategies/getOrSet.js";
 
 //Cache Modules
 import *as userCacheModule from "../cache/modules/userModule.js";
@@ -273,7 +269,7 @@ export const changeEmail = async (req, res) => {
 
         if (!email) return res.status(400).json(ApiResponse.error("Email alanı zorunludur."))
 
-        const findUser = await cacheService.getUserFromCacheOrCheckDb(userId);
+        const findUser = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
         if(findUser.email === email) return res.status(400).json(ApiResponse.error("Yeni mail eskisi ile aynı olamaz."))
 
         const updateUser = await userDatabaseModule.changeEmail(userId, email)

@@ -5,7 +5,7 @@ export const createClass = async (data) => {
         return await Class.create(data)
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -14,7 +14,7 @@ export const updateClassById = async (classId, data) => {
         return await Class.findByIdAndUpdate(classId, data, {new: true})
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -27,7 +27,7 @@ export const getClassById = async (classId) => {
             })
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -36,7 +36,7 @@ export const getClassByCode = async (code) => {
         return await Class.findOne({code: code})
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -51,7 +51,7 @@ export const getStudentsByClassId = async (classId) => {
         return classData?.students || null;
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -66,7 +66,7 @@ export const getWeeksByClassId = async (classId) => {
         return classData?.weeks || null;
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -85,7 +85,7 @@ export const getClassPosts = async (classId) => {
         return classData?.posts || null;
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -94,7 +94,7 @@ export const pushNewStudent = async (classId, studentId) => {
         return await Class.findByIdAndUpdate(classId, { $push: { students: studentId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -103,7 +103,7 @@ export const pushPostToClass = async (classId, postId) => {
         return await Class.findByIdAndUpdate(classId, { $push: { posts: postId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -112,7 +112,7 @@ export const pushForbiddenStudents = async (classId, studentId) => {
         return await Class.findByIdAndUpdate(classId, { $push: { forbiddenStudents: studentId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -121,7 +121,7 @@ export const pushWeekToClass = async (classId, weekId) => {
         return await Class.findByIdAndUpdate(classId, { $push: { weeks: weekId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -130,7 +130,7 @@ export const removeStudentFromClass = async (classId, studentId) => {
         return await Class.findByIdAndUpdate(classId, { $pull: { students: studentId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -149,7 +149,7 @@ export const getAssignmentsByClassId = async (classId) => {
         return classData?.assignments || null;
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -158,6 +158,6 @@ export const pushAssignmentToClass = async (classId, assignmentId) => {
         return await Class.findByIdAndUpdate(classId, { $push: { assignments: assignmentId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
