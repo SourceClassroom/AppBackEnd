@@ -36,7 +36,7 @@ export const getAssignmentSubmissions = async (assignmentId) => {
                     path: "attachments",
                     select: "originalname size"
                 }],
-                select: "description"
+                select: "description grade feedback"
             });
     } catch (error) {
         throw error;

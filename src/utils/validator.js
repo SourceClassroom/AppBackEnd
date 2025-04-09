@@ -178,7 +178,7 @@ export const validateGrade = [
         .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
     body("grade")
         .notEmpty().withMessage("Not alanı boş olamaz")
-        .isNumeric({ min: 0, max: 100 }).withMessage("Not değeri 0 ile 100 arasında olmalıdır.")
+        .isFloat({ min: 0, max: 100 }).withMessage("Not değeri 0 ile 100 arasında olmalıdır.")
 ]
 export const validateFeedback = [
     body("submissionId")

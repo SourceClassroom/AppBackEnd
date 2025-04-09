@@ -7,7 +7,6 @@ export const getCachedSubmissionById = async (submissionId, fetchFn) => {
     try {
         return await getOrSet(SUBMISSION_KEY(submissionId), () => fetchFn(submissionId), 3600);
     } catch (error) {
-        console.log(error)
-        return error
+        throw error;
     }
 }

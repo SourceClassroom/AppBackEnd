@@ -25,7 +25,6 @@ export const getCachedClassPosts = async (classId, fetchFn) => {
     try {
         return await getOrSet(`${CLASS_KEY(classId)}:posts`, () => fetchFn(classId), 3600)
     } catch (error) {
-        console .log(error)
-        return error
+        throw error;
     }
 }

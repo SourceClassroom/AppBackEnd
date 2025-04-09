@@ -73,16 +73,14 @@ export const getSubmissions = async (req, res) => {
     }
 }
 
-//TODO test new functions
 
 export const gradeSubmission = async (req, res) => {
     try {
         const { submissionId, grade } = req.body
-        //TODO add validator
 
         const updateSubmission = await submissionDatabaseModule.setGrade(submissionId, grade)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-        await invalidateKeys([`submission:${submissionId}`, `assignmnet:${updateSubmission.assignment}:submissions`])
+        await invalidateKeys([`submission:${submissionId}`, `assignment:${updateSubmission.assignment}:submissions`])
 
         return res.status(200).json(ApiResponse.success("Ödev notu başarı ile girildi.", updateSubmission))
     } catch (error) {
@@ -98,7 +96,8 @@ export const feedbackSubmission = async (req, res) => {
 
         const updateSubmission = await submissionDatabaseModule.setFeedback(submissionId, feedback)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-        await invalidateKeys([`submission:${submissionId}`, `assignmnet:${updateSubmission.assignment}:submissions`])
+        console.log(updateSubmission.assignment.toString())
+        await invalidateKeys([`submission:${submissionId}`, `assignment:${updateSubmission.assignment.toString()}:submissions`])
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {
