@@ -2,7 +2,7 @@ import ApiResponse from "../utils/apiResponse.js";
 import { processMedia } from "../services/fileService.js";
 
 //Cache Strategies
-import {invalidateKey} from "../cache/strategies/invalidate.js";
+import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import *as weekCacheModule from '../cache/modules/weekModule.js';
@@ -131,8 +131,7 @@ export const updateAssignment = async (req, res) => {
         };
 
         const updatedAssignment = await assignmentDatabaseModule.updateAssignment(assignmentId, updatedAssignmentData);
-        if (updatedAssignment.week) await invalidateKey(`week:${updatedAssignment.week}:assignments`)
-        else await invalidateKey(`class:${updatedAssignment.classroom}:assignments`)
+        await invalidateKeys([`class:${updatedAssignment.classroom}:assignments`, `week:${updatedAssignment.week}:assignments`])
 
         return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde güncellendi.", updatedAssignment, 200));
     } catch (error) {

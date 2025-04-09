@@ -15,9 +15,7 @@ export const invalidateKeys = async (keys = []) => {
         const validKeys = keys.filter(key => typeof key === 'string' && key.trim() !== '');
         if (validKeys.length === 0) return 0;
 
-        const deleted = await client.del(...validKeys);
-        console.log(`Deleted ${deleted} keys from cache:`, validKeys);
-        return deleted;
+        return await client.del(...validKeys);
     } catch (error) {
         console.error('Cache invalidation error:', error);
         throw new Error("Redis cache silinirken hata oluştu");

@@ -14,8 +14,9 @@ router.route("/create").post(
     weekController.createWeek
 );
 
-router.route("/update/:weekId").put(
+router.route("/update/:classId/:weekId").put(
     authenticateToken,
+    apiValidator.validateMongoId("classId"),
     apiValidator.validateMongoId("weekId"),
     apiValidator.validateWeek,
     apiValidator.validate,

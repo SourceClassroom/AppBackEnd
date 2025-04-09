@@ -1,11 +1,9 @@
 import bcrypt from 'bcryptjs';
 import ApiResponse from "../utils/ApiResponse.js";
 import TokenService from "../services/jwtService.js";
-import {User} from "../database/models/userModel.js";
 import *as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
 import *as cacheService from "../services/cacheService.js";
-import { getDashboardFromCacheOrCheckDb } from "../services/cacheService.js";
 
 //Cache Strategies
 import getOrSet from "../cache/strategies/getOrSet.js";

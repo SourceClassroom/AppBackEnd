@@ -1,11 +1,29 @@
 import {Week} from "../models/weekModel.js";
 
+export const createWeek = async (weekData) => {
+    try {
+        return await Week.create(weekData);
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const updateWeek = async (weekId, weekData) => {
+    try {
+        return await Week.findByIdAndUpdate(weekId, weekData, { new: true });
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const getWeekById = async (weekId) => {
     try {
         return await Week.findById(weekId).select("title description startDate endDate classroom");
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -24,7 +42,7 @@ export const getAssignmentsByWeekId = async (weekId) => {
         return weekData?.assignments || null;
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -33,7 +51,7 @@ export const pushAssignmentToWeek = async (weekId, assignmentId) => {
         return await Week.findByIdAndUpdate(weekId, { $push: { assignments: assignmentId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -42,7 +60,7 @@ export const pushPostToWeek = async (weekId, postId) => {
         return await Week.findByIdAndUpdate(weekId, { $push: { posts: postId } }, { new: true });
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }
 
@@ -61,6 +79,6 @@ export const getWeekPosts = async (weekId) => {
         return weekData?.posts || null;
     } catch (error) {
         console.log(error)
-        return error
+        throw error
     }
 }

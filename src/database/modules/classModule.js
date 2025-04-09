@@ -55,6 +55,21 @@ export const getStudentsByClassId = async (classId) => {
     }
 }
 
+export const getWeeksByClassId = async (classId) => {
+    try {
+        const classData = await Class.findById(classId)
+            .populate({
+                path: 'weeks',
+                select: 'title description startDate endDate',
+            });
+
+        return classData?.weeks || null;
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
 export const getClassPosts = async (classId) => {
     try {
         const classData = await Class.findById(classId)
@@ -95,6 +110,15 @@ export const pushPostToClass = async (classId, postId) => {
 export const pushForbiddenStudents = async (classId, studentId) => {
     try {
         return await Class.findByIdAndUpdate(classId, { $push: { forbiddenStudents: studentId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        return error
+    }
+}
+
+export const pushWeekToClass = async (classId, weekId) => {
+    try {
+        return await Class.findByIdAndUpdate(classId, { $push: { weeks: weekId } }, { new: true });
     } catch (error) {
         console.log(error)
         return error
