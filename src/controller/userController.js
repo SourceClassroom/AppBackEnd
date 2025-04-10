@@ -16,7 +16,7 @@ import *as userDatabaseModule from "../database/modules/userModule.js";
  * @route GET /api/users/:id
  * @access Public
  * */
-export const getUsers = async (req, res) => {
+export const getUserProfile = async (req, res) => {
     try {
         const userId = req.params.id;
         const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
@@ -50,6 +50,12 @@ export const createUser = async (req, res) => {
     try {
         // Request body'den verileri al
         const { name, surname, email, password, role } = req.body;
+
+        // Check if first user
+        const existingUsers = await userCacheModule.getUserCount(userDatabaseModule.getUserCount);
+        console.log(existingUsers)
+        const isFirstUser = existingUsers === 0;
+
         // E-posta kontrolü
         const existingUser = await userDatabaseModule.getUserByEmail(email)
         if (existingUser) {
@@ -61,7 +67,10 @@ export const createUser = async (req, res) => {
         // Şifreyi hashle
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        const accountStatus =  role === "teacher" ? 'pending' : 'active'
+
+        // First user is sysadmin, otherwise use provided role
+        const userRole = isFirstUser ? 'sysadmin' : (role || 'student');
+        const accountStatus = userRole === "teacher" ? 'pending' : 'active';
 
         // Yeni kullanıcı oluştur
         const newUserData = {
@@ -69,7 +78,7 @@ export const createUser = async (req, res) => {
             surname,
             email,
             password: hashedPassword,
-            role: role || 'student',
+            role: userRole,
             accountStatus,
             tokenVersion: TokenService.generateVersionCode()
         }
@@ -108,7 +117,6 @@ export const createUser = async (req, res) => {
         );
     }
 }
-
 /**
  * Kullanıcı girişi
  * @route POST /api/users/login
@@ -192,6 +200,7 @@ export const loginUser = async (req, res) => {
 export const changePassword = async (req, res) => {
     try {
         const userId = req.user.id;
+        const userEmail = req.user.email
         const { currentPassword, newPassword } = req.body;
 
         // Giriş kontrolü
@@ -202,7 +211,7 @@ export const changePassword = async (req, res) => {
         }
 
         // Kullanıcıyı bul (şifre dahil)
-        const user = await userDatabaseModule.getUserById(userId)
+        const user = await userDatabaseModule.getUserLoginData(userEmail)
         if (!user) {
             return res.status(404).json(
                 ApiResponse.error('Kullanıcı bulunamadı')
@@ -242,7 +251,7 @@ export const changePassword = async (req, res) => {
             req.headers?.authorization?.split(" ")[1] ||
             req.query?.token;
 
-        await tokenCacheModule.blacklistToken(oldToken)
+        await TokenService.blacklistToken(oldToken)
 
         res.status(200).json(
             ApiResponse.success(

@@ -42,7 +42,7 @@ export const createWeek = async (req, res) => {
 
         // Veritabanına kaydet
         const newWeek = await weekDatabaseModule.createWeek(newWeekData)
-        await classDatabaseModule.pushWeekToClass(newWeek._id)
+        await classDatabaseModule.pushWeekToClass(classId, newWeek._id)
         await invalidateKeys([`class:${classId}:weeks`, `class:${classId}`])
 
         // Başarılı yanıt

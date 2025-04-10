@@ -5,14 +5,13 @@ import *as userController from "../controller/userController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
 
-
 const router = express.Router()
 
 router.route("/profile/:id").get(
     authenticateToken,
     apiValidator.validateMongoId("id"),
     apiValidator.validate,
-    userController.getUsers
+    userController.getUserProfile
 )
 
 router.route("/dashboard").get(

@@ -51,7 +51,7 @@ export const viewUserAvatar = async (req, res) => {
         const userId = req.params.userId;
         const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
 
-        if (!user || !user.profile.avatar) {
+        if (!user || !user.profile?.avatar) {
             return res.status(404).json(ApiResponse.notFound("Avatar bulunamadı."));
         }
         const attachmentData = await attachmentCacheModule.getCachedAttachmentData(user.profile.avatar, attachmentDatabaseModule.getAttachmentById)

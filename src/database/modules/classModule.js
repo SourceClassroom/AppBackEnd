@@ -23,7 +23,7 @@ export const getClassById = async (classId) => {
         return await Class.findById(classId)
             .populate({
                 path: "teacher",
-                select: "name surname email",
+                select: "name surname email profile.avatar",
             })
     } catch (error) {
         console.log(error)
@@ -79,7 +79,7 @@ export const getClassPosts = async (classId) => {
                     path: 'attachments',
                     select: '_id size originalname'
                 },
-                select: 'title content attachments comments createdAt'
+                select: 'title content attachments createdAt'
             });
 
         return classData?.posts || null;

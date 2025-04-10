@@ -29,3 +29,11 @@ export const clearUserCache = async (userId) => {
     }
 }
 
+export const getUserCount = async (fetchFn) => {
+    try {
+        return await getOrSet('user:count', () => fetchFn(), 3600)
+    } catch (error) {
+        throw error;
+    }
+}
+

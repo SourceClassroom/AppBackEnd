@@ -126,3 +126,12 @@ export const updateLastLogin = async (userId) => {
         throw error
     }
 }
+
+export const getUserCount = async () => {
+    try {
+        return await User.countDocuments()
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
