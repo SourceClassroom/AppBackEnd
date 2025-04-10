@@ -365,7 +365,8 @@ export const updateProfile = async (req, res) => {
         };
 
         await userDatabaseModule.updateProfile(userId, updatedProfileData)
-        await userCacheModule.clearUserCache(userId)
+        //await userCacheModule.clearUserCache(userId)
+        await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
     } catch (error) {
