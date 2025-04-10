@@ -4,27 +4,15 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    depends_on:
+      - mongodb
+      - redis
     env_file:
       - .env
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/app
-    networks:
-      - proxynet
-  mongodb:
-    image: mongo:latest
-    container_name: sc_mongo
-    restart: unless-stopped
-    volumes:
-      - ./mongodb_data:/data/db
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-    command: ["--auth"]
-    networks:
-      - proxynet
-  react:
-    image: redis:latest
-    container_name: sc_redis
     networks:
       - proxynet
 networks:

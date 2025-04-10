@@ -6,6 +6,7 @@ export default async (pattern) => {
 
         const patternArray = Array.isArray(pattern) ? pattern : [pattern];
 
+        // Scan through patterns to collect keys
         for (const pattern of patternArray) {
             let cursor = "0";
 
@@ -14,8 +15,9 @@ export default async (pattern) => {
                 const scanResult = await client.scan(cursor, "MATCH", pattern, "COUNT", 100);
                 const result = Array.isArray(scanResult) ? scanResult : scanResult.reply;
                 if (!Array.isArray(result)) {
-                    await client.del(pattern);
-                    return 1;
+                    // Delete single key if scan result is not an array
+                    const deleted = await client.del(pattern);
+                    return deleted;
                 }
                 const [nextCursor, keys] = result;
                 cursor = nextCursor;
@@ -28,15 +30,18 @@ export default async (pattern) => {
 
         const keysToDelete = Array.from(allKeysToDelete);
         const chunkSize = 100;
+        let totalDeleted = 0;
 
+        // Delete keys in chunks
         for (let i = 0; i < keysToDelete.length; i += chunkSize) {
             const chunk = keysToDelete.slice(i, i + chunkSize);
             if (chunk.length > 0) {
-                await client.del(chunk);
+                const deleted = await client.del(chunk);
+                totalDeleted += deleted;
             }
         }
 
-        return keysToDelete.length;
+        return totalDeleted;
     } catch (error) {
         console.error("scanAndDeleteByPattern error:", error);
         throw error;

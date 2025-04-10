@@ -10,6 +10,7 @@ import *as tokenCacheModule from "../cache/modules/tokenModule.js";
 
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
+import {invalidateKeys} from "../cache/strategies/invalidate.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -328,7 +329,8 @@ export const changeAvatar = async (req, res) => {
 
         await userDatabaseModule.changeAvatar(userId, fileIds[0])
 
-        await userCacheModule.clearUserCache(userId)
+        await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
+        //await userCacheModule.clearUserCache(userId)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
 
         return res.status(200).json(ApiResponse.success("Avatar başarılı bir şekilde değiştirildi."))
@@ -346,7 +348,7 @@ export const updateProfile = async (req, res) => {
         const { name, surname, profile } = req.body;
         const cacheKey = `user:${userId}`;
 
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById(userId))
+        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
         if (!user) {
             return res.status(404).json(ApiResponse.error("Kullanıcı bulunamadı."));
         }
