@@ -3,7 +3,10 @@ import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 import ApiResponse from "../utils/apiResponse.js";
-import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
+import {allAllowedFileTypes} from "../utils/fileTypes.js"
+
+//Database Modules
+import *as  assignmentDatabaseModule from "../database/modules/assignmentModule.js";
 
 // __dirname'in ESM karşılığını elde etme
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +18,11 @@ const createUploadDir = (dirPath) => {
         fs.mkdirSync(dirPath, { recursive: true });
     }
 };
+
+const uploadTypes = [
+    "assignment", "submission", "avatar",
+    "chat", "material", "general"
+]
 
 // Önce memory storage kullan - kontrol için
 const memoryStorage = multer.memoryStorage();
@@ -44,7 +52,7 @@ const memoryUpload = (options = {}) => {
 
 // İki aşamalı upload fonksiyonu
 export const validateAndUpload = (options = {}) => {
-    const {
+    let {
         fieldName = "files",
         minFiles = 1,
         maxFiles = 10,
@@ -55,6 +63,8 @@ export const validateAndUpload = (options = {}) => {
     return [
         // 1. Aşama: Memory'ye al ve kontrol et
         (req, res, next) => {
+            if (!uploadTypes.includes(req.body.uploadType)) res.status(400).json(ApiResponse.error("Desteklenmeyen yükleme tipi."))
+            if (req.body.uploadType === 'submission') allowedTypes = assignmentDatabaseModule.getAssignmentById(req.body.assignmentId)
             const uploadMiddleware = memoryUpload({
                 fileSize,
                 allowedTypes

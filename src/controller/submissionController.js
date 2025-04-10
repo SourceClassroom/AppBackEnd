@@ -29,6 +29,7 @@ export const getASubmission = async (req, res) => {
 export const createSubmission = async (req, res) => {
     try {
         const { assignmentId, description } = req.body;
+        req.body.permission = 2
 
         const getAssignment = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
         if (!getAssignment) return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı"))

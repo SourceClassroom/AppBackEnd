@@ -23,6 +23,7 @@ import *as assignmentDatabaseModule from '../database/modules/assignmentModule.j
 export const createAssignment = async (req, res) => {
     try {
         const { classId, title, description, dueDate, week } = req.body;
+        req.body.permission = 1
 
         // Sınıfı getir
         const classExists = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)

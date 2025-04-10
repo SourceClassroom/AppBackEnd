@@ -11,6 +11,7 @@ const assignmentSchema = new Schema({
     attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     submissions: [{ type: Schema.Types.ObjectId, ref: "Submission" }],
     week: { type: Schema.Types.ObjectId, ref: "Week" },
+    fileTypes: [{ type: String, default: "all"}]
 }, { timestamps: true });
 
 const Assignment = mongoose.model("Assignment", assignmentSchema);

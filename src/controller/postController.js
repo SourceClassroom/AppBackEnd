@@ -17,6 +17,8 @@ import *as classDatabaseModule from '../database/modules/classModule.js';
 export const createPost = async (req, res) => {
     try {
         const { classId, content, week, title } = req.body;
+        req.body.permission = 1
+
         const fileIds = await processMedia(req);
 
         const classCacheKey = `class:${classId}:posts`;
