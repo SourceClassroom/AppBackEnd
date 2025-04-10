@@ -58,7 +58,6 @@ export const createWeek = async (req, res) => {
 
 export const updateWeek = async (req, res) => {
     try {
-        console.log(req.params)
         const { weekId } = req.params;
         const { title, description, startDate, endDate } = req.body;
 

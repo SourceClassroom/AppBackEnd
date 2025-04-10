@@ -68,7 +68,7 @@ export const createClass = async (req, res) => {
             { new: true }
         );
 
-        await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
+        await userCacheModule.getCachedUserData(teacher, userDatabaseModule.getUserById);
         return res.status(201).json(
             ApiResponse.success("Sınıf başarılı bir şekilde oluşturuldu.", {updatedTeacher, newClass})
         );
