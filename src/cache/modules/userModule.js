@@ -22,7 +22,7 @@ export const getCachedUserDashboardData = async (userId, fetchFn) => {
 export const clearUserCache = async (userId) => {
     try {
         const patterns = [`user:${userId}`, `user:${userId}:*`];
-        return await scanAndDeleteByPattern(patterns);
+        return await scanAndDelete(patterns);
     } catch (error) {
         console.error(`clearUserCache error (userId: ${userId}):`, error);
         throw error;

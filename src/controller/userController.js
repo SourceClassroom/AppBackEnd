@@ -216,7 +216,7 @@ export const changePassword = async (req, res) => {
                 ApiResponse.error('Mevcut şifre yanlış')
             );
         }
-        if (currentPassword === newPassword) {
+        if (await bcrypt.compare(newPassword, user.password)) { // import bcrypt
             return res.status(400).json(ApiResponse.error("Eski şifre ile yeni şifre aynı olamaz."))
         }
 

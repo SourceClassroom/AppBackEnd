@@ -7,7 +7,9 @@ export const client = redis.createClient({
   },
 });
 
-client.on("error", (err) => console.error("Redis bağlantı hatası:", err));
+client.on("error", (err) => {
+  console.error("Redis bağlantı hatası:", err);
+});
 
 export const redisConnect = async () => {
     await client.connect().then(() => {

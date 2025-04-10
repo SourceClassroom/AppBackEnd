@@ -4,13 +4,20 @@ export default async (pattern) => {
     try {
         const allKeysToDelete = new Set();
 
-        const patternArray = Array.isArray(patterns) ? patterns : [patterns];
+        const patternArray = Array.isArray(pattern) ? pattern : [pattern];
 
         for (const pattern of patternArray) {
             let cursor = "0";
 
             do {
-                const [nextCursor, keys] = await client.scan(cursor, "MATCH", pattern, "COUNT", 100);
+                // Scan result can be array or object with reply property
+                const scanResult = await client.scan(cursor, "MATCH", pattern, "COUNT", 100);
+                const result = Array.isArray(scanResult) ? scanResult : scanResult.reply;
+                if (!Array.isArray(result)) {
+                    await client.del(pattern);
+                    return 1;
+                }
+                const [nextCursor, keys] = result;
                 cursor = nextCursor;
 
                 if (Array.isArray(keys) && keys.length > 0) {
@@ -24,7 +31,9 @@ export default async (pattern) => {
 
         for (let i = 0; i < keysToDelete.length; i += chunkSize) {
             const chunk = keysToDelete.slice(i, i + chunkSize);
-            await client.del(...chunk);
+            if (chunk.length > 0) {
+                await client.del(chunk);
+            }
         }
 
         return keysToDelete.length;

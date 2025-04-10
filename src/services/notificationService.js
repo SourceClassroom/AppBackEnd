@@ -28,7 +28,7 @@ async function checkUserPreferences(userId, notificationType) {
         const user = await User.findById(userId);
 
         if (!user) {
-            console.error(`Kullanıcı bulunamadı: ${userId}`);
+            console.error(`Kullanıcı bulunamadı: ${encodeURIComponent(userId)}`); // import encodeURIComponent from 'querystring'
             return false;
         }
 

@@ -1,6 +1,5 @@
 import { client } from "../client/redisClient.js";
 import getOrSetCache from "../strategies/getOrSet.js";
-import { invalidateKey } from "../strategies/invalidate.js";
 
 const ASSIGNMENT_KEY = (assignmentId) => `assignment:${assignmentId}`;
 const WEEK_ASSIGNMENTS_KEY = (weekId) => `week:${weekId}:assignments`;

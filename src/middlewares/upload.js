@@ -63,8 +63,6 @@ export const validateAndUpload = (options = {}) => {
     return [
         // 1. Aşama: Memory'ye al ve kontrol et
         (req, res, next) => {
-            if (!uploadTypes.includes(req.body.uploadType)) res.status(400).json(ApiResponse.error("Desteklenmeyen yükleme tipi."))
-            if (req.body.uploadType === 'submission') allowedTypes = assignmentDatabaseModule.getAssignmentById(req.body.assignmentId)
             const uploadMiddleware = memoryUpload({
                 fileSize,
                 allowedTypes
@@ -97,6 +95,8 @@ export const validateAndUpload = (options = {}) => {
         },
         // 2. Aşama: Diske yaz
         (req, res, next) => {
+            if (!uploadTypes.includes(req.body.uploadType)) res.status(400).json(ApiResponse.error("Desteklenmeyen yükleme tipi."))
+            if (req.body.uploadType === 'submission') allowedTypes = assignmentDatabaseModule.getAssignmentById(req.body.assignmentId)
             if (!req.files || req.files.length === 0) return next();
             try {
                 const userId = req.user?.id || 'anonymous';
