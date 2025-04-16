@@ -45,7 +45,7 @@ export const getStudentsByClassId = async (classId) => {
         const classData = await Class.findById(classId)
             .populate({
                 path: 'students',
-                select: 'name surname email profile.avatar',
+                select: '_id',
             });
 
         return classData?.students || null;

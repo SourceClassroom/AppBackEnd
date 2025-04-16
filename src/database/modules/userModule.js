@@ -100,6 +100,15 @@ export const getUserDashboard = async (userId) => {
     }
 }
 
+export const getMultiUserById = async (userIds) => {
+    try {
+        return await User.find({ _id: { $in: userIds } }).select("-password")
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const pushNewEnrolledClass = async (userId, classId) => {
     try {
         return await User.findByIdAndUpdate(userId, { $push: { enrolledClasses: classId } }, { new: true });

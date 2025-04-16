@@ -12,6 +12,8 @@ import *as classCacheModule from '../cache/modules/classModule.js';
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
 import *as classDatabaseModule from '../database/modules/classModule.js';
+import multiGet from "../cache/strategies/multiGet.js";
+import {getMultiUserById} from "../database/modules/userModule.js";
 
 export const getClass = async (req, res) => {
     try {
@@ -255,18 +257,16 @@ export const banStudent = async (req, res) => {
 export const studentList = async (req, res) => {
     try {
         const classId = req.params.classId
-        const cacheKey = `class:${classId}:students`
 
-        //Sınıfı kontrol et
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
-        if (!getClassData) {
+        //Ogrenci Id verisi al
+        const getStudentIds = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        if (!getStudentIds) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
 
-        // Öğrenci verisini al
-        const getStudentData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        const studentData = await multiGet(getStudentIds, "user", userDatabaseModule.getMultiUserById)
 
-        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", getStudentData, 200))
+        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", studentData, 200))
     } catch (error) {
         console.error('Öğrenci bilgileri alınırken bir hata meydana geldi.:', error);
         res.status(500).json(

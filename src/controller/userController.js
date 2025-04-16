@@ -329,8 +329,8 @@ export const changeAvatar = async (req, res) => {
 
         await userDatabaseModule.changeAvatar(userId, fileIds[0])
 
-        await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
-        //await userCacheModule.clearUserCache(userId)
+        //await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
+        await userCacheModule.clearUserCache(userId)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
 
         return res.status(200).json(ApiResponse.success("Avatar başarılı bir şekilde değiştirildi."))
@@ -365,8 +365,8 @@ export const updateProfile = async (req, res) => {
         };
 
         await userDatabaseModule.updateProfile(userId, updatedProfileData)
-        //await userCacheModule.clearUserCache(userId)
-        await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
+        await userCacheModule.clearUserCache(userId)
+        //await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
     } catch (error) {
