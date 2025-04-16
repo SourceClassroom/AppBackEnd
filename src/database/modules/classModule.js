@@ -57,11 +57,7 @@ export const getStudentsByClassId = async (classId) => {
 
 export const getWeeksByClassId = async (classId) => {
     try {
-        const classData = await Class.findById(classId)
-            .populate({
-                path: 'weeks',
-                select: 'title description startDate endDate',
-            });
+        const classData = await Class.findById(classId).select("_id")
 
         return classData?.weeks || null;
     } catch (error) {
@@ -69,26 +65,6 @@ export const getWeeksByClassId = async (classId) => {
         throw error
     }
 }
-/*
-export const getClassPosts = async (classId) => {
-    try {
-        const classData = await Class.findById(classId)
-            .populate({
-                path: 'posts',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title content attachments createdAt'
-            });
-
-        return classData?.posts || null;
-    } catch (error) {
-        console.log(error)
-        throw error
-    }
-}
-*/
 
 export const pushNewStudent = async (classId, studentId) => {
     try {

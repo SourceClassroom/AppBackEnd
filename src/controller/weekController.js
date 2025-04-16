@@ -1,6 +1,7 @@
 import ApiResponse from "../utils/apiResponse.js";
 
 //Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
@@ -43,7 +44,7 @@ export const createWeek = async (req, res) => {
         // Veritabanına kaydet
         const newWeek = await weekDatabaseModule.createWeek(newWeekData)
         await classDatabaseModule.pushWeekToClass(classId, newWeek._id)
-        await invalidateKeys([`class:${classId}:weeks`, `class:${classId}`])
+        await invalidateKeys([`class:${classId}:weeks`])
 
         // Başarılı yanıt
         return res.status(201).json(ApiResponse.success("Hafta başarıyla oluşturuldu.", newWeek, 201));
@@ -74,7 +75,7 @@ export const updateWeek = async (req, res) => {
         };
 
         const updateWeek = await weekDatabaseModule.updateWeek(weekId, updateWeekData)
-        await invalidateKeys([`week:${weekId}`, `class:${getWeekData.classroom}:weeks`, `class:${getWeekData.classroom}`])
+        await invalidateKeys([`week:${weekId}`])
 
         return res.status(200).json(ApiResponse.success("Hafta başarıyla güncellendi.", updateWeek, 200));
     } catch (error) {
@@ -90,12 +91,14 @@ export const getClassWeeks = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const getWeeksData = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId)
-        if (!getWeeksData) {
+        const getClassWeeks = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId)
+        if (!getClassWeeks) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        return res.status(200).json(ApiResponse.success("Sınıf haftaları.", getWeeksData));
+        const weeksData = await multiGet(getClassWeeks, 'week', weekDatabaseModule.getMultiWeeks)
+
+        return res.status(200).json(ApiResponse.success("Sınıf haftaları.", weeksData));
     } catch (error) {
         console.error('Class haftaları fetch hatası:', error);
         res.status(500).json(

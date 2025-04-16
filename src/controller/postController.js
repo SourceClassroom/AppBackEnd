@@ -2,6 +2,7 @@ import ApiResponse from "../utils/apiResponse.js";
 import {processMedia} from "../services/fileService.js";
 
 //Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKeys, invalidateKey } from "../cache/strategies/invalidate.js";
 
 //Cache Module
@@ -13,7 +14,6 @@ import *as classCacheModule from '../cache/modules/classModule.js';
 import *as postDatabaseModule from '../database/modules/postModule.js';
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
-import multiGet from "../cache/strategies/multiGet.js";
 
 export const createPost = async (req, res) => {
     try {

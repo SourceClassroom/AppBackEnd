@@ -26,26 +26,15 @@ export const getWeekById = async (weekId) => {
         throw error
     }
 }
-/*!Removed
-export const getAssignmentsByWeekId = async (weekId) => {
-    try {
-        const weekData = await Week.findById(weekId)
-            .populate({
-                path: 'assignments',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title description dueDate createdAt'
-            });
 
-        return weekData?.assignments || null;
+export const getMultiWeeks = async (weekIds) => {
+    try {
+        return await Week.find({ _id: { $in: weekIds } }).select("title description startDate endDate");
     } catch (error) {
         console.log(error)
         throw error
     }
 }
-*/
 
 export const pushAssignmentToWeek = async (weekId, assignmentId) => {
     try {

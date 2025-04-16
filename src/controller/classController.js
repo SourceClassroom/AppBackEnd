@@ -3,6 +3,7 @@ import {User} from "../database/models/userModel.js";
 import { generateUniqueCode } from "../services/classCodeService.js";
 
 //Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKey, invalidateKeys } from "../cache/strategies/invalidate.js";
 
 //Cache Modules
@@ -12,7 +13,6 @@ import *as classCacheModule from '../cache/modules/classModule.js';
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
 import *as classDatabaseModule from '../database/modules/classModule.js';
-import multiGet from "../cache/strategies/multiGet.js";
 
 export const getClass = async (req, res) => {
     try {

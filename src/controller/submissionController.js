@@ -1,6 +1,10 @@
 import ApiResponse from "../utils/apiResponse.js";
 import {processMedia} from "../services/fileService.js";
 
+//Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
+import {invalidateKeys} from "../cache/strategies/invalidate.js";
+
 //Cache Modules
 import *as submissionCacheModule from '../cache/modules/submissionModule.js';
 import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
@@ -8,9 +12,6 @@ import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
 //Database Modules
 import *as submissionDatabaseModule from '../database/modules/submissionModule.js';
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
-import {invalidateKeys} from "../cache/strategies/invalidate.js";
-import {getAssignmentSubmissions} from "../database/modules/assignmentModule.js";
-import multiGet from "../cache/strategies/multiGet.js";
 
 export const getASubmission = async (req, res) => {
     try {
