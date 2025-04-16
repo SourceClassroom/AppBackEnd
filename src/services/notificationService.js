@@ -1,6 +1,6 @@
 import {User} from '../database/models/userModel.js';
-import {Notification} from '../database/models/notificationModel.js';
 import {Class} from "../database/models/classModel.js";
+import {Notification} from '../database/models/notificationModel.js';
 
 /**
  * Farklı bildirim türleri

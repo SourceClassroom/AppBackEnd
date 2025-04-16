@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import {client} from "../cache/client/redisClient.js";
-import {User} from "../database/models/userModel.js";
 
 //Cache Modules
 import *as tokenCacheModule from '../cache/modules/tokenModule.js';

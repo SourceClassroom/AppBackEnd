@@ -8,7 +8,6 @@ import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 //Cache Modules
 import *as weekCacheModule from '../cache/modules/weekModule.js';
 import *as classCacheModule from '../cache/modules/classModule.js';
-import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
 
 //Database Modules
 import *as weekDatabaseModule from '../database/modules/weekModule.js';

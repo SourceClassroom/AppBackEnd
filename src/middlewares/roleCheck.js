@@ -1,4 +1,3 @@
-import { ObjectId } from "mongoose";
 import ApiResponse from "../utils/apiResponse.js";
 import {Class} from "../database/models/classModel.js";
 

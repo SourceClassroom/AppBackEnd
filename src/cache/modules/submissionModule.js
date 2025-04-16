@@ -1,5 +1,4 @@
 import getOrSet from "../strategies/getOrSet.js";
-import { client } from "../client/redisClient.js";
 
 const SUBMISSION_KEY = (submissionId) => `submission:${submissionId}`
 

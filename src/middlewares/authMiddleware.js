@@ -1,4 +1,3 @@
-import {client} from "../cache/client/redisClient.js";
 import ApiResponse from "../utils/apiResponse.js";
 import {User} from "../database/models/userModel.js";
 import TokenService from "../services/jwtService.js";

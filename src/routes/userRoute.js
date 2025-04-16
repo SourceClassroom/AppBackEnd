@@ -3,7 +3,7 @@ import upload from "../middlewares/upload.js";
 import *as apiValidator from "../utils/validator.js"
 import *as userController from "../controller/userController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
-import {fileTypes, allAllowedFileTypes} from "../utils/fileTypes.js"
+import {fileTypes} from "../utils/fileTypes.js"
 
 const router = express.Router()
 

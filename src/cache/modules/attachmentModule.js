@@ -1,5 +1,4 @@
 import getOrSet from "../strategies/getOrSet.js";
-import { client } from "../client/redisClient.js";
 
 const ATTACHMENT_KEY = (attachmentId) =>`attachment:${attachmentId}`;
 
