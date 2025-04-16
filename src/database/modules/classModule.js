@@ -57,7 +57,7 @@ export const getStudentsByClassId = async (classId) => {
 
 export const getWeeksByClassId = async (classId) => {
     try {
-        const classData = await Class.findById(classId).select("_id")
+        const classData = await Class.findById(classId).select("weeks")
 
         return classData?.weeks || null;
     } catch (error) {
