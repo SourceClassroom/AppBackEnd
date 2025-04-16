@@ -45,7 +45,7 @@ export const getStudentsByClassId = async (classId) => {
         const classData = await Class.findById(classId)
             .populate({
                 path: 'students',
-                select: 'name surname email profile.avatar',
+                select: '_id',
             });
 
         return classData?.students || null;
@@ -57,32 +57,9 @@ export const getStudentsByClassId = async (classId) => {
 
 export const getWeeksByClassId = async (classId) => {
     try {
-        const classData = await Class.findById(classId)
-            .populate({
-                path: 'weeks',
-                select: 'title description startDate endDate',
-            });
+        const classData = await Class.findById(classId).select("_id")
 
         return classData?.weeks || null;
-    } catch (error) {
-        console.log(error)
-        throw error
-    }
-}
-
-export const getClassPosts = async (classId) => {
-    try {
-        const classData = await Class.findById(classId)
-            .populate({
-                path: 'posts',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title content attachments createdAt'
-            });
-
-        return classData?.posts || null;
     } catch (error) {
         console.log(error)
         throw error
@@ -133,7 +110,7 @@ export const removeStudentFromClass = async (classId, studentId) => {
         throw error
     }
 }
-
+/*!Removed
 export const getAssignmentsByClassId = async (classId) => {
     try {
         const classData = await Class.findById(classId)
@@ -152,7 +129,7 @@ export const getAssignmentsByClassId = async (classId) => {
         throw error
     }
 }
-
+*/
 export const pushAssignmentToClass = async (classId, assignmentId) => {
     try {
         return await Class.findByIdAndUpdate(classId, { $push: { assignments: assignmentId } }, { new: true });

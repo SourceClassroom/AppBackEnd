@@ -39,3 +39,16 @@ export const setFeedback = async (submissionId, feedback) => {
         throw new Error('Feedback girilirken bir hata meydana geldi.');
     }
 }
+
+export const getMultiSubmissions = async (submissionIds) => {
+    try {
+        return await Submission.find({ _id: { $in: submissionIds } })
+            .populate({
+                path: "attachments",
+                select: "originalname size"
+            })
+            .select("description grade feedback student")
+    } catch (error) {
+        throw error;
+    }
+};

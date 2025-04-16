@@ -4,13 +4,15 @@ import TokenService from "../services/jwtService.js";
 import *as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
 
+//Cache Strategies
+import {invalidateKeys} from "../cache/strategies/invalidate.js";
+
 //Cache Modules
 import *as userCacheModule from "../cache/modules/userModule.js";
 import *as tokenCacheModule from "../cache/modules/tokenModule.js";
 
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
-import {invalidateKeys} from "../cache/strategies/invalidate.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -329,8 +331,8 @@ export const changeAvatar = async (req, res) => {
 
         await userDatabaseModule.changeAvatar(userId, fileIds[0])
 
-        await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
-        //await userCacheModule.clearUserCache(userId)
+        //await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
+        await userCacheModule.clearUserCache(userId)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
 
         return res.status(200).json(ApiResponse.success("Avatar başarılı bir şekilde değiştirildi."))
@@ -365,8 +367,8 @@ export const updateProfile = async (req, res) => {
         };
 
         await userDatabaseModule.updateProfile(userId, updatedProfileData)
-        //await userCacheModule.clearUserCache(userId)
-        await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
+        await userCacheModule.clearUserCache(userId)
+        //await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
     } catch (error) {

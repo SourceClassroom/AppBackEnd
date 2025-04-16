@@ -2,6 +2,7 @@ import ApiResponse from "../utils/apiResponse.js";
 import { processMedia } from "../services/fileService.js";
 
 //Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
@@ -55,13 +56,11 @@ export const createAssignment = async (req, res) => {
 
         // Hafta veya sınıfa ödev ID'sini ekle
         if (week) {
-            const updateWeek = await weekDatabaseModule.pushAssignmentToWeek(week, newAssignment._id)
-            const updatedAssignments = await weekDatabaseModule.getAssignmentsByWeekId(week);
-            await assignmentCacheModule.writeAssignmnetToCacheByWeek(week, updatedAssignments, 3600)
+            await weekDatabaseModule.pushAssignmentToWeek(week, newAssignment._id)
+            await invalidateKey(`week:${classId}:assignments`)
         } else {
-            const updateClass = await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
-            const updatedAssignments = await classDatabaseModule.getAssignmentsByClassId(classId);
-            await assignmentCacheModule.writeAssignmnetToCacheByClass(classId, updatedAssignments, 3600)
+            await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
+            await invalidateKey(`class:${classId}:assignments`)
         }
 
         return res.status(201).json(ApiResponse.success("Ödev başarılı bir şekilde oluşturuldu.", newAssignment, 201));
@@ -77,13 +76,15 @@ export const getClassAssignments = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const assignments = await assignmentCacheModule.getCachedClassAssignments(classId, classDatabaseModule.getAssignmentsByClassId);
-        if (!assignments) {
+        const classAssignments = await classCacheModule.getCachedClassAssignments(classId, assignmentDatabaseModule.getClassAssignments);
+        if (!classAssignments) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
+        const assignmentsData = await multiGet(classAssignments, 'assignment', assignmentDatabaseModule.getMultiAssignments)
+
         return res.status(200).json(
-            ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignments, 200)
+            ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignmentsData, 200)
         );
     } catch (error) {
         console.error('Ödevleri getirme hatası:', error);
@@ -97,13 +98,15 @@ export const getWeekAssignments = async (req, res) => {
     try {
         const { weekId } = req.params;
 
-        const assignments = await assignmentCacheModule.getCachedWeekAssignments(weekId, weekDatabaseModule.getAssignmentsByWeekId);
-        if (!assignments) {
+        const weekAssignments = await weekCacheModule.getCachedWeekAssignments(weekId, assignmentDatabaseModule.getWeekAssignments);
+        if (!weekAssignments) {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
 
+        const assignmentsData = await multiGet(weekAssignments, 'assignment', assignmentDatabaseModule.getMultiAssignments)
+
         return res.status(200).json(
-            ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignments, 200)
+            ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignmentsData, 200)
         );
     } catch (error) {
         console.error('Ödevleri getirme hatası:', error);
@@ -132,7 +135,7 @@ export const updateAssignment = async (req, res) => {
         };
 
         const updatedAssignment = await assignmentDatabaseModule.updateAssignment(assignmentId, updatedAssignmentData);
-        await invalidateKeys([`class:${updatedAssignment.classroom}:assignments`, `week:${updatedAssignment?.week}:assignments`])
+        await invalidateKeys([`assignment:${assignmentId}`])
 
         return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde güncellendi.", updatedAssignment, 200));
     } catch (error) {

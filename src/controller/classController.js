@@ -3,6 +3,7 @@ import {User} from "../database/models/userModel.js";
 import { generateUniqueCode } from "../services/classCodeService.js";
 
 //Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKey, invalidateKeys } from "../cache/strategies/invalidate.js";
 
 //Cache Modules
@@ -255,18 +256,16 @@ export const banStudent = async (req, res) => {
 export const studentList = async (req, res) => {
     try {
         const classId = req.params.classId
-        const cacheKey = `class:${classId}:students`
 
-        //Sınıfı kontrol et
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
-        if (!getClassData) {
+        //Ogrenci Id verisi al
+        const getStudentIds = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        if (!getStudentIds) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
 
-        // Öğrenci verisini al
-        const getStudentData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        const studentData = await multiGet(getStudentIds, "user", userDatabaseModule.getMultiUserById)
 
-        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", getStudentData, 200))
+        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", studentData, 200))
     } catch (error) {
         console.error('Öğrenci bilgileri alınırken bir hata meydana geldi.:', error);
         res.status(500).json(
@@ -304,7 +303,7 @@ export const leaveClass = async (req, res) => {
         const updateUser = await userDatabaseModule.removeClassFromEnrolledClasses(userId, classId)
 
         // Sınıftan kullanıcıyı kaldır
-        const updateClass = await classDatabaseModule.removeStudentFromClass(classId, userId)
+        await classDatabaseModule.removeStudentFromClass(classId, userId)
 
         //Clear cache
         await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`, `class:${classId}`, `class:${classId}:students`])

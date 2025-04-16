@@ -1,6 +1,10 @@
 import ApiResponse from "../utils/apiResponse.js";
 import {processMedia} from "../services/fileService.js";
 
+//Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
+import {invalidateKeys} from "../cache/strategies/invalidate.js";
+
 //Cache Modules
 import *as submissionCacheModule from '../cache/modules/submissionModule.js';
 import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
@@ -8,8 +12,6 @@ import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
 //Database Modules
 import *as submissionDatabaseModule from '../database/modules/submissionModule.js';
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
-import {invalidateKeys} from "../cache/strategies/invalidate.js";
-import {getAssignmentSubmissions} from "../database/modules/assignmentModule.js";
 
 export const getASubmission = async (req, res) => {
     try {
@@ -43,8 +45,8 @@ export const createSubmission = async (req, res) => {
             attachments: fileIds
         }
         const newSubmission = await submissionDatabaseModule.createSubmission(newSubmissionData)
-        const updateAsssignment = await assignmentDatabaseModule.pushSubmissionToAssignment(assignmentId, newSubmission._id)
-        await invalidateKeys([`submissions:${assignmentId}`, `assignment:${assignmentId}:submissions`])
+        await assignmentDatabaseModule.pushSubmissionToAssignment(assignmentId, newSubmission._id)
+        await invalidateKeys([`assignment:${assignmentId}:submissions`])
 
         return res.status(201).json(ApiResponse.success("Gönderim başarıyla eklendi.", newSubmission, 201));
     } catch (error) {
@@ -61,7 +63,9 @@ export const getSubmissions = async (req, res) => {
         const submissions = await assignmentCacheModule.getCachedSubmissions(assignmentId, assignmentDatabaseModule.getAssignmentSubmissions)
         if (!submissions) return res.status(404).json(ApiResponse.notFound("Bu ödev için gönderim bulunamadı"))
 
-        return res.status(200).json(ApiResponse.success("Ödeve eklenmiş tüm gönderimler.", submissions));
+        const submissionsData = await multiGet(submissions, "submission", submissionDatabaseModule.getMultiSubmissions)
+
+        return res.status(200).json(ApiResponse.success("Ödeve eklenmiş tüm gönderimler.", submissionsData));
     } catch (error) {
         console.log(error)
         res.status(500).json(
