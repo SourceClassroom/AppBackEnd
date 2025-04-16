@@ -13,7 +13,6 @@ import *as classCacheModule from '../cache/modules/classModule.js';
 import *as userDatabaseModule from "../database/modules/userModule.js";
 import *as classDatabaseModule from '../database/modules/classModule.js';
 import multiGet from "../cache/strategies/multiGet.js";
-import {getMultiUserById} from "../database/modules/userModule.js";
 
 export const getClass = async (req, res) => {
     try {
@@ -304,7 +303,7 @@ export const leaveClass = async (req, res) => {
         const updateUser = await userDatabaseModule.removeClassFromEnrolledClasses(userId, classId)
 
         // Sınıftan kullanıcıyı kaldır
-        const updateClass = await classDatabaseModule.removeStudentFromClass(classId, userId)
+        await classDatabaseModule.removeStudentFromClass(classId, userId)
 
         //Clear cache
         await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`, `class:${classId}`, `class:${classId}:students`])

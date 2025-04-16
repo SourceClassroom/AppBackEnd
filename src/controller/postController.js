@@ -13,6 +13,7 @@ import *as classCacheModule from '../cache/modules/classModule.js';
 import *as postDatabaseModule from '../database/modules/postModule.js';
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
+import multiGet from "../cache/strategies/multiGet.js";
 
 export const createPost = async (req, res) => {
     try {
@@ -35,13 +36,11 @@ export const createPost = async (req, res) => {
 
         const createPost = await postDatabaseModule.createPost(newPostData)
         if (week) {
-            await invalidateKeys([weekCacheKey])
             await weekDatabaseModule.pushPostToWeek(week, createPost._id)
-            await weekCacheModule.getCachedWeekPosts(week, weekDatabaseModule.getWeekPosts)
+            await invalidateKeys([weekCacheKey])
         } else {
-            await invalidateKeys([classCacheKey])
             await classDatabaseModule.pushPostToClass(classId, createPost._id)
-            await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
+            await invalidateKeys([classCacheKey])
         }
         res.status(201).json(ApiResponse.success("Duyuru başarıyla oluşturuldu.", createPost, 201));
     } catch (error) {
@@ -56,9 +55,11 @@ export const getClassPosts = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classPosts = await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
+        const classPosts = await classCacheModule.getCachedClassPosts(classId, postDatabaseModule.getClassPosts)
 
-        return res.status(200).json(ApiResponse.success("Sınıf post verisi.", classPosts));
+        const postData = await multiGet(classPosts, "post", postDatabaseModule.getMultiPosts)
+
+        return res.status(200).json(ApiResponse.success("Sınıf post verisi.", postData));
     } catch (error) {
         console.error('Class post fetch hatası:', error);
         res.status(500).json(

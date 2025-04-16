@@ -69,7 +69,7 @@ export const getWeeksByClassId = async (classId) => {
         throw error
     }
 }
-
+/*
 export const getClassPosts = async (classId) => {
     try {
         const classData = await Class.findById(classId)
@@ -88,6 +88,7 @@ export const getClassPosts = async (classId) => {
         throw error
     }
 }
+*/
 
 export const pushNewStudent = async (classId, studentId) => {
     try {
@@ -133,7 +134,7 @@ export const removeStudentFromClass = async (classId, studentId) => {
         throw error
     }
 }
-
+/*!Removed
 export const getAssignmentsByClassId = async (classId) => {
     try {
         const classData = await Class.findById(classId)
@@ -152,7 +153,7 @@ export const getAssignmentsByClassId = async (classId) => {
         throw error
     }
 }
-
+*/
 export const pushAssignmentToClass = async (classId, assignmentId) => {
     try {
         return await Class.findByIdAndUpdate(classId, { $push: { assignments: assignmentId } }, { new: true });

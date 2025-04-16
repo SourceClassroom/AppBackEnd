@@ -1,9 +1,6 @@
-import { client } from "../client/redisClient.js";
 import getOrSetCache from "../strategies/getOrSet.js";
 
 const ASSIGNMENT_KEY = (assignmentId) => `assignment:${assignmentId}`;
-const WEEK_ASSIGNMENTS_KEY = (weekId) => `week:${weekId}:assignments`;
-const CLASS_ASSIGNMENTS_KEY = (classId) => `class:${classId}:assignments`;
 
 export const getCachedAssignment = async (assignmentId, fetchFn) => {
     try {
@@ -12,34 +9,9 @@ export const getCachedAssignment = async (assignmentId, fetchFn) => {
         throw error;
     }
 }
-
-export const getCachedClassAssignments = async (classId, fetchFn) => {
+export const getCachedSubmissions = async (assignmentId, fetchFn) => {
     try {
-        return await getOrSetCache(CLASS_ASSIGNMENTS_KEY(classId),  () => fetchFn(classId), 3600);
-    } catch (error) {
-        throw error;
-    }
-}
-
-export const getCachedWeekAssignments = async (weekId, fetchFn) => {
-    try {
-        return await getOrSetCache(WEEK_ASSIGNMENTS_KEY(weekId), () => fetchFn(weekId), 3600);
-    } catch (error) {
-        throw error;
-    }
-}
-
-export const writeAssignmnetToCacheByClass = async (classId, assignments, ttl = 3600) => {
-    try {
-        await client.setEx(CLASS_ASSIGNMENTS_KEY(classId), ttl, JSON.stringify(assignments));
-    } catch (error) {
-        throw error;
-    }
-}
-
-export const writeAssignmnetToCacheByWeek = async (weekId, assignments, ttl = 3600) => {
-    try {
-        await client.setEx(WEEK_ASSIGNMENTS_KEY(weekId), ttl, JSON.stringify(assignments));
+        return await getOrSetCache(`${ASSIGNMENT_KEY(assignmentId)}:submissions`, () => fetchFn(assignmentId), 900);
     } catch (error) {
         throw error;
     }

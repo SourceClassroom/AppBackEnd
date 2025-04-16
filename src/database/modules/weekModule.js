@@ -26,7 +26,7 @@ export const getWeekById = async (weekId) => {
         throw error
     }
 }
-
+/*!Removed
 export const getAssignmentsByWeekId = async (weekId) => {
     try {
         const weekData = await Week.findById(weekId)
@@ -45,6 +45,7 @@ export const getAssignmentsByWeekId = async (weekId) => {
         throw error
     }
 }
+*/
 
 export const pushAssignmentToWeek = async (weekId, assignmentId) => {
     try {

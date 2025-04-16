@@ -20,6 +20,14 @@ export const getCachedStudentList = async (classId, fetchFn) => {
     }
 }
 
+export const getCachedClassAssignments = async (classId, fetchFn) => {
+    try {
+        return await getOrSet(`${CLASS_KEY(classId)}:assignments`, () => fetchFn(classId), 3600)
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const getCachedClassPosts = async (classId, fetchFn) => {
     try {
         return await getOrSet(`${CLASS_KEY(classId)}:posts`, () => fetchFn(classId), 3600)

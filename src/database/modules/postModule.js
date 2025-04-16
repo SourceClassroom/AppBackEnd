@@ -23,3 +23,19 @@ export const pushCommentToPost = async (postId, commentId) => {
         throw new Error('Post güncellenirken bir hata meydana geldi.');
     }
 }
+
+export const getClassPosts = async (classId) => {
+    try {
+        return await Post.find({ classroom: classId }).select("_id").sort({ createdAt: -1 });
+    } catch (error) {
+        throw new Error('Postlar getirilirken bir hata meydana geldi.');
+    }
+}
+
+export const getMultiPosts = async (postIds) => {
+    try {
+        return await Post.find({ _id: { $in: postIds } }).sort({ createdAt: -1 });
+    } catch (error) {
+        throw new Error('Postlar getirilirken bir hata meydana geldi.');
+    }
+}

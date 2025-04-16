@@ -14,14 +14,21 @@ export default async (ids, prefix, fetchFn) => {
             missingData.push(ids[index]);
         }
     });
-    console.log(missingData)
-    const fetcherDataFromDb = await fetchFn(missingData);
 
-    for (const data of fetcherDataFromDb) {
-        await client.set(`${prefix}:${data.id}`, JSON.stringify(user), {
-            EX: 3600
-        });
-        result.push(data);
+    if (missingData.length > 0) {
+        const fetcherDataFromDb = await fetchFn(missingData);
+
+        const pipeline = client.multi(); // Redis pipeline başlat
+
+        for (const data of fetcherDataFromDb) {
+            pipeline.set(`${prefix}:${data.id}`, JSON.stringify(data), {
+                EX: 3600
+            });
+            result.push(data);
+        }
+
+        await pipeline.exec(); // Bütün set işlemlerini tek seferde gönder
     }
-    return result
-}
+
+    return result;
+};
