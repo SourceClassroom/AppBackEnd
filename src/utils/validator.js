@@ -138,6 +138,21 @@ export const validateCreateAssignment = [
         .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
 ]
 
+export const validateCreateMaterial = [
+    body('classId')
+        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
+        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
+    body('title')
+        .notEmpty().withMessage('Başlık alanı zorunludur.')
+        .isLength({ min: 3 }).withMessage('Başlık en az 3 karakter olmalıdır.'),
+    body('description')
+        .optional()
+        .isLength({ max: 2048 }).withMessage('Açıklama en fazla 2048 karakter olabilir.'),
+    body('week')
+        .optional()
+        .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
+]
+
 export const classValidate = [
     body('title')
         .notEmpty().withMessage('Sınıf ismi boş olamaz.')

@@ -55,7 +55,7 @@ export const getClassPosts = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classPosts = await classCacheModule.getCachedClassPosts(classId, postDatabaseModule.getClassPosts)
+        const classPosts = await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
 
         const postData = await multiGet(classPosts, "post", postDatabaseModule.getMultiPosts)
 
@@ -74,7 +74,9 @@ export const getWeekPosts = async (req, res) => {
 
         const weekPosts = await weekCacheModule.getCachedWeekPosts(weekId, weekDatabaseModule.getWeekPosts)
 
-        return res.status(200).json(ApiResponse.success("Hafta post verisi.", weekPosts));
+        const postData = await multiGet(weekPosts, "post", postDatabaseModule.getMultiPosts)
+
+        return res.status(200).json(ApiResponse.success("Hafta post verisi.", postData));
     } catch (error) {
         console.error('Hafta post fetch hatası:', error);
         res.status(500).json(

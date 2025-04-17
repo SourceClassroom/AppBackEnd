@@ -35,6 +35,15 @@ export const getCachedClassPosts = async (classId, fetchFn) => {
         throw error;
     }
 }
+
+export const getCachedClassMaterials = async (classId, fetchFn) => {
+    try {
+        return await getOrSet(`${CLASS_KEY(classId)}:materials`, () => fetchFn(classId), 3600)
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const getClassWeeks = async (classId, fetchFn) => {
     try {
         return await getOrSet(`${CLASS_KEY(classId)}:weeks`, () => fetchFn(classId), 3600)

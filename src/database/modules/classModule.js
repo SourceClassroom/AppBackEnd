@@ -75,6 +75,15 @@ export const pushNewStudent = async (classId, studentId) => {
     }
 }
 
+export const pushMaterialToClass = async (classId, materialId) => {
+    try {
+        return await Class.findByIdAndUpdate(classId, { $push: { material: materialId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const pushPostToClass = async (classId, postId) => {
     try {
         return await Class.findByIdAndUpdate(classId, { $push: { posts: postId } }, { new: true });
@@ -110,29 +119,39 @@ export const removeStudentFromClass = async (classId, studentId) => {
         throw error
     }
 }
-/*!Removed
-export const getAssignmentsByClassId = async (classId) => {
+export const pushAssignmentToClass = async (classId, assignmentId) => {
     try {
-        const classData = await Class.findById(classId)
-            .populate({
-                path: 'assignments',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title description dueDate createdAt'
-            });
-
-        return classData?.assignments || null;
+        return await Class.findByIdAndUpdate(classId, { $push: { assignments: assignmentId } }, { new: true });
     } catch (error) {
         console.log(error)
         throw error
     }
 }
-*/
-export const pushAssignmentToClass = async (classId, assignmentId) => {
+
+export const getClassMaterials = async (classId) => {
     try {
-        return await Class.findByIdAndUpdate(classId, { $push: { assignments: assignmentId } }, { new: true });
+        const data = await Class.findById(classId).select("material")
+        return data?.material || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const getClassAssignments = async (classId) => {
+    try {
+        const data = await Class.findById(classId).select("assignments")
+        return data?.assignments || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const getClassPosts = async (classId) => {
+    try {
+        const data = await Class.findById(classId).select("posts")
+        return data?.posts || null
     } catch (error) {
         console.log(error)
         throw error

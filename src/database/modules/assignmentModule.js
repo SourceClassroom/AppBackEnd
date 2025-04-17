@@ -32,21 +32,6 @@ export const getAssignmentSubmissions = async (assignmentId) => {
     }
 };
 
-export const getClassAssignments = async (classId) => {
-    try {
-        return await Assignment.find({ class: classId }).select("_id").sort({ createdAt: -1 })
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const getWeekAssignments = async (weekId) => {
-    try {
-        return await Assignment.find({ week: weekId }).select("_id").sort({ createdAt: -1 })
-    } catch (error) {
-        throw error;
-    }
-};
 
 export const getMultiAssignments = async (assignmentIds) => {
     try {

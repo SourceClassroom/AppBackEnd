@@ -19,6 +19,7 @@ const ClassSchema = new Schema({
     forbiddenStudents: [{ type: Schema.Types.ObjectId, ref: "User" }],
     posts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
     assignments: [{ type: Schema.Types.ObjectId, ref: "Assignment" }],
+    material: [{ type: Schema.Types.ObjectId, ref: "Material" }],
     weeks: [{ type: Schema.Types.ObjectId, ref: "Week" }],
 }, { timestamps: true });
 

@@ -62,7 +62,7 @@ router.route("/change-avatar").put(
     upload.validateAndUpload({
             fieldName: "files",
             minFiles: 1,
-            maxFiled: 1,
+            maxFiles: 1,
             fileSize: 10 * 1024 * 1024,
             allowedTypes: fileTypes.images
         }),

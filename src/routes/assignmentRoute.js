@@ -12,7 +12,7 @@ router.route("/create").post(
     upload.validateAndUpload({
         fieldName: "files",
         minFiles: 0,
-        maxFiled: 20,
+        maxFiles: 20,
         fileSize: 1024 * 1024 * 1024,
     }),
     apiValidator.validateCreateAssignment,

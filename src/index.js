@@ -5,8 +5,8 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import cookieParser from "cookie-parser"
 import conn from "./database/client/mongodbConnection.js";
+import hostnameCheck from "./middlewares/hostnameCheck.js";
 import {redisConnect} from "./cache/client/redisClient.js";
-import hostnameCheck from "./middlewares/hostnameCheck.js"
 
 //Routes
 import userRouter from './routes/userRoute.js';
@@ -14,6 +14,7 @@ import weekRouter from './routes/weekRoute.js';
 import postRouter from './routes/postRoute.js';
 import classRouter from './routes/classRoute.js';
 import commentRoute from "./routes/commentRoute.js";
+import materialRoute from "./routes/materialRoute.js";
 import attachmentRoute from './routes/attachmentRoute.js'
 import assignmentRouter from './routes/assignmentRoute.js';
 import submissionRouter from './routes/submissionRoute.js';
@@ -47,6 +48,7 @@ app.use('/api/post', postRouter)
 app.use('/api/users', userRouter)
 app.use('/api/class', classRouter)
 app.use('/api/comment', commentRoute)
+app.use('/api/material', materialRoute)
 app.use('/api/attachment', attachmentRoute)
 app.use('/api/assignment', assignmentRouter)
 app.use('/api/submission', submissionRouter)

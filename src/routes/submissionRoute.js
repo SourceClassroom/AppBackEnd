@@ -48,7 +48,7 @@ router.route("/submit").post(
     upload.validateAndUpload({
         fieldName: "files",
         minFiles: 0,
-        maxFiled: 5,
+        maxFiles: 5,
         fileSize: 1024 * 1024 * 1024,
     }),
     roleCheck.isClassMember(),

@@ -1,4 +1,5 @@
 import {Week} from "../models/weekModel.js";
+import {Class} from "../models/classModel.js";
 
 export const createWeek = async (weekData) => {
     try {
@@ -54,7 +55,7 @@ export const pushPostToWeek = async (weekId, postId) => {
     }
 }
 
-export const getWeekPosts = async (weekId) => {
+/*export const getWeekPosts = async (weekId) => {
     try {
         const weekData = await Week.findById(weekId)
             .populate({
@@ -67,6 +68,35 @@ export const getWeekPosts = async (weekId) => {
             });
 
         return weekData?.posts || null;
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}*/
+
+export const getWeekMaterials = async (weekId) => {
+    try {
+        const data = await Week.findById(weekId).select("material")
+        return data?.material || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const getWeekPosts = async (weekId) => {
+    try {
+        const data = await Week.findById(weekId).select("posts")
+        return data?.posts || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+export const getWeekAssignments = async (weekId) => {
+    try {
+        const data = await Week.findById(weekId).select("assignments")
+        return data?.assignments || null
     } catch (error) {
         console.log(error)
         throw error

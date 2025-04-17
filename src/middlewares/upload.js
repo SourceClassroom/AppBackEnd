@@ -95,7 +95,7 @@ export const validateAndUpload = (options = {}) => {
         },
         // 2. Aşama: Diske yaz
         (req, res, next) => {
-            if (!uploadTypes.includes(req.body.uploadType)) res.status(400).json(ApiResponse.error("Desteklenmeyen yükleme tipi."))
+            if (!uploadTypes.includes(req.body.uploadType)) return res.status(400).json(ApiResponse.error("Desteklenmeyen yükleme tipi."))
             if (req.body.uploadType === 'submission') allowedTypes = assignmentDatabaseModule.getAssignmentById(req.body.assignmentId)
             if (!req.files || req.files.length === 0) return next();
             try {

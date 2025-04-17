@@ -75,7 +75,7 @@ export const getClassAssignments = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classAssignments = await classCacheModule.getCachedClassAssignments(classId, assignmentDatabaseModule.getClassAssignments);
+        const classAssignments = await classCacheModule.getCachedClassAssignments(classId, classDatabaseModule.getClassAssignments);
         if (!classAssignments) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
@@ -97,7 +97,7 @@ export const getWeekAssignments = async (req, res) => {
     try {
         const { weekId } = req.params;
 
-        const weekAssignments = await weekCacheModule.getCachedWeekAssignments(weekId, assignmentDatabaseModule.getWeekAssignments);
+        const weekAssignments = await weekCacheModule.getCachedWeekAssignments(weekId, weekDatabaseModule.getWeekAssignments);
         if (!weekAssignments) {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
