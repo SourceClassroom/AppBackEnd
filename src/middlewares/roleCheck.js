@@ -167,6 +167,7 @@ export const checkFilePermission = (userIdField = 'userId', attachmentIdField = 
             } else if (permission === 2) {
                 req.params.classId = classroom
                 if (!classroom) return res.status(400).json(ApiResponse.error("Sınıf verisi bulunamadı lütfen bir sistem yöneticisi ile iletişime geçin."))
+                if (attachmentData.userId === user.id) return next()
                 return isClassTeacherOrOwner()(req, res, next);
             }
             // TODO: Chat dosyaları için yetkilendirme eklenebilir

@@ -29,4 +29,15 @@ router.route("/:classId").get(
     materialController.getClassMaterials
 )
 
+router.route("/:classId/:weekId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("weekId"),
+    apiValidator.validate,
+    roleCheck.isClassMember(),
+    materialController.getWeekMaterials
+)
+
+
+
 export default router

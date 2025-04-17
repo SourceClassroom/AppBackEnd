@@ -3,6 +3,7 @@ import upload from "../middlewares/upload.js"
 import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
+import *as classMiddleware from "../middlewares/classMiddleware.js";
 import *as assignmentController from "../controller/assignmentController.js";
 
 const router = express.Router()
@@ -26,6 +27,7 @@ router.route("/update/:classId/:assignmentId").put(
     apiValidator.validateMongoId("classId"),
     apiValidator.validateMongoId("assignmentId"),
     apiValidator.validate,
+    classMiddleware.checkAssignmentClassroom,
     roleCheck.isClassTeacherOrOwner(),
     assignmentController.updateAssignment
 )
@@ -43,6 +45,7 @@ router.route("/week/:classId/:weekId").get(
     apiValidator.validateMongoId("classId"),
     apiValidator.validateMongoId("weekId"),
     apiValidator.validate,
+    classMiddleware.checkWeekClassroom,
     roleCheck.isClassMember(),
     assignmentController.getWeekAssignments
 )

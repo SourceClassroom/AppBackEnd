@@ -10,8 +10,25 @@ import *as submissionCacheModule from '../cache/modules/submissionModule.js';
 import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
 
 //Database Modules
+import * as userDatabaseModule from "../database/modules/userModule.js";
 import *as submissionDatabaseModule from '../database/modules/submissionModule.js';
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
+
+export const getUserSubmissions = async (req, res) => {
+    try {
+        const assignmentId = req.params.assignmentId
+        const userId = req.user.id
+
+        const submissions = await submissionCacheModule.getCachedUserSubmissions(userId, assignmentId, submissionDatabaseModule.getUserSubmission)
+        if (!submissions) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
+
+        return res.status(200).json(ApiResponse.success("Gönderim verisi.", submissions));
+    } catch (error) {
+        res.status(500).json(
+            ApiResponse.serverError('Gönderim verisi alinirken bir hata oluştu', error)
+        );
+    }
+}
 
 export const getASubmission = async (req, res) => {
     try {
@@ -36,6 +53,12 @@ export const createSubmission = async (req, res) => {
         const getAssignment = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
         if (!getAssignment) return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı"))
 
+        //Check assignment dueDate
+        const currentDate = new Date();
+        const dueDate = new Date(getAssignment.dueDate)
+        if (currentDate > dueDate) {
+            return res.status(400).json(ApiResponse.error("Ödev için son gönderim tarihi geçmiş."));
+        }
         const fileIds = await processMedia(req);
 
         const newSubmissionData = {
@@ -63,9 +86,28 @@ export const getSubmissions = async (req, res) => {
         const submissions = await assignmentCacheModule.getCachedSubmissions(assignmentId, assignmentDatabaseModule.getAssignmentSubmissions)
         if (!submissions) return res.status(404).json(ApiResponse.notFound("Bu ödev için gönderim bulunamadı"))
 
-        const submissionsData = await multiGet(submissions, "submission", submissionDatabaseModule.getMultiSubmissions)
+        const submissionsData = (await multiGet(submissions, "submission", submissionDatabaseModule.getMultiSubmissions))
+            .map(sub => sub.toObject ? sub.toObject() : sub);
 
-        return res.status(200).json(ApiResponse.success("Ödeve eklenmiş tüm gönderimler.", submissionsData));
+        const users = submissionsData.map(sub => sub.student);
+        const userData = (await multiGet(users, "user", userDatabaseModule.getMultiUserById))
+            .map(u => u.toObject ? u.toObject() : u);
+
+        const responseData = submissionsData.map(submission => {
+            const user = userData.find(u => u._id.toString() === submission.student.toString());
+            return {
+                ...submission,
+                student: {
+                    name: user.name,
+                    surname: user.surname,
+                    profile: {
+                        avatar: user.profile?.avatar
+                    }
+                }
+            };
+        });
+
+        return res.status(200).json(ApiResponse.success("Ödeve eklenmiş tüm gönderimler.", responseData));
     } catch (error) {
         console.log(error)
         res.status(500).json(

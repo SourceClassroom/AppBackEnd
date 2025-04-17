@@ -6,10 +6,12 @@ import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKey} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
+import *as weekCacheModule from "../cache/modules/weekModule.js";
 import *as classCacheModule from "../cache/modules/classModule.js";
-
 import *as materialCacheModule from "../cache/modules/materialModule.js";
+
 //Database Modules
+import *as weekDatabaseModule from "../database/modules/weekModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
 import *as materialDatabaseModule from "../database/modules/materialModule.js";
 
@@ -44,6 +46,21 @@ export const getClassMaterials = async (req, res) => {
         const classMaterials = await classCacheModule.getCachedClassMaterials(classId, classDatabaseModule.getClassMaterials);
 
         const materials = await multiGet(classMaterials, 'material', materialDatabaseModule.getMultiMaterials)
+
+        res.status(200).json(ApiResponse.success("Materyaller başarıyla getirildi.", materials, 200));
+    } catch (error) {
+        console.log(error)
+        res.status(500).json(ApiResponse.serverError("Materyaller getirilirken bir hata meydana geldi.", error));
+    }
+};
+
+export const getWeekMaterials = async (req, res) => {
+    try {
+        const { classId, weekId } = req.params;
+
+        const weekMaterials = await weekCacheModule.getCachedWeekMaterials(week, weekDatabaseModule.getWeekMaterials);
+
+        const materials = await multiGet(weekMaterials, 'material', materialDatabaseModule.getMultiMaterials)
 
         res.status(200).json(ApiResponse.success("Materyaller başarıyla getirildi.", materials, 200));
     } catch (error) {

@@ -4,6 +4,7 @@ import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import *as postController from "../controller/postController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
+import *as classMiddleware from "../middlewares/classMiddleware.js";
 
 const router = express.Router()
 
@@ -34,6 +35,7 @@ router.route("/week/:classId/:weekId").get(
     apiValidator.validateMongoId("classId"),
     apiValidator.validateMongoId("weekId"),
     apiValidator.validate,
+    classMiddleware.checkWeekClassroom,
     roleCheck.isClassMember(),
     postController.getWeekPosts
 )
@@ -43,6 +45,7 @@ router.route("/update/:classId/:postId").put(
     apiValidator.validateMongoId("classId"),
     apiValidator.validateMongoId("postId"),
     apiValidator.validate,
+    classMiddleware.checkPostClassroom,
     roleCheck.isClassTeacherOrOwner(),
     postController.updatePost
 )

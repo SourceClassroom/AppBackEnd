@@ -26,3 +26,11 @@ export const getCachedWeekAssignments = async (weekId, fetchFn) => {
         throw error;
     }
 }
+
+export const getCachedWeekMaterials = async (weekId, fetchFn) => {
+    try {
+        return await getOrSet(`${WEEK_KEY(weekId)}:materials`, () => fetchFn(weekId), 3600)
+    } catch (error) {
+        throw error;
+    }
+}

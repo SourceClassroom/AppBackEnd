@@ -26,7 +26,8 @@ export const updateAssignment = async (assignmentId, data) => {
 
 export const getAssignmentSubmissions = async (assignmentId) => {
     try {
-        return await Assignment.findById(assignmentId, "submissions")
+        const assignmentData = await Assignment.findById(assignmentId, "submissions")
+        return assignmentData?.submissions
     } catch (error) {
         throw error;
     }
@@ -40,7 +41,6 @@ export const getMultiAssignments = async (assignmentIds) => {
                 path: "attachments",
                 select: "originalname size"
             })
-            .select("title description dueDate createdAt")
     } catch (error) {
         throw error;
     }

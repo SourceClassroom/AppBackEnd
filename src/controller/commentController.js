@@ -35,34 +35,41 @@ export const createComment = async (req, res) => {
 
 export const getComments = async (req, res) => {
     try {
-        const { postId } = req.params
+        const { postId } = req.params;
 
-        let comments = await commentCacheModule.getPostComments(postId, commentDatabaseModule.getPostComments)
+        // Cache üzerinden veya DB'den yorumları al
+        let comments = await commentCacheModule.getPostComments(postId, commentDatabaseModule.getPostComments);
 
         if (!comments || comments.length === 0) {
-            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı", null, 404))
+            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı", null, 404));
         }
-        const users = comments.map(comment => comment.author)
 
-        const userData = await multiGet(users, "user", userDatabaseModule.getMultiUserById)
+        // Saf objeye dönüştür
+        comments = comments.map(comment => comment.toObject ? comment.toObject() : comment);
 
-        comments = comments.map(comment => {
-            const user = userData.find(u => u._id.toString() === comment.author.toString())
+        const users = comments.map(comment => comment.author);
+
+        let userData = await multiGet(users, "user", userDatabaseModule.getMultiUserById);
+        userData = userData.map(user => user.toObject ? user.toObject() : user);
+
+        // Kullanıcı bilgilerini yorumlara entegre et
+        const result = comments.map(comment => {
+            const user = userData.find(u => u._id.toString() === comment.author.toString());
             return {
                 ...comment,
                 author: {
-                    name: user.name,
-                    surname: user.surname,
+                    name: user?.name || "Bilinmiyor",
+                    surname: user?.surname || "",
                     profile: {
-                        avatar: user.profile?.avatar
+                        avatar: user?.profile?.avatar || null
                     }
                 }
-            }
-        })
-        console.log(comments)
-        res.status(200).json(ApiResponse.success("Yorumlar başarıyla getirildi", comments, 200))
+            };
+        });
+
+        res.status(200).json(ApiResponse.success("Yorumlar başarıyla getirildi", result, 200));
     } catch (error) {
-        console.error(error)
-        return res.status(500).json(ApiResponse.serverError("Internal Server Error", error))
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Internal Server Error", error));
     }
-}
+};

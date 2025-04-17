@@ -3,6 +3,7 @@ import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import *as weekController from "../controller/weekController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
+import *as classMiddleware from "../middlewares/classMiddleware.js";
 
 const router = express.Router()
 
@@ -20,6 +21,7 @@ router.route("/update/:classId/:weekId").put(
     apiValidator.validateMongoId("weekId"),
     apiValidator.validateWeek,
     apiValidator.validate,
+    classMiddleware.checkWeekClassroom,
     roleCheck.isClassTeacherOrOwner(),
     weekController.updateWeek
 )

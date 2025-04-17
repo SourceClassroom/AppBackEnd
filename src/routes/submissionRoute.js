@@ -5,7 +5,7 @@ import *as roleCheck from "../middlewares/roleCheck.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 import *as submissionCheck from "../middlewares/submissionCheck.js";
 import *as submissionController from "../controller/submissionController.js"
-
+import *as classMiddleware from "../middlewares/classMiddleware.js"
 
 const router = express.Router()
 
@@ -25,6 +25,15 @@ router.route("/:classId/:submissionId").get(
     apiValidator.validateMongoId("submissionId"),
     apiValidator.validate,
     submissionController.getASubmission
+)
+
+router.route("/user-submission/:classId/:assignmentId").get(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("assignmentId"),
+    apiValidator.validate,
+    roleCheck.isClassMember(),
+    submissionController.getUserSubmissions
 )
 
 router.route("/grade").put(
@@ -55,6 +64,7 @@ router.route("/submit").post(
     submissionCheck.checkUserSubmissions(),
     apiValidator.validateSubmission,
     apiValidator.validate,
+    classMiddleware.checkAssignmentClassroom,
     submissionController.createSubmission
 )
 

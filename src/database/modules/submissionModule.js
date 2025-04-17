@@ -16,6 +16,18 @@ export const getSubmissionById = async (submissionId) => {
     }
 }
 
+export const getUserSubmission = async (userId, assignmentId) => {
+    try {
+        return await Submission.findOne({student: userId, assignment: assignmentId})
+            .populate({
+                path: "attachments",
+                select: "originalname size"
+            })
+    } catch (error) {
+        throw new Error('Gönderim verileri alınırken bir hata meydana geldi.');
+    }
+}
+
 export const createSubmission = async (submissionData) => {
     try {
          return await Submission.create(submissionData);
@@ -47,7 +59,7 @@ export const getMultiSubmissions = async (submissionIds) => {
                 path: "attachments",
                 select: "originalname size"
             })
-            .select("description grade feedback student")
+            .select("description grade feedback student createdAt")
     } catch (error) {
         throw error;
     }

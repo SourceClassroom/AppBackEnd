@@ -9,3 +9,11 @@ export const getCachedSubmissionById = async (submissionId, fetchFn) => {
         throw error;
     }
 }
+
+export const getCachedUserSubmissions = async (userId, assignmentId, fetchFn) => {
+    try {
+        return await getOrSet(`user:${userId}:submission:${assignmentId}`, () => fetchFn(userId, assignmentId), 3600);
+    } catch (error) {
+        throw error;
+    }
+}

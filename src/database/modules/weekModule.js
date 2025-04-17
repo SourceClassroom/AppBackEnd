@@ -21,7 +21,7 @@ export const updateWeek = async (weekId, weekData) => {
 
 export const getWeekById = async (weekId) => {
     try {
-        return await Week.findById(weekId).select("title description startDate endDate classroom");
+        return await Week.findById(weekId).select("title classroom description startDate endDate");
     } catch (error) {
         console.log(error)
         throw error
@@ -30,7 +30,7 @@ export const getWeekById = async (weekId) => {
 
 export const getMultiWeeks = async (weekIds) => {
     try {
-        return await Week.find({ _id: { $in: weekIds } }).select("title description startDate endDate");
+        return await Week.find({ _id: { $in: weekIds } }).select("title classroom description startDate endDate");
     } catch (error) {
         console.log(error)
         throw error
@@ -54,25 +54,6 @@ export const pushPostToWeek = async (weekId, postId) => {
         throw error
     }
 }
-
-/*export const getWeekPosts = async (weekId) => {
-    try {
-        const weekData = await Week.findById(weekId)
-            .populate({
-                path: 'posts',
-                populate: {
-                    path: 'attachments',
-                    select: '_id size originalname'
-                },
-                select: 'title content comments createdAt'
-            });
-
-        return weekData?.posts || null;
-    } catch (error) {
-        console.log(error)
-        throw error
-    }
-}*/
 
 export const getWeekMaterials = async (weekId) => {
     try {
