@@ -14,7 +14,8 @@ export const getMultiMaterials = async (materialIds) => {
             .populate({
                 path: 'attachments',
                 select: '_id originalname size',
-            });
+            })
+            .sort({ createdAt: -1 });
     } catch (error) {
         throw error;
     }

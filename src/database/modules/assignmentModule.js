@@ -41,6 +41,7 @@ export const getMultiAssignments = async (assignmentIds) => {
                 path: "attachments",
                 select: "originalname size"
             })
+            .sort({ createdAt: -1 });
     } catch (error) {
         throw error;
     }
