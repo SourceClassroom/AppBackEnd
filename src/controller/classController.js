@@ -60,16 +60,10 @@ export const createClass = async (req, res) => {
         //Class oluştur
         const newClass = await classDatabaseModule.createClass(classData)
 
-        await invalidateKeys([`user:${teacher}`, `user:${teacher}:dashboard`]);
-        //TODO
         //Kullanıcının öğretim yaptığı sınıfları güncelle
-        const updatedTeacher = await User.updateOne(
-            { _id: teacher },
-            { $push: { teachingClasses: [newClass._id] } },
-            { new: true }
-        );
+        const updatedTeacher = await userDatabaseModule.pushNewTeachingClass(teacher, newClass._id)
 
-        await userCacheModule.getCachedUserData(teacher, userDatabaseModule.getUserById);
+        await userCacheModule.clearUserCache(teacher)
         return res.status(201).json(
             ApiResponse.success("Sınıf başarılı bir şekilde oluşturuldu.", {updatedTeacher, newClass})
         );

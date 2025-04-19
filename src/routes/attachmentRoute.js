@@ -26,6 +26,16 @@ router.route("/material/download/:classId/:id").get(
     attachmentController.downloadAttachment
 )
 
+router.route("/general/download/:classId/:id").get(
+    authenticateToken,
+    apiValidator.validateMongoId("id"),
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validate,
+    roleCheck.checkFilePermission(),
+    attachmentController.downloadAttachment
+)
+
+
 router.route("/avatar/:userId").get(
     authenticateToken,
     apiValidator.validateMongoId("userId"),

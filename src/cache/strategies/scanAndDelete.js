@@ -1,7 +1,5 @@
 import { client } from "../client/redisClient.js";
 
-//TODO  test this thing
-
 export default async (prefix) => {
     try {
         const pattern = `${prefix}*`;

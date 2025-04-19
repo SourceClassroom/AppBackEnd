@@ -118,6 +118,15 @@ export const pushNewEnrolledClass = async (userId, classId) => {
     }
 }
 
+export const pushNewTeachingClass = async (userId, classId) => {
+    try {
+        return await User.findByIdAndUpdate(userId, { $push: { teachingClasses: classId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const removeClassFromEnrolledClasses = async (userId, classId) => {
     try {
         return await User.findByIdAndUpdate(userId, { $pull: { enrolledClasses: classId } }, { new: true });

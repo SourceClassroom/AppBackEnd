@@ -12,10 +12,6 @@ import *as classCacheModule from "../cache/modules/classModule.js";
 import *as weekDatabaseModule from "../database/modules/weekModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
 
-/*TODO
-* Sınıftaki diğer haftaların günleri kontrol edilecek ve haftalar üst üste binmeyecek
-*/
-
 /**
  * Hafta oluşturma
  * @route POST /api/week/create
@@ -32,13 +28,31 @@ export const createWeek = async (req, res) => {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
+        // Get existing weeks for this class
+        const existingWeeks = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId);
+        const weeksData = await multiGet(existingWeeks, 'week', weekDatabaseModule.getMultiWeeks);
+
+        // Check for date overlap with existing weeks
+        const newStartDate = new Date(startDate);
+        const newEndDate = new Date(endDate);
+
+        const hasOverlap = weeksData.some(week => {
+            const weekStart = new Date(week.startDate);
+            const weekEnd = new Date(week.endDate);
+            return (newStartDate <= weekEnd && newEndDate >= weekStart);
+        });
+
+        if (hasOverlap) {
+            return res.status(400).json(ApiResponse.error("Seçilen tarih aralığı mevcut haftalarla çakışıyor."));
+        }
+
         // Hafta oluştur
         const newWeekData = {
             classroom: classId,
             title,
             description,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate)
+            startDate: newStartDate,
+            endDate: newEndDate
         };
 
         // Veritabanına kaydet
@@ -56,7 +70,6 @@ export const createWeek = async (req, res) => {
         );
     }
 };
-
 export const updateWeek = async (req, res) => {
     try {
         const { weekId } = req.params;
@@ -67,11 +80,35 @@ export const updateWeek = async (req, res) => {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
 
+        // Get class id from week data
+        const classId = getWeekData.classroom;
+
+        // Get all weeks for this class
+        const existingWeeks = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId);
+        const weeksData = await multiGet(existingWeeks, 'week', weekDatabaseModule.getMultiWeeks);
+
+        // Check for date overlap with existing weeks
+        const newStartDate = new Date(startDate);
+        const newEndDate = new Date(endDate);
+
+        const hasOverlap = weeksData.some(week => {
+            // Skip checking against the week being updated
+            if(week._id.toString() === weekId) return false;
+
+            const weekStart = new Date(week.startDate);
+            const weekEnd = new Date(week.endDate);
+            return (newStartDate <= weekEnd && newEndDate >= weekStart);
+        });
+
+        if (hasOverlap) {
+            return res.status(400).json(ApiResponse.error("Seçilen tarih aralığı mevcut haftalarla çakışıyor."));
+        }
+
         const updateWeekData = {
             title,
             description,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate)
+            startDate: newStartDate,
+            endDate: newEndDate
         };
 
         const updateWeek = await weekDatabaseModule.updateWeek(weekId, updateWeekData)
@@ -85,7 +122,6 @@ export const updateWeek = async (req, res) => {
         );
     }
 }
-
 
 export const getClassWeeks = async (req, res) => {
     try {

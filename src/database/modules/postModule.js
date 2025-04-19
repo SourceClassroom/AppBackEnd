@@ -26,7 +26,12 @@ export const pushCommentToPost = async (postId, commentId) => {
 
 export const getMultiPosts = async (postIds) => {
     try {
-        return await Post.find({ _id: { $in: postIds } }).sort({ createdAt: -1 });
+        return await Post.find({ _id: { $in: postIds } }).sort({ createdAt: -1 })
+            .populate({
+                path: "attachments",
+                select: "originalname size"
+            })
+            .sort({ createdAt: -1 })
     } catch (error) {
         throw new Error('Postlar getirilirken bir hata meydana geldi.');
     }
