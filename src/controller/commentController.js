@@ -58,6 +58,7 @@ export const getComments = async (req, res) => {
             return {
                 ...comment,
                 author: {
+                    _id: user._id,
                     name: user?.name || "Bilinmiyor",
                     surname: user?.surname || "",
                     profile: {
