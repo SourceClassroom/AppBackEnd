@@ -12,6 +12,7 @@ import {redisConnect} from "./cache/client/redisClient.js";
 import userRouter from './routes/userRoute.js';
 import weekRouter from './routes/weekRoute.js';
 import postRouter from './routes/postRoute.js';
+import zoomRouter from './routes/zoomRoute.js';
 import classRouter from './routes/classRoute.js';
 import commentRoute from "./routes/commentRoute.js";
 import materialRoute from "./routes/materialRoute.js";
@@ -45,6 +46,7 @@ app.use(express.urlencoded({extended: true}))
 
 app.use('/api/week', weekRouter)
 app.use('/api/post', postRouter)
+app.use('/api/zoom', zoomRouter)
 app.use('/api/users', userRouter)
 app.use('/api/class', classRouter)
 app.use('/api/comment', commentRoute)
