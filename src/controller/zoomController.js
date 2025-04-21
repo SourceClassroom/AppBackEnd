@@ -18,7 +18,7 @@ export const authUser = async (req, res) => {
         return res.status(200).json(ApiResponse.success("Zoom ile giriş yapıldı.", initUserData))
     } catch (error) {
         console.error(error)
-        return res.statsu(500).json(ApiResponse.serverError("Zoom ile giriş yapılırken bir hata meydana geldi."))
+        return res.status(500).json(ApiResponse.serverError("Zoom ile giriş yapılırken bir hata meydana geldi."))
     }
 }
 //TODO

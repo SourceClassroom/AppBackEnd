@@ -16,22 +16,21 @@ export const getAccessToken = async (req) => {
 
         const credentials = Buffer.from(`${process.env.ZOOM_ID}:${process.env.ZOOM_SECRET}`).toString('base64');
 
-        const response = await fetch('https://zoom.us/oauth/token', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Basic ${credentials}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code: code,
-                redirect_uri: process.env.FRONT_URL
-            })
-        });
+        const response = await fetch(`https://zoom.us/oauth/token?grant_type=authorization_code&code=${code}&redirect_uri=${process.env.ZOOM_REDIRECT}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${credentials}`, // base64(client_id:client_secret)
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Access token alınamadı: ${errorText}`);
         }
+
         const responseData = await response.json();
 
         const encryptedAccessToken = encrypt(responseData.access_token)
@@ -52,20 +51,16 @@ export const getAccessToken = async (req) => {
 
 export const refreshUserToken = async (userId) => {
     try {
-        const userZoomData = await zoomDatabaseModule.getUserRefreshToken(userId)
+        const userZoomData = await zoomDatabaseModule.getUserZoomData(userId)
         const refreshToken = decrypt(userZoomData.refreshToken)
         const credentials = Buffer.from(`${process.env.ZOOM_ID}:${process.env.ZOOM_SECRET}`).toString('base64');
 
-        const response = await fetch('https://zoom.us/oauth/token', {
+        const response = await fetch(`https://zoom.us/oauth/token?grant_type=refresh_token&refresh_roken=${refreshToken}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({
-                grant_type: 'refresh_token',
-                refresh_token: refreshToken
-            })
+            }
         });
         if (!response.ok) {
             const errorText = await response.text();

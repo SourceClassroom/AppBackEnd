@@ -8,10 +8,9 @@ export const updateRefreshToken = async (userId, refreshToken) => {
     }
 }
 
-export const getUserRefreshToken = async (userId) => {
+export const getUserZoomData = async (userId) => {
     try {
-        const user = await Zoom.findOne({user: userId})
-        return user.refreshToken
+        return await Zoom.findOne({user: userId})
     } catch (error) {
         throw error
     }
