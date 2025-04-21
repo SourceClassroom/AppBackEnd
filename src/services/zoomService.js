@@ -91,9 +91,7 @@ export const refreshUserToken = async (userId) => {
 
 export const getZoomUserData = async (userId) => {
     try {
-        let accessToken = await zoomCacheModule.getUserAccessToken(userId)
-        if (accessToken) accessToken = decrypt(accessToken)
-        if (!accessToken) accessToken = await refreshUserToken(userId)
+        const accessToken = await getDecryptedAccessTokenOrRefresh(userId)
 
         const response = await fetch('https://api.zoom.us/v2/users/me', {
             method: 'GET',
@@ -115,14 +113,13 @@ export const getZoomUserData = async (userId) => {
     }
 }
 
-export const createMeeting = async (userId, zoomUserId,topic, type, start_time, duration = 60) => {
+export const createMeeting = async (userId, zoomUserId,topic, type=2, start_time, duration = 60) => {
     try {
-        const accessToken = await zoomCacheModule.getUserAccessToken(userId)
-        const decryptedAccessToken = decrypt(accessToken)
+        const accessToken = await getDecryptedAccessTokenOrRefresh(userId)
         const response = await fetch(`https://api.zoom.us/v2/users/${zoomUserId}/meetings `, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${decryptedAccessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -147,6 +144,18 @@ export const createMeeting = async (userId, zoomUserId,topic, type, start_time, 
             throw new Error(`Access token alınamadı: ${errorText}`);
         }
         return await response.json()
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const getDecryptedAccessTokenOrRefresh = async (userId) => {
+    try {
+        let accessToken = await zoomCacheModule.getUserAccessToken(userId)
+        if (accessToken) accessToken = decrypt(accessToken)
+        if (!accessToken) accessToken = await refreshUserToken(userId)
+        return accessToken
     } catch (error) {
         console.error(error)
         throw error
