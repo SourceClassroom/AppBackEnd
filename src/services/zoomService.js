@@ -1,8 +1,8 @@
 //Encrypt Module
-import { encrypt } from "../utils/encrypt.js";
+import {encrypt, decrypt} from "../utils/encrypt.js";
 
 //Cache Modules
-import *as zoomCacheModule from "../cache/modules/zoomModule.js";
+import * as zoomCacheModule from "../cache/modules/zoomModule.js";
 
 //Database Modules
 import * as zoomDatabaseModule from "../database/modules/zoomModule.js";
@@ -40,7 +40,7 @@ export const getAccessToken = async (req) => {
             access_token: encryptedAccessToken,
             expires_in: responseData.expires_in
         }
-        await zoomDatabaseModule.initUser({user: userId, refreshToken: encryptedRefreshToken})
+        await zoomDatabaseModule.updateRefreshToken(userId, encryptedRefreshToken)
         await zoomCacheModule.cacheUserAccessToken(userId, returnData)
 
         return returnData
@@ -89,11 +89,37 @@ export const refreshUserToken = async (userId) => {
     }
 }
 
-export const createMeeting = async (userId, topic, type, start_time, duration = 60, password) => {
+export const getZoomUserData = async (userId) => {
+    try {
+        let accessToken = await zoomCacheModule.getUserAccessToken(userId)
+        if (accessToken) accessToken = decrypt(accessToken)
+        if (!accessToken) accessToken = await refreshUserToken(userId)
+
+        const response = await fetch('https://api.zoom.us/v2/users/me', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Zoom api hatasi: ${errorText}`);
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const createMeeting = async (userId, zoomUserId,topic, type, start_time, duration = 60) => {
     try {
         const accessToken = await zoomCacheModule.getUserAccessToken(userId)
         const decryptedAccessToken = decrypt(accessToken)
-        const response = await fetch(`https://api.zoom.us/v2/users/${userId}/meetings `, {
+        const response = await fetch(`https://api.zoom.us/v2/users/${zoomUserId}/meetings `, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${decryptedAccessToken}`,
@@ -104,7 +130,6 @@ export const createMeeting = async (userId, topic, type, start_time, duration = 
                 type,
                 start_time,
                 duration,
-                password,
                 settings: {
                     host_video: true,
                     participant_video: false,
@@ -121,8 +146,7 @@ export const createMeeting = async (userId, topic, type, start_time, duration = 
             const errorText = await response.text();
             throw new Error(`Access token alınamadı: ${errorText}`);
         }
-        const responseData = await response.json();
-        return responseData
+        return await response.json()
     } catch (error) {
         console.error(error)
         throw error

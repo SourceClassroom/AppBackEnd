@@ -1,16 +1,8 @@
 import { Zoom } from "../models/zoomModel.js";
 
-export const initUser = async (data) => {
-    try {
-        return await Zoom.create(data)
-    } catch (error) {
-        throw error
-    }
-}
-
 export const updateRefreshToken = async (userId, refreshToken) => {
     try {
-        return await Zoom.findOneAndUpdate({user: userId}, {$set: {refreshToken}}, {new: true})
+        return await Zoom.findOneAndUpdate({user: userId}, {$set: {refreshToken}}, {new: true, upsert: true})
     } catch (error) {
         throw error
     }
