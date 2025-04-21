@@ -122,7 +122,7 @@ export const reviewSubmission = async (req, res) => {
 
         const updateSubmission = await submissionDatabaseModule.setReview(submissionId, feedback, grade)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-        await invalidateKeys([`submission:${submissionId}`])
+        await invalidateKeys([`submission:${submissionId}`, `user:${updateSubmission.student}:submission:${updateSubmission.assignment}`])
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {
