@@ -4,7 +4,7 @@ import {authenticateToken} from "../middlewares/authMiddleware.js";
 
 const router = express.Router()
 
-router.route("/oauth").get(
+router.route("/auth").get(
     authenticateToken,
     zoomController.authUser
 )

@@ -11,6 +11,7 @@ import *as userCacheModule from "../cache/modules/userModule.js";
 import *as tokenCacheModule from "../cache/modules/tokenModule.js";
 
 //Database Modules
+import *as zoomDatabaseModule from "../database/modules/zoomModule.js";
 import *as userDatabaseModule from "../database/modules/userModule.js";
 
 /**
@@ -409,9 +410,14 @@ export const updateNotificationPreferences = async (req, res) => {
 export const userDashboard = async (req, res) => {
     try {
         const userId = req.user.id;
-        const userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard)
+        let userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard)
 
         if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
+
+        if (userData.role === "teacher" || userData.role === "sysadmin") {
+            const zoomData = await zoomDatabaseModule.getUserZoomData(userId)
+            if (zoomData) userData.zoom = true
+        }
 
         return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", userData, 200));
     } catch (error) {
