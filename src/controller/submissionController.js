@@ -116,30 +116,13 @@ export const getSubmissions = async (req, res) => {
     }
 }
 
-
-export const gradeSubmission = async (req, res) => {
+export const reviewSubmission = async (req, res) => {
     try {
-        const { submissionId, grade } = req.body
+        const { submissionId, feedback, grade } = req.body
 
-        const updateSubmission = await submissionDatabaseModule.setGrade(submissionId, grade)
+        const updateSubmission = await submissionDatabaseModule.setReview(submissionId, feedback, grade)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-        await invalidateKeys([`submission:${submissionId}`, `assignment:${updateSubmission.assignment}:submissions`])
-
-        return res.status(200).json(ApiResponse.success("Ödev notu başarı ile girildi.", updateSubmission))
-    } catch (error) {
-        res.status(500).json(
-            ApiResponse.serverError('Not verilirken bir hata meydana geldi.', error)
-        );
-    }
-}
-
-export const feedbackSubmission = async (req, res) => {
-    try {
-        const { submissionId, feedback } = req.body
-
-        const updateSubmission = await submissionDatabaseModule.setFeedback(submissionId, feedback)
-        if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
-        await invalidateKeys([`submission:${submissionId}`, `assignment:${updateSubmission.assignment.toString()}:submissions`])
+        await invalidateKeys([`submission:${submissionId}`])
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {

@@ -36,20 +36,12 @@ router.route("/user-submission/:classId/:assignmentId").get(
     submissionController.getUserSubmissions
 )
 
-router.route("/grade").put(
+router.route("/review").put(
     authenticateToken,
     roleCheck.isClassTeacherOrOwner(),
     apiValidator.validateGrade,
     apiValidator.validate,
-    submissionController.gradeSubmission
-)
-
-router.route("/feedback").put(
-    authenticateToken,
-    roleCheck.isClassTeacherOrOwner(),
-    apiValidator.validateFeedback,
-    apiValidator.validate,
-    submissionController.feedbackSubmission
+    submissionController.reviewSubmission
 )
 
 router.route("/submit").post(

@@ -36,17 +36,9 @@ export const createSubmission = async (submissionData) => {
     }
 }
 
-export const setGrade = async (submissionId, grade) => {
+export const setReview = async (submissionId, feedback, grade) => {
     try {
-        return await Submission.findByIdAndUpdate(submissionId, {$set: {grade: grade}}, {new: true})
-    } catch (error) {
-        throw new Error('Not verilirken bir hata meydana geldi.');
-    }
-}
-
-export const setFeedback = async (submissionId, feedback) => {
-    try {
-        return await Submission.findByIdAndUpdate(submissionId, {$set: {feedback: feedback}}, {new: true})
+        return await Submission.findByIdAndUpdate(submissionId, {$set: {feedback, grade}}, {new: true})
     } catch (error) {
         throw new Error('Feedback girilirken bir hata meydana geldi.');
     }
