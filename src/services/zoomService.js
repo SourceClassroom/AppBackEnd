@@ -5,7 +5,8 @@ import {encrypt, decrypt} from "../utils/encrypt.js";
 import * as zoomCacheModule from "../cache/modules/zoomModule.js";
 
 //Database Modules
-import * as zoomDatabaseModule from "../database/modules/zoomModule.js";
+import *as zoomDatabaseModule from "../database/modules/zoomModule.js";
+import *as meetingDatabaseModule from "../database/modules/meetingModule.js";
 
 export const getAccessToken = async (req) => {
     try {
@@ -138,7 +139,20 @@ export const createMeeting = async (userId, zoomUserId,topic, type=2, start_time
             const errorText = await response.text();
             throw new Error(`Access token alınamadı: ${errorText}`);
         }
-        return await response.json()
+        const responseData = await response.json();
+
+        const meetingData = {
+            teacher: userId,
+            topic: responseData.topic,
+            meetingId: responseData.id,
+            joinUrl: responseData.join_url,
+            startUrl: responseData.start_url,
+            startTime: responseData.start_time,
+            duration: responseData.duration
+        }
+
+        await meetingDatabaseModule.createMeeting(meetingData);
+        return responseData
     } catch (error) {
         console.error(error)
         throw error

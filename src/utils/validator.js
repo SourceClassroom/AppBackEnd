@@ -227,6 +227,26 @@ export const validateComment = [
         .isLength({max: 250}).withMessage("Yorum içeriği 250 karakterden fazla olamaz.")
 ]
 
+export const validateLesson = [
+    body("topic")
+        .notEmpty().withMessage("Ders konusu boş olamaz.")
+        .isLength({min: 3}).withMessage("Ders konusu en az 3 karakter olmalıdır."),
+    body("description")
+        .optional()
+        .isLength({max: 1025}).withMessage("Ders açıklaması 1024 karakterden fazla olamaz."),
+    body("start_time")
+        .notEmpty().withMessage("Ders başlangıç zamanı boş olamaz.")
+        .isISO8601().withMessage("Geçerli bir başlangıç zamanı giriniz."),
+    body("duration")
+        .optional()
+        .isInt({min: 1}).withMessage("Ders süresi en az 1 dakika olmalıdır."),
+    body("classId")
+        .notEmpty().withMessage("Sınıf ID alanı boş olamaz.")
+        .isMongoId().withMessage("Geçerli bir sınıf ID giriniz."),
+    body("week")
+        .optional()
+        .isMongoId().withMessage("Geçerli bir hafta ID giriniz.")
+]
 
 /**
  * MongoDB ID formatını doğrulama

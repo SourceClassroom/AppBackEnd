@@ -7,9 +7,8 @@ const lessonSchema = new Schema({
     week: { type: Schema.Types.ObjectId, ref: 'Week' },
     title: { type: String, required: true },
     description: { type: String},
-    zoomUrl: { type: String, required: true },
+    meeting: { type: Schema.Types.ObjectId, ref: 'Meeting' },
     startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
 });
 
 const Lesson = mongoose.model("Lesson", lessonSchema);
