@@ -8,6 +8,14 @@ export const createPost = async (postData) => {
     }
 }
 
+export const getPostById = async (postId) => {
+    try {
+        return await Post.findById(postId)
+    } catch (error) {
+        throw new Error('Post getirilirken bir hata meydana geldi.');
+    }
+}
+
 export const updatePost = async (postId, updateData) => {
     try {
         return await Post.findByIdAndUpdate(postId, updateData, { new: true });
@@ -34,5 +42,13 @@ export const getMultiPosts = async (postIds) => {
             .sort({ createdAt: -1 })
     } catch (error) {
         throw new Error('Postlar getirilirken bir hata meydana geldi.');
+    }
+}
+
+export const deletePost = async (postId, deletedBy) => {
+    try {
+        return await Post.findByIdAndUpdate(postId, { isDeleted: true, deletedBy, deletedAt: new Date()}, { new: true });
+    } catch (error) {
+        throw new Error('Post güncellenirken bir hata meydana geldi.');
     }
 }

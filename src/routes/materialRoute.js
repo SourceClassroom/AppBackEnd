@@ -38,6 +38,15 @@ router.route("/:classId/:weekId").get(
     materialController.getWeekMaterials
 )
 
+//TODO add class material check
+router.route("/delete/:classId/:materialId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("materialId"),
+    apiValidator.validate,
+    roleCheck.isClassTeacherOrOwner(),
+    materialController.deleteMaterial
+)
 
 
 export default router

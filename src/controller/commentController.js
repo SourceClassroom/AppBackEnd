@@ -2,7 +2,7 @@ import ApiResponse from "../utils/apiResponse.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
-import {invalidateKey} from "../cache/strategies/invalidate.js";
+import {invalidateKeys, invalidateKey} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import *as commentCacheModule from "../cache/modules/commentModule.js";
@@ -24,7 +24,7 @@ export const createComment = async (req, res) => {
 
         const newComment = await commentDatabaseModule.createComment(commentData)
         await postDatabaseModule.pushCommentToPost(postId, newComment._id)
-        await invalidateKey(`comments:${postId}`)
+        await invalidateKeys([`comments:${postId}`, `post:${postId}`])
 
         res.status(201).json(ApiResponse.success("Comment created successfully", newComment, 201))
     } catch (error) {
@@ -79,13 +79,12 @@ export const deleteComment = async (req, res) => {
     try {
         const { commentId } = req.params
 
-        const comment = await commentDatabaseModule.getCommentById(commentId)
+        const comment = await commentDatabaseModule.deleteComment(commentId, req.user.id)
         if (!comment) {
             return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı", null, 404))
         }
 
         await invalidateKey(`comments:${comment.post}`)
-        await commentDatabaseModule.deleteComment(commentId)
 
         res.status(200).json(ApiResponse.success("Yorum başarıyla silindi", null, 200))
     } catch (error) {

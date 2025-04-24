@@ -20,3 +20,11 @@ export const getMultiMaterials = async (materialIds) => {
         throw error;
     }
 };
+
+export const deleteMaterial = async (materialId, deletedBy) => {
+    try {
+        return await Material.findByIdAndUpdate(materialId, { isDeleted: true, deletedBy, deletedAt: new Date()}, { new: true });
+    } catch (error) {
+        throw error;
+    }
+};

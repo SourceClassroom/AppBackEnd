@@ -111,7 +111,7 @@ export const deletePost = async (req, res) => {
     try {
         const { postId } = req.params;
 
-        const deletedPost = await postDatabaseModule.deletePost(postId);
+        const deletedPost = await postDatabaseModule.deletePost(postId, req.user.id);
         if (!deletedPost) {
             return res.status(404).json(ApiResponse.notFound('Post bulunamadı.'));
         }

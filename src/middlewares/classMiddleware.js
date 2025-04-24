@@ -2,11 +2,13 @@ import ApiResponse from "../utils/apiResponse.js";
 
 //Cache Modules
 import *as weekCacheModule from "../cache/modules/weekModule.js";
+import *as postCacheModule from "../cache/modules/postModule.js";
 import *as classCacheModule from "../cache/modules/classModule.js";
 import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
 
 //Database Modules
 import *as weekDatabseModule from "../database/modules/weekModule.js";
+import *as postDatabaseModule from "../database/modules/postModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
 
@@ -76,7 +78,7 @@ export const checkPostClassroom = async (req, res, next) => {
         if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
         const weekId = req.params.weekId || req.body.weekId;
 
-        const post = await postController.getPost(postId)
+        const post = await postCacheModule.getCachedPost(postId, postDatabaseModule.getPostById)
         if (!post) return res.status(404).json(ApiResponse.error("Post bulunamadı"))
 
         const classData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)

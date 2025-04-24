@@ -18,6 +18,7 @@ import *as materialDatabaseModule from "../database/modules/materialModule.js";
 export const createMaterial = async (req, res) => {
     try {
         const { classId, title, description, week } = req.body;
+        req.body.permission = 1
 
         const fileIds = await processMedia(req);
 
@@ -66,5 +67,18 @@ export const getWeekMaterials = async (req, res) => {
     } catch (error) {
         console.log(error)
         res.status(500).json(ApiResponse.serverError("Materyaller getirilirken bir hata meydana geldi.", error));
+    }
+};
+
+export const deleteMaterial = async (req, res) => {
+    try {
+        const { materialId } = req.params;
+
+        await materialDatabaseModule.deleteMaterial(materialId, req.user.id);
+        await invalidateKey(`material:${materialId}`)
+
+        res.status(200).json(ApiResponse.success("Materyal başarıyla silindi.", null, 200));
+    } catch (error) {
+        res.status(500).json(ApiResponse.serverError("Materyal silinirken bir hata meydana geldi.", error));
     }
 };
