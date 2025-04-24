@@ -139,6 +139,22 @@ export const isResourceOwner = (userIdField = 'userId') => {
     };
 };
 
+export const isSysadmin = () => {
+    return async (req, res, next) => {
+        try {
+            const { user } = req;
+
+            if (user.role === 'sysadmin') {
+                return next();
+            }
+
+            return res.status(403).json(ApiResponse.forbidden("Bu işlem için gerekli izniniz bulunmamaktadır"));
+        } catch (error) {
+            return res.status(500).json(ApiResponse.serverError("Rol kontrolü sırasında bir hata oluştu", error));
+        }
+    };
+};
+
 export const checkFilePermission = (userIdField = 'userId', attachmentIdField = 'id') => {
     return async (req, res, next) => {
         try {

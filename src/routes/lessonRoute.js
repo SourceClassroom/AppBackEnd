@@ -9,7 +9,7 @@ const router = express.Router()
 router.route("/create").post(
     authenticateToken,
     roleCheck.isClassTeacherOrOwner(),
-    apiValidator.lessonValidate,
+    apiValidator.validateLesson,
     apiValidator.validate,
     lessonController.createLesson
 )

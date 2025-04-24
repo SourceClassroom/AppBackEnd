@@ -248,6 +248,46 @@ export const validateLesson = [
         .isMongoId().withMessage("Geçerli bir hafta ID giriniz.")
 ]
 
+export const validateUserStatus = [
+    body("userId")
+        .notEmpty().withMessage("Kullanıcı ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir kullanıcı ID giriniz."),
+    body("status")
+        .notEmpty().withMessage("Kullanıcı durumu boş olamaz.")
+        .isIn(['active', 'inactive', 'suspended', 'pending']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
+]
+
+export const validateUpdateUserForAdmin = [
+    body("userId")
+        .notEmpty().withMessage("Kullanıcı ID alanı zorunludur.")
+        .isMongoId().withMessage("Geçerli bir kullanıcı ID giriniz."),
+    body("data")
+        .notEmpty().withMessage("Güncellenecek veri boş olamaz.")
+        .isObject().withMessage("Güncellenecek veri bir nesne olmalıdır."),
+    body("data.name")
+        .notEmpty().withMessage("İsim verisi boş olamaz.")
+        .isString().withMessage("İsim bir metin olmalıdır.")
+        .isLength({min: 2, max: 32}).withMessage("İsim 2-32 karakter arasında olmalıdır.")
+        .isAlphanumeric('tr-TR').withMessage("İsim sadece alfanümerik karakterler içerebilir.")
+        .toLowerCase(),
+    body("data.surname")
+        .notEmpty().withMessage("Soyisim verisi boş olamaz.")
+        .isString().withMessage("Soyisim bir metin olmalıdır.")
+        .isLength({min: 2, max: 32}).withMessage("Soyisim 2-32 karakter arasında olmalıdır.")
+        .isAlphanumeric('tr-TR').withMessage("Soyisim sadece alfanümerik karakterler içerebilir.")
+        .toLowerCase(),
+    body("data.email")
+        .notEmpty().withMessage("Email verisi boş olamaz.")
+        .isEmail().withMessage("Geçerli bir e-posta adresi giriniz.")
+        .normalizeEmail(),
+    body("data.role")
+        .notEmpty().withMessage("Rol verisi boş olamaz.")
+        .isIn(['student', 'teacher', 'sysadmin']).withMessage("Geçerli bir kullanıcı rolü giriniz."),
+    body("data.accountStatus")
+        .notEmpty().withMessage("Durum verisi boş olamaz.")
+        .isIn(['active', 'inactive', 'suspended', 'pending']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
+]
+
 /**
  * MongoDB ID formatını doğrulama
  */

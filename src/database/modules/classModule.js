@@ -38,7 +38,16 @@ export const getMultiClassById = async (classIds) => {
                 path: "teacher",
                 select: "name surname email profile.avatar",
             })
-            .select("title description code teacher")
+            .select("title description code teacher createdAt")
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const getClassesPaginated = async (offset, limit) => {
+    try {
+        return await Class.find().skip(offset).limit(limit).select("_id");
     } catch (error) {
         console.log(error)
         throw error
@@ -166,6 +175,15 @@ export const getClassPosts = async (classId) => {
     try {
         const data = await Class.findById(classId).select("posts")
         return data?.posts || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const getClassCount = async () => {
+    try {
+        return await Class.countDocuments()
     } catch (error) {
         console.log(error)
         throw error
