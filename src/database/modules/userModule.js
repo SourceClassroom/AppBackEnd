@@ -11,7 +11,7 @@ export const createUser = async (userData) => {
 
 export const getUserById = async (userId) => {
     try {
-        return await User.findById(userId).select("-password")
+        return await User.findOne({ _id: userId, isDeleted: false }).select("-password")
     } catch (error) {
         console.log(error)
         throw error
@@ -20,13 +20,12 @@ export const getUserById = async (userId) => {
 
 export const getUserByEmail = async (email) => {
     try {
-        return await User.findOne({ email }).select("_id")
+        return await User.findOne({ email, isDeleted: false }).select("_id")
     } catch (error) {
         console.log(error)
         throw error
     }
 }
-
 export const changePassword = async (userId, password, tokenVersion) => {
     try {
         return await User.findByIdAndUpdate(userId, { $set: { password, tokenVersion } }, { new: true }).select("-password");

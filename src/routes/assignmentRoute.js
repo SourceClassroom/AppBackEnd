@@ -32,6 +32,16 @@ router.route("/update/:classId/:assignmentId").put(
     assignmentController.updateAssignment
 )
 
+router.route("/delete/:classId/:assignmentId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("assignmentId"),
+    apiValidator.validate,
+    classMiddleware.checkAssignmentClassroom,
+    roleCheck.isClassTeacherOrOwner(),
+    assignmentController.deleteAssignment
+)
+
 router.route("/class/:classId").get(
     authenticateToken,
     apiValidator.validateMongoId("classId"),

@@ -74,3 +74,22 @@ export const getComments = async (req, res) => {
         return res.status(500).json(ApiResponse.serverError("Internal Server Error", error));
     }
 };
+
+export const deleteComment = async (req, res) => {
+    try {
+        const { commentId } = req.params
+
+        const comment = await commentDatabaseModule.getCommentById(commentId)
+        if (!comment) {
+            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı", null, 404))
+        }
+
+        await invalidateKey(`comments:${comment.post}`)
+        await commentDatabaseModule.deleteComment(commentId)
+
+        res.status(200).json(ApiResponse.success("Yorum başarıyla silindi", null, 200))
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json(ApiResponse.serverError("Internal Server Error", error))
+    }
+}

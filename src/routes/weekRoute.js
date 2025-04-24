@@ -33,4 +33,14 @@ router.route("/get/:classId").get(
     weekController.getClassWeeks
 )
 
+router.route("/delete/:classId/:weekId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("weekId"),
+    apiValidator.validate,
+    classMiddleware.checkWeekClassroom,
+    roleCheck.isClassTeacherOrOwner(),
+    weekController.deleteWeek
+)
+
 export default router

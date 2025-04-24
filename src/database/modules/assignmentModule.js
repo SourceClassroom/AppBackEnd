@@ -27,16 +27,15 @@ export const updateAssignment = async (assignmentId, data) => {
 export const getAssignmentSubmissions = async (assignmentId) => {
     try {
         const assignmentData = await Assignment.findById(assignmentId, "submissions")
-        return assignmentData?.submissions
+        return assignmentData?.submissions?.reverse()
     } catch (error) {
         throw error;
     }
 };
 
-
 export const getMultiAssignments = async (assignmentIds) => {
     try {
-        return await Assignment.find({ _id: { $in: assignmentIds } })
+        return await Assignment.find({ _id: { $in: assignmentIds }, isDeleted: false })
             .populate({
                 path: "attachments",
                 select: "originalname size"
@@ -54,6 +53,14 @@ export const pushSubmissionToAssignment = async (assignmentId, submissionId) => 
             { $push: { submissions: submissionId } },
             { new: true }
         );
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const deleteAssignment = async (assignmentId, userId) => {
+    try {
+        return await Assignment.findByIdAndUpdate(assignmentId, { isDeleted: true, deletedBy: userId, deletedAt: new Date() }, { new: true });
     } catch (error) {
         throw error;
     }

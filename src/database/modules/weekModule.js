@@ -21,7 +21,7 @@ export const updateWeek = async (weekId, weekData) => {
 
 export const getWeekById = async (weekId) => {
     try {
-        return await Week.findById(weekId).select("title classroom description startDate endDate");
+        return await Week.findById(weekId).select("title classroom description startDate endDate").where('isDeleted').equals(false);
     } catch (error) {
         console.log(error)
         throw error
@@ -30,13 +30,12 @@ export const getWeekById = async (weekId) => {
 
 export const getMultiWeeks = async (weekIds) => {
     try {
-        return await Week.find({ _id: { $in: weekIds } }).select("title classroom description startDate endDate");
+        return await Week.find({ _id: { $in: weekIds }, isDeleted: false }).select("title classroom description startDate endDate");
     } catch (error) {
         console.log(error)
         throw error
     }
 }
-
 export const pushAssignmentToWeek = async (weekId, assignmentId) => {
     try {
         return await Week.findByIdAndUpdate(weekId, { $push: { assignments: assignmentId } }, { new: true });
@@ -58,7 +57,7 @@ export const pushPostToWeek = async (weekId, postId) => {
 export const getWeekMaterials = async (weekId) => {
     try {
         const data = await Week.findById(weekId).select("material")
-        return data?.material || null
+        return data?.material?.reverse()  || null
     } catch (error) {
         console.log(error)
         throw error
@@ -68,7 +67,7 @@ export const getWeekMaterials = async (weekId) => {
 export const getWeekPosts = async (weekId) => {
     try {
         const data = await Week.findById(weekId).select("posts")
-        return data?.posts || null
+        return data?.posts?.reverse()  || null
     } catch (error) {
         console.log(error)
         throw error
@@ -77,7 +76,16 @@ export const getWeekPosts = async (weekId) => {
 export const getWeekAssignments = async (weekId) => {
     try {
         const data = await Week.findById(weekId).select("assignments")
-        return data?.assignments || null
+        return data?.assignments?.reverse()      || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const deleteWeek = async (weekId, deletedBy) => {
+    try {
+        return await Week.findByIdAndUpdate(weekId, { isDeleted: true, deletedBy, deletedAt: new Date() }, { new: true });
     } catch (error) {
         console.log(error)
         throw error

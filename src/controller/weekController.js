@@ -142,3 +142,24 @@ export const getClassWeeks = async (req, res) => {
         );
     }
 }
+
+export const deleteWeek = async (req, res) => {
+    try {
+        const { weekId, classId } = req.params;
+
+        const getWeekData = await weekCacheModule.getCachedWeekData(weekId, weekDatabaseModule.getWeekById)
+        if (!getWeekData) {
+            return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
+        }
+
+        const deleteWeek = await weekDatabaseModule.deleteWeek(weekId)
+        await weekCacheModule.clearWeekCache(weekId)
+
+        return res.status(200).json(ApiResponse.success("Hafta başarıyla silindi.", deleteWeek, 200));
+    } catch (error) {
+        console.error('Hafta silme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Hafta silinirken bir hata oluştu', error)
+        );
+    }
+}

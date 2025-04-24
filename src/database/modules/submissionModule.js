@@ -2,7 +2,7 @@ import {Submission} from "../models/submissionsModel.js";
 
 export const getSubmissionById = async (submissionId) => {
     try {
-        return await Submission.findById(submissionId)
+        return await Submission.findOne({ _id: submissionId, isDeleted: false })
             .populate({
                 path: "student",
                 select: "name surname profile.avatar"
@@ -18,7 +18,7 @@ export const getSubmissionById = async (submissionId) => {
 
 export const getUserSubmission = async (userId, assignmentId) => {
     try {
-        return await Submission.findOne({student: userId, assignment: assignmentId})
+        return await Submission.findOne({student: userId, assignment: assignmentId, isDeleted: false})
             .populate({
                 path: "attachments",
                 select: "originalname size"
@@ -46,7 +46,7 @@ export const setReview = async (submissionId, feedback, grade) => {
 
 export const getMultiSubmissions = async (submissionIds) => {
     try {
-        return await Submission.find({ _id: { $in: submissionIds } })
+        return await Submission.find({ _id: { $in: submissionIds }, isDeleted: false })
             .populate({
                 path: "attachments",
                 select: "originalname size"

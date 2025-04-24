@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import softDeleteFields from "../fields/softDeleteFields.js";
 
 const { Schema } = mongoose;
 
@@ -11,6 +12,7 @@ const weekSchema = new Schema({
     posts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
     assignments: [{ type: Schema.Types.ObjectId, ref: "Assignment" }],
     materials: [{ type: Schema.Types.ObjectId, ref: "Material" }],
+    ...softDeleteFields
 });
 
 const Week = mongoose.model("Week", weekSchema);

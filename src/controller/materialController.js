@@ -58,7 +58,7 @@ export const getWeekMaterials = async (req, res) => {
     try {
         const { classId, weekId } = req.params;
 
-        const weekMaterials = await weekCacheModule.getCachedWeekMaterials(week, weekDatabaseModule.getWeekMaterials);
+        const weekMaterials = await weekCacheModule.getCachedWeekMaterials(weekId, weekDatabaseModule.getWeekMaterials);
 
         const materials = await multiGet(weekMaterials, 'material', materialDatabaseModule.getMultiMaterials)
 

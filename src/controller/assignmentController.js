@@ -8,11 +8,13 @@ import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 //Cache Modules
 import *as weekCacheModule from '../cache/modules/weekModule.js';
 import *as classCacheModule from '../cache/modules/classModule.js';
+import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
 
 //Database Modules
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
 import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
+import {getCachedAssignment} from "../cache/modules/assignmentModule.js";
 
 
 /**
@@ -141,6 +143,29 @@ export const updateAssignment = async (req, res) => {
         console.error('Ödev güncelleme hatası:', error);
         res.status(500).json(
             ApiResponse.serverError('Ödev güncellenirken bir hata oluştu', error)
+        );
+    }
+};
+
+export const deleteAssignment = async (req, res) => {
+    try {
+        const { assignmentId } = req.params;
+
+        // Ödevi getir
+        const assignment = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
+        if (!assignment) {
+            return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı."));
+        }
+
+        // Ödevi sil
+        await assignmentDatabaseModule.deleteAssignment(assignmentId, req.user.id);
+        await invalidateKeys([`assignment:${assignmentId}`])
+
+        return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde silindi.", null, 200));
+    } catch (error) {
+        console.error('Ödev silme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Ödev silinirken bir hata oluştu', error)
         );
     }
 };

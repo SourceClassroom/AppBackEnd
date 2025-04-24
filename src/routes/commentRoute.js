@@ -15,12 +15,20 @@ router.route("/:classId/:postId").get(
     commentController.getComments
 )
 
+//TODO check comment owner
 router.route("/create").post(
     authenticateToken,
     roleCheck.isClassMember(),
     apiValidator.validateComment,
     apiValidator.validate,
     commentController.createComment
+)
+
+router.route("/delete/:commentId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("commentId"),
+    apiValidator.validate,
+    commentController.deleteComment
 )
 
 export default router;

@@ -2,12 +2,12 @@ import { client } from "../client/redisClient.js";
 
 export default async (ids, prefix, fetchFn) => {
     if (ids.length === 0 || !ids) return [];
-    const mappedIds = ids.map(id => `${prefix}:${id._id}`);
+    const mappedIds = ids.map(id => `${prefix}:${id._id || id}`);
+
     const cachedData = await client.mGet(mappedIds);
 
     const result = [];
     const missingData = [];
-
     cachedData.forEach((data, index) => {
         if (data) {
             result.push(JSON.parse(data));
@@ -15,7 +15,7 @@ export default async (ids, prefix, fetchFn) => {
             missingData.push(ids[index]);
         }
     });
-
+    //console.log(prefix,missingData)
     if (missingData.length > 0) {
         const fetcherDataFromDb = await fetchFn(missingData);
 

@@ -1,4 +1,5 @@
 import getOrSet from "../strategies/getOrSet.js";
+import scanAndDelete from "../strategies/scanAndDelete.js";
 
 const CLASS_KEY = (classId) => `class:${classId}`
 
@@ -48,6 +49,15 @@ export const getClassWeeks = async (classId, fetchFn) => {
     try {
         return await getOrSet(`${CLASS_KEY(classId)}:weeks`, () => fetchFn(classId), 3600)
     } catch (error) {
+        throw error;
+    }
+}
+
+export const clearClassCache = async (classId) => {
+    try {
+        return await scanAndDelete(CLASS_KEY(classId));
+    } catch (error) {
+        console.error(`clearUserCache error (classId: ${classId}):`, error);
         throw error;
     }
 }

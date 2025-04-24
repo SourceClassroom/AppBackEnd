@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import softDeleteFields from "../fields/softDeleteFields.js";
 
 const { Schema } = mongoose;
 
@@ -17,6 +18,7 @@ const notificationSchema = new Schema({
             'submission_reminder'
         ] },
     isRead: { type: Boolean, default: false },
+    ...softDeleteFields
 }, { timestamps: true });
 
 const Notification = mongoose.model("Notification", notificationSchema);

@@ -50,4 +50,14 @@ router.route("/update/:classId/:postId").put(
     postController.updatePost
 )
 
+router.route("/delete/:classId/:postId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("postId"),
+    apiValidator.validate,
+    classMiddleware.checkPostClassroom,
+    roleCheck.isClassTeacherOrOwner(),
+    postController.deletePost
+)
+
 export default router

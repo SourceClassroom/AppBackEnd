@@ -101,6 +101,24 @@ export const updateClass = async (req, res) => {
     }
 }
 
+export const deleteClass = async (req, res) => {
+    try {
+        const classId = req.params.classId;
+        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        if (!getClassData) {
+            return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
+        }
+
+        const deleteClass = await classDatabaseModule.deleteClassById(classId, req.user.id)
+        await classCacheModule.clearClassCache(classId)
+        return res.status(200).json(ApiResponse.success("Sınıf başarıyla silindi.", deleteClass, 200));
+    } catch (error) {
+        console.error('Sınıf silme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Sınıf silinirken bir hata oluştu', error)
+        );
+    }
+}
 
 /**
  * Sınıfa katılma

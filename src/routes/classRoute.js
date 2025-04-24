@@ -66,6 +66,15 @@ router.route("/update/:classId").put(
     classController.updateClass
 )
 
+//Delete Class
+router.route("/delete/:classId").delete(
+    authenticateToken,
+    roleCheck.isClassTeacherOrOwner(),
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validate,
+    classController.deleteClass
+)
+
 router.route("/students/:classId").get(
     authenticateToken,
     roleCheck.isClassMember(),

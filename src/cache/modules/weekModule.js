@@ -1,4 +1,5 @@
 import getOrSet from "../strategies/getOrSet.js";
+import scanAndDelete from "../strategies/scanAndDelete.js";
 
 const WEEK_KEY = (weekId) => `week:${weekId}`
 
@@ -31,6 +32,15 @@ export const getCachedWeekMaterials = async (weekId, fetchFn) => {
     try {
         return await getOrSet(`${WEEK_KEY(weekId)}:materials`, () => fetchFn(weekId), 3600)
     } catch (error) {
+        throw error;
+    }
+}
+
+export const clearWeekCache = async (weekId) => {
+    try {
+        return await scanAndDelete(WEEK_KEY(weekId));
+    } catch (error) {
+        console.error(`clearUserCache error (weekId: ${weekId}):`, error);
         throw error;
     }
 }

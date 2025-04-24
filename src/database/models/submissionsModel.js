@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import softDeleteFields from "../fields/softDeleteFields.js";
 
 const { Schema } = mongoose;
 
@@ -9,6 +10,7 @@ const submissionSchema = new Schema({
     attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     grade: { type: Number },
     feedback: { type: String },
+    ...softDeleteFields
 }, {timestamps: true});
 
 const Submission = mongoose.model("Submission", submissionSchema);

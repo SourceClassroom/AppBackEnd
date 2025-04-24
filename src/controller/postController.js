@@ -106,3 +106,23 @@ export const updatePost = async (req, res) => {
         );
     }
 }
+
+export const deletePost = async (req, res) => {
+    try {
+        const { postId } = req.params;
+
+        const deletedPost = await postDatabaseModule.deletePost(postId);
+        if (!deletedPost) {
+            return res.status(404).json(ApiResponse.notFound('Post bulunamadı.'));
+        }
+
+        await invalidateKey(`post:${postId}`)
+
+        res.status(200).json(ApiResponse.success('Post başarıyla silindi.', deletedPost));
+    } catch (error) {
+        console.error('Post silme hatası:', error);
+        res.status(500).json(
+            ApiResponse.serverError('Post silinirken bir hata meydana geldi.', error)
+        );
+    }
+}

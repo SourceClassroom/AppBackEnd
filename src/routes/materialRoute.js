@@ -11,7 +11,7 @@ router.route("/create").post(
     authenticateToken,
     upload.validateAndUpload({
         fieldName: "files",
-        minFiles: 0,
+        minFiles: 1,
         maxFiles: 20,
         fileSize: 1024 * 1024 * 1024,
     }),

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import validator from "validator";
+import softDeleteFields from "../fields/softDeleteFields.js";
 
 const { Schema } = mongoose;
 
@@ -88,7 +89,8 @@ const UserSchema = new Schema({
     tokenVersion: {
         type: Number,
         default: 0
-    }
+    },
+    ...softDeleteFields
 }, {timestamps: true});
 
 const User = mongoose.model('User', UserSchema);

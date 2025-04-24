@@ -20,7 +20,7 @@ export const updateClassById = async (classId, data) => {
 
 export const getClassById = async (classId) => {
     try {
-        return await Class.findById(classId)
+        await Class.findOne({ _id: classId, isDeleted: false })
             .populate({
                 path: "teacher",
                 select: "name surname email profile.avatar",
@@ -33,7 +33,7 @@ export const getClassById = async (classId) => {
 
 export const getMultiClassById = async (classIds) => {
     try {
-        return await Class.find({ _id: { $in: classIds } })
+        return await Class.find({ _id: { $in: classIds }, isDeleted: false })
             .populate({
                 path: "teacher",
                 select: "name surname email profile.avatar",
@@ -56,7 +56,7 @@ export const getClassesPaginated = async (offset, limit) => {
 
 export const getClassByCode = async (code) => {
     try {
-        return await Class.findOne({code: code})
+        return await Class.findOne({code: code, isDeleted: false})
     } catch (error) {
         console.log(error)
         throw error
@@ -154,7 +154,7 @@ export const pushAssignmentToClass = async (classId, assignmentId) => {
 export const getClassMaterials = async (classId) => {
     try {
         const data = await Class.findById(classId).select("material")
-        return data?.material || null
+        return data?.material?.reverse()  || null
     } catch (error) {
         console.log(error)
         throw error
@@ -164,7 +164,7 @@ export const getClassMaterials = async (classId) => {
 export const getClassAssignments = async (classId) => {
     try {
         const data = await Class.findById(classId).select("assignments")
-        return data?.assignments || null
+        return data?.assignments?.reverse() || null
     } catch (error) {
         console.log(error)
         throw error
@@ -174,7 +174,7 @@ export const getClassAssignments = async (classId) => {
 export const getClassPosts = async (classId) => {
     try {
         const data = await Class.findById(classId).select("posts")
-        return data?.posts || null
+        return data?.posts ? data.posts.reverse() : null
     } catch (error) {
         console.log(error)
         throw error
@@ -184,6 +184,15 @@ export const getClassPosts = async (classId) => {
 export const getClassCount = async () => {
     try {
         return await Class.countDocuments()
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
+export const deleteClassById = async (classId, deletedBy) => {
+    try {
+        return await Class.findByIdAndUpdate(classId, {isDeleted: true, deletedBy, deletedAt: new Date()})
     } catch (error) {
         console.log(error)
         throw error

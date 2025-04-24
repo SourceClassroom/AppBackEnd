@@ -10,7 +10,7 @@ export const createMaterial = async (data) => {
 
 export const getMultiMaterials = async (materialIds) => {
     try {
-        return await Material.find({ _id: { $in: materialIds } })
+        return await Material.find({ _id: { $in: materialIds }, isDeleted: false })
             .populate({
                 path: 'attachments',
                 select: '_id originalname size',
