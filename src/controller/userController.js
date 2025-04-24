@@ -1,18 +1,19 @@
 import bcrypt from 'bcryptjs';
 import ApiResponse from "../utils/apiResponse.js";
 import TokenService from "../services/jwtService.js";
-import *as fileService from "../services/fileService.js";
+import * as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
 
 //Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
 
 //Cache Modules
-import *as userCacheModule from "../cache/modules/userModule.js";
-import *as tokenCacheModule from "../cache/modules/tokenModule.js";
+import * as userCacheModule from "../cache/modules/userModule.js";
 
 //Database Modules
-import *as zoomDatabaseModule from "../database/modules/zoomModule.js";
-import *as userDatabaseModule from "../database/modules/userModule.js";
+import * as zoomDatabaseModule from "../database/modules/zoomModule.js";
+import * as userDatabaseModule from "../database/modules/userModule.js";
+import * as classDatabaseModule from "../database/modules/classModule.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -411,8 +412,15 @@ export const userDashboard = async (req, res) => {
     try {
         const userId = req.user.id;
         let userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard)
-
         if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
+
+        if (userData?.enrolledClasses.length > 0) {
+            userData.enrolledClasses = await multiGet(userData.enrolledClasses, "class", classDatabaseModule.getMultiClassById)
+        }
+
+        if (userData?.teachingClasses.length > 0) {
+            userData.teachingClasses = await multiGet(userData.teachingClasses, "class", classDatabaseModule.getMultiClassById)
+        }
 
         if (userData.role === "teacher" || userData.role === "sysadmin") {
             const zoomData = await zoomDatabaseModule.getUserZoomData(userId)

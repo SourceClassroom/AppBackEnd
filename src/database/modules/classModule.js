@@ -31,6 +31,20 @@ export const getClassById = async (classId) => {
     }
 }
 
+export const getMultiClassById = async (classIds) => {
+    try {
+        return await Class.find({ _id: { $in: classIds } })
+            .populate({
+                path: "teacher",
+                select: "name surname email profile.avatar",
+            })
+            .select("title description code teacher")
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const getClassByCode = async (code) => {
     try {
         return await Class.findOne({code: code})
