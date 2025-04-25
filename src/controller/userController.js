@@ -5,6 +5,9 @@ import {processMedia} from "../services/fileService.js";
 import * as fileService from "../services/fileService.js";
 import { generateCode } from "../services/classCodeService.js";
 
+//Mailer
+import sendMail from "../mailer/sendMail.js";
+
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
 
@@ -254,6 +257,8 @@ export const generateVerificationCode = async (req, res) => {
         const code = generateCode()
         await invalidateKey(`code:${mail}`)
         await mailVerificationCacheModule.setVerificationCode(mail, code)
+
+        await sendMail(mail, "SourceClassroom Mail Doğrulama", `Mail doğrulama kodunuz: ${code}`)
 
         res.status(200).json(
             ApiResponse.success('Doğrulama kodu oluşturuldu.')
