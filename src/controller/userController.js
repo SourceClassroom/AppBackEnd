@@ -96,13 +96,10 @@ export const createUser = async (req, res) => {
 
         const newUser = await userDatabaseModule.createUser(newUserData)
 
-        const token = await TokenService.generateAccessToken({
-            id: newUser._id,
-            role: newUser.role,
-            tokenVersion: newUser.tokenVersion
-        });
+
         const code = generateCode()
         await mailVerificationCacheModule.setVerificationCode(email, code)
+        await sendMail(mail, "SourceClassroom Mail Doğrulama", `Mail doğrulama kodunuz: ${code}`)
 
         const userResponse = {
             _id: newUser._id,
@@ -118,8 +115,7 @@ export const createUser = async (req, res) => {
             ApiResponse.success(
                 'Giriş başarılı',
                 {
-                    user: userResponse,
-                    token
+                    user: userResponse
                 }
             )
         );
