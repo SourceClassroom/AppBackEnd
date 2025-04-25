@@ -96,10 +96,9 @@ export const createUser = async (req, res) => {
 
         const newUser = await userDatabaseModule.createUser(newUserData)
 
-
         const code = generateCode()
         await mailVerificationCacheModule.setVerificationCode(email, code)
-        await sendMail(mail, "SourceClassroom Mail Doğrulama", `Mail doğrulama kodunuz: ${code}`)
+        await sendMail(email, "SourceClassroom Mail Doğrulama", `Mail doğrulama kodunuz: ${code}`)
 
         const userResponse = {
             _id: newUser._id,
