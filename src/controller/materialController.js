@@ -3,7 +3,7 @@ import {processMedia} from "../services/fileService.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
-import {invalidateKey} from "../cache/strategies/invalidate.js";
+import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import *as weekCacheModule from "../cache/modules/weekModule.js";
@@ -31,12 +31,38 @@ export const createMaterial = async (req, res) => {
         };
 
         const material = await materialDatabaseModule.createMaterial(newMaterialData);
-        await classDatabaseModule.pushMaterialToClass(classId, material._id)
-        await invalidateKey(`class:${classId}:materials`)
+        if (week) await weekDatabaseModule.pushMaterialToWeek(week, material._id)
+        else await classDatabaseModule.pushMaterialToClass(classId, material._id)
+        await invalidateKeys([`class:${classId}:materials`, `week:${week}:materials`])
 
         res.status(201).json(ApiResponse.success("Materyel başarıyla oluşturuldu.", material, 201));
     } catch (error) {
+        console.error(error)
         res.status(500).json(ApiResponse.serverError("Materyel oluşturulurken bir hata meydana geldi.", error));
+    }
+};
+
+export const updateMaterial = async (req, res) => {
+    try {
+        const { materialId } = req.params;
+        const { title, description } = req.body;
+
+        const fileIds = await processMedia(req);
+        const currentAttachments = req.body.attachments ? JSON.parse(req.body.attachments) : [];
+
+        const updatedMaterialData = {
+            title,
+            description,
+            attachments: currentAttachments.concat(fileIds),
+        };
+
+        const updatedMaterial = await materialDatabaseModule.updateMaterial(materialId, updatedMaterialData);
+        await invalidateKey(`material:${materialId}`)
+
+        res.status(200).json(ApiResponse.success("Materyal başarıyla güncellendi.", updatedMaterial, 200));
+    } catch (error) {
+        console.error(error)
+        res.status(500).json(ApiResponse.serverError("Materyal güncellenirken bir hata meydana geldi.", error));
     }
 };
 

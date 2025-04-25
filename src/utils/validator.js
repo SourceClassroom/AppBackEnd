@@ -153,6 +153,29 @@ export const validateCreateMaterial = [
         .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
 ]
 
+export const validateUpdateMaterial = [
+    body('title')
+        .notEmpty().withMessage('Başlık alanı zorunludur.')
+        .isLength({ min: 3 }).withMessage('Başlık en az 3 karakter olmalıdır.'),
+    body('description')
+        .optional()
+        .isLength({ max: 2048 }).withMessage('Açıklama en fazla 2048 karakter olabilir.'),
+    body('week')
+        .optional()
+        .isMongoId().withMessage('Geçerli bir hafta ID giriniz.'),
+]
+
+export const validateMailVerification = [
+    body('mail')
+        .notEmpty().withMessage('E-posta alanı zorunludur')
+        .isEmail().withMessage('Geçerli bir e-posta adresi girilmelidir')
+        .normalizeEmail(),
+    body('code')
+        .customSanitizer(value => value.toUpperCase())
+        .isLength({ min: 6, max: 6 }).withMessage('Sınıf kodu 6 karakter olmalıdır.')
+        .matches(/^[A-Z0-9]{6}$/).withMessage('Sınıf kodu sadece büyük harf ve rakamlardan oluşabilir.'),
+]
+
 export const classValidate = [
     body('title')
         .notEmpty().withMessage('Sınıf ismi boş olamaz.')
@@ -285,7 +308,7 @@ export const validateUpdateUserForAdmin = [
         .isIn(['student', 'teacher', 'sysadmin']).withMessage("Geçerli bir kullanıcı rolü giriniz."),
     body("data.accountStatus")
         .notEmpty().withMessage("Durum verisi boş olamaz.")
-        .isIn(['active', 'inactive', 'suspended', 'pending']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
+        .isIn(['active', 'inactive', 'suspended', 'pending', 'mailVerification']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
 ]
 
 /**

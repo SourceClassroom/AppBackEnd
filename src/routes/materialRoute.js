@@ -38,6 +38,22 @@ router.route("/:classId/:weekId").get(
     materialController.getWeekMaterials
 )
 
+router.route("/update/:classId/:materialId").put(
+    authenticateToken,
+    upload.validateAndUpload({
+        fieldName: "files",
+        minFiles: 0,
+        maxFiles: 20,
+        fileSize: 1024 * 1024 * 1024,
+    }),
+    apiValidator.validateMongoId("classId"),
+    apiValidator.validateMongoId("materialId"),
+    apiValidator.validateUpdateMaterial,
+    apiValidator.validate,
+    roleCheck.isClassTeacherOrOwner(),
+    materialController.updateMaterial
+)
+
 //TODO add class material check
 router.route("/delete/:classId/:materialId").delete(
     authenticateToken,

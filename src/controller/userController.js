@@ -1,19 +1,22 @@
 import bcrypt from 'bcryptjs';
 import ApiResponse from "../utils/apiResponse.js";
 import TokenService from "../services/jwtService.js";
-import * as fileService from "../services/fileService.js";
 import {processMedia} from "../services/fileService.js";
+import * as fileService from "../services/fileService.js";
+import { generateCode } from "../services/classCodeService.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
 
 //Cache Modules
 import * as userCacheModule from "../cache/modules/userModule.js";
+import * as mailVerificationCacheModule from "../cache/modules/mailVerificationModule.js";
 
 //Database Modules
 import * as zoomDatabaseModule from "../database/modules/zoomModule.js";
 import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as classDatabaseModule from "../database/modules/classModule.js";
+import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -74,7 +77,7 @@ export const createUser = async (req, res) => {
 
         // First user is sysadmin, otherwise use provided role
         const userRole = isFirstUser ? 'sysadmin' : (role || 'student');
-        const accountStatus = userRole === "teacher" ? 'pending' : 'active';
+        const accountStatus = userRole === "teacher" ? 'pending' : 'mailVerification';
 
         // Yeni kullanıcı oluştur
         const newUserData = {
@@ -84,6 +87,7 @@ export const createUser = async (req, res) => {
             password: hashedPassword,
             role: userRole,
             accountStatus,
+            mailVerification: false,
             tokenVersion: TokenService.generateVersionCode()
         }
 
@@ -94,6 +98,9 @@ export const createUser = async (req, res) => {
             role: newUser.role,
             tokenVersion: newUser.tokenVersion
         });
+        const code = generateCode()
+        await mailVerificationCacheModule.setVerificationCode(email, code)
+
         const userResponse = {
             _id: newUser._id,
             name: newUser.name,
@@ -152,6 +159,10 @@ export const loginUser = async (req, res) => {
             return res.status(403).json(
                 ApiResponse.forbidden("Bu kullanıcı hesabı'nın giriş yapma izni bulunmuyor.")
             );
+        } else if (accountStatus === "mailVerification") {
+            return res.status(403).json(
+                ApiResponse.forbidden("Lütfen mail adresinizi doğrulayın.", {verification: false})
+            );
         }
         // Şifre kontrolü
         const isMatch = await bcrypt.compare(password, user.password);
@@ -195,6 +206,65 @@ export const loginUser = async (req, res) => {
         );
     }
 };
+
+export const verifyMail = async (req, res) => {
+    try {
+        const { mail, code } = req.body
+
+        const user = await userDatabaseModule.getUserByEmail(mail)
+        if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."))
+        if (user.mailVerification === true) return res.status(400).json(ApiResponse.error("Mail adresi zaten doğrulanmış."))
+
+        const verificationCode = await mailVerificationCacheModule.getVerificationCode(mail)
+
+        if (!verificationCode) {
+            return res.status(400).json(
+                ApiResponse.error('Doğrulama kodunun süresi dolmuş.')
+            )
+        }
+        if (verificationCode !== code) {
+            return res.status(400).json(
+                ApiResponse.error('Hatalı doğrulama kodu.')
+            )
+        }
+
+        const newUserData = await userDatabaseModule.verifyUser(mail)
+        await userCacheModule.clearUserCache(newUserData._id)
+        await invalidateKeys([`code:${mail}`])
+
+        res.status(200).json(
+            ApiResponse.success('Mail doğrulandı.', newUserData._id)
+        )
+    } catch (error) {
+        console.error(error)
+        res.status(500).json(
+            ApiResponse.serverError('Mail doğrulama hatası', error)
+        )
+    }
+}
+
+export const generateVerificationCode = async (req, res) => {
+    try {
+        const { mail } = req.body
+
+        const user = await userDatabaseModule.getUserByEmail(mail)
+        if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."))
+        if (user.mailVerification === true) return res.status(400).json(ApiResponse.error("Mail adresi zaten doğrulanmış."))
+
+        const code = generateCode()
+        await invalidateKey(`code:${mail}`)
+        await mailVerificationCacheModule.setVerificationCode(mail, code)
+
+        res.status(200).json(
+            ApiResponse.success('Doğrulama kodu oluşturuldu.')
+        )
+    } catch (error) {
+        console.error(error)
+        res.status(500).json(
+            ApiResponse.serverError('Doğrulama kodu oluşturulurken bir hata oluştu', error)
+        )
+    }
+}
 
 /**
  * Kullanıcı şifresini değiştirme

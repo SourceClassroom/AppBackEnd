@@ -26,4 +26,4 @@ async function generateUniqueCode() {
     return code;
 }
 
-export { generateUniqueCode };
+export { generateUniqueCode, generateCode };

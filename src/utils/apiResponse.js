@@ -71,8 +71,8 @@ class ApiResponse {
     }
 
     //Erişim reddi hatası yanıtı
-    static forbidden(message = "Bu işlem için yetkiniz yok") {
-        return this.error(message, null, 403);
+    static forbidden(message = "Bu işlem için yetkiniz yok", errors = null) {
+        return this.error(message, errors, 403);
     }
 
     //Bulunamadı hatası yanıtı

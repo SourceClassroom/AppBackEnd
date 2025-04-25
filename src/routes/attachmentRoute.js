@@ -17,10 +17,9 @@ router.route("/submission/download/:classId/:id").get(
     attachmentController.downloadAttachment
 )
 
-router.route("/material/download/:classId/:id").get(
+router.route("/download/:id").get(
     authenticateToken,
     apiValidator.validateMongoId("id"),
-    apiValidator.validateMongoId("classId"),
     apiValidator.validate,
     roleCheck.checkFilePermission(),
     attachmentController.downloadAttachment

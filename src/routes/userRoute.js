@@ -1,9 +1,9 @@
 import express from "express"
 import upload from "../middlewares/upload.js";
-import *as apiValidator from "../utils/validator.js"
+import {fileTypes} from "../utils/fileTypes.js";
+import *as apiValidator from "../utils/validator.js";
 import *as userController from "../controller/userController.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
-import {fileTypes} from "../utils/fileTypes.js"
 
 const router = express.Router()
 
@@ -22,6 +22,15 @@ router.route("/dashboard").get(
 router.route("/login").post(userController.loginUser)
 
 router.route("/logout").post(authenticateToken, userController.logoutUser)
+
+router.route("/verify").post(
+    apiValidator.validateMailVerification,
+    apiValidator.validate,
+    userController.verifyMail
+)
+router.route("/generate-code").post(
+    userController.generateVerificationCode
+)
 
 router.route("/register").post(
     apiValidator.userCreateValidationRules,

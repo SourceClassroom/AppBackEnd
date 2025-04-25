@@ -2,7 +2,6 @@ import ApiResponse from "../utils/apiResponse.js";
 import {User} from "../database/models/userModel.js";
 import TokenService from "../services/jwtService.js";
 
-
 /**
  * JWT token doğrulama middleware'i
  * Token'ı cookie veya Authorization header'dan alır

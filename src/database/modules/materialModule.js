@@ -28,3 +28,11 @@ export const deleteMaterial = async (materialId, deletedBy) => {
         throw error;
     }
 };
+
+export const updateMaterial = async (materialId, data) => {
+    try {
+        return await Material.findByIdAndUpdate(materialId, data, { new: true });
+    } catch (error) {
+        throw error;
+    }
+};

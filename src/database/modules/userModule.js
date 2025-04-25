@@ -26,6 +26,16 @@ export const getUserByEmail = async (email) => {
         throw error
     }
 }
+
+export const verifyUser = async (email) => {
+    try {
+        return await User.findOneAndUpdate({email}, { $set: { accountStatus: "active", mailVerification: true} }, { new: true }).select("-password");
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const changePassword = async (userId, password, tokenVersion) => {
     try {
         return await User.findByIdAndUpdate(userId, { $set: { password, tokenVersion } }, { new: true }).select("-password");

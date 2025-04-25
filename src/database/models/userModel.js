@@ -83,12 +83,16 @@ const UserSchema = new Schema({
     // Hesap durumu
     accountStatus: {
         type: String,
-        enum: ['active', 'inactive', 'suspended', 'pending'],
+        enum: ['active', 'inactive', 'suspended', 'pending', 'mailVerification'],
         default: 'active'
     },
     tokenVersion: {
         type: Number,
         default: 0
+    },
+    mailVerification: {
+        type: Boolean,
+        default: false
     },
     ...softDeleteFields
 }, {timestamps: true});

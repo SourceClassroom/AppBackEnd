@@ -54,10 +54,19 @@ export const pushPostToWeek = async (weekId, postId) => {
     }
 }
 
+export const pushMaterialToWeek = async (weekId, materialId) => {
+    try {
+        return await Week.findByIdAndUpdate(weekId, { $push: { materials: materialId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const getWeekMaterials = async (weekId) => {
     try {
-        const data = await Week.findById(weekId).select("material")
-        return data?.material?.reverse()  || null
+        const data = await Week.findById(weekId).select("materials")
+        return data?.materials?.reverse()  || null
     } catch (error) {
         console.log(error)
         throw error
