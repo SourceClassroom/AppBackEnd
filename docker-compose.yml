@@ -4,9 +4,6 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    depends_on:
-      - mongodb
-      - redis
     env_file:
       - .env
     ports:
