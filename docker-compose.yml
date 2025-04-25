@@ -9,7 +9,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
+      - ./publuc:/app/public
     networks:
       - proxynet
 networks:
