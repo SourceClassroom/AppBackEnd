@@ -1,4 +1,4 @@
-import { client } from '../client/redisClient.js'
+import { client } from '../client/redisClient.js';
 
 const getOrSetCache = async (key, fetchFn, ttl = 60) => {
     try {
@@ -6,13 +6,15 @@ const getOrSetCache = async (key, fetchFn, ttl = 60) => {
         if (cached) return JSON.parse(cached);
 
         const freshData = await fetchFn();
-        if (freshData) await client.setEx(key, ttl, JSON.stringify(freshData));
+        if (freshData) {
+            await client.set(key, JSON.stringify(freshData), "EX", ttl);
+        }
 
         return freshData;
     } catch (error) {
-        console.log(error)
-        throw error
+        console.error(error);
+        throw error;
     }
-}
+};
 
 export default getOrSetCache;

@@ -2,7 +2,12 @@ import { client } from "../client/redisClient.js";
 
 export const cacheUserAccessToken = async (userId, keyData) => {
     try {
-        return await client.setEx(`user:${userId}:access_token`, keyData.expires_in, keyData.access_token)
+        return await client.set(
+            `user:${userId}:access_token`,
+            keyData.access_token,
+            'EX',
+            keyData.expires_in
+        )
     } catch (error) {
         throw error
     }

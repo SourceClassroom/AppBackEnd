@@ -1,13 +1,15 @@
 import { client } from "../client/redisClient.js";
 
 export default async (ids, prefix, fetchFn) => {
-    if (ids.length === 0 || !ids) return [];
+    if (!ids || ids.length === 0) return [];
+
     const mappedIds = ids.map(id => `${prefix}:${id._id || id}`);
 
-    const cachedData = await client.mGet(mappedIds);
+    const cachedData = await client.mget(mappedIds);
 
     const result = [];
     const missingData = [];
+
     cachedData.forEach((data, index) => {
         if (data) {
             result.push(JSON.parse(data));
@@ -15,20 +17,18 @@ export default async (ids, prefix, fetchFn) => {
             missingData.push(ids[index]);
         }
     });
-    //console.log(prefix,missingData)
+
     if (missingData.length > 0) {
-        const fetcherDataFromDb = await fetchFn(missingData);
+        const fetchedDataFromDb = await fetchFn(missingData);
 
-        const pipeline = client.multi(); // Redis pipeline başlat
+        const pipeline = client.multi();
 
-        for (const data of fetcherDataFromDb) {
-            pipeline.set(`${prefix}:${data.id}`, JSON.stringify(data), {
-                EX: 3600
-            });
+        for (const data of fetchedDataFromDb) {
+            pipeline.set(`${prefix}:${data.id}`, JSON.stringify(data), 'EX', 3600);
             result.push(data);
         }
 
-        await pipeline.exec(); // Bütün set işlemlerini tek seferde gönder
+        await pipeline.exec();
     }
 
     return result;

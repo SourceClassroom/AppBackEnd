@@ -5,10 +5,4 @@ import {authenticateToken} from "../middlewares/authMiddleware.js";
 
 const router = express.Router()
 
-router.route("/send").post(
-    authenticateToken,
-    roleCheck.isClassTeacherOrOwner(),
-    notificationController.sendNotificationtoClass
-);
-
 export default router

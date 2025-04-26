@@ -3,7 +3,10 @@ import cors from "cors";
 import dotenv from 'dotenv';
 import express from 'express';
 import { fileURLToPath } from 'url';
+import { createServer } from "http";
 import cookieParser from "cookie-parser"
+import initQueues from './queue/initQueues.js';
+import socketHandler from "./socket/sockerHandler.js";
 import conn from "./database/client/mongodbConnection.js";
 import hostnameCheck from "./middlewares/hostnameCheck.js";
 import {redisConnect} from "./cache/client/redisClient.js";
@@ -31,11 +34,16 @@ conn();
 //Redis connection
 redisConnect()
 
+//Init Queues
+initQueues();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT
+
+const httpServer = createServer(app); // Express'i HTTP serverla sarmalıyoruz
 
 app.use(hostnameCheck)
 
@@ -60,6 +68,8 @@ app.use('/api/notification', notificationRouter)
 
 //app.use('/public', express.static(path.join(__dirname, 'public')));
 
-app.listen(port, () => {
-    console.log((`Application running on port: ${port}`))
-})
+socketHandler(httpServer);
+
+httpServer.listen(port, () => {
+    console.log(`Application running on port: ${port}`);
+});
