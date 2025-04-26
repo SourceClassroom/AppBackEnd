@@ -3,7 +3,6 @@ import *as apiValidator from "../utils/validator.js"
 import *as roleCheck from "../middlewares/roleCheck.js";
 import {authenticateToken} from "../middlewares/authMiddleware.js";
 import *as adminController from "../controller/adminController.js";
-import {validateUpdateUserForAdmin} from "../utils/validator.js";
 
 const router = express.Router()
 

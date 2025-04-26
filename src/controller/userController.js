@@ -253,7 +253,7 @@ export const generateVerificationCode = async (req, res) => {
         await invalidateKey(`code:${mail}`)
         await mailVerificationCacheModule.setVerificationCode(mail, code)
 
-        await sendMail(mail, "SourceClassroom Mail Doğrulama", `Mail doğrulama kodunuz: ${code}`)
+        await sendMail(mail, `${process.env.APP_NAME} Mail Doğrulama`, `Mail doğrulama kodunuz: ${code}`)
 
         res.status(200).json(
             ApiResponse.success('Doğrulama kodu oluşturuldu.')
@@ -326,7 +326,7 @@ export const changePassword = async (req, res) => {
             req.query?.token;
 
         await TokenService.blacklistToken(oldToken)
-
+        sendMail(userEmail, `${process.env.APP_NAME} Şifre Değiştirme Bildirimi`, `${process.env.APP_NAME} şifreniz değiştirildi. Eğer bu işlem siz yapmadıysanız lütfen bir yönetici ile iletişime geçin.`)
         res.status(200).json(
             ApiResponse.success(
                 'Şifre başarıyla değiştirildi',

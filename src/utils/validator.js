@@ -277,7 +277,7 @@ export const validateUserStatus = [
         .isMongoId().withMessage("Geçerli bir kullanıcı ID giriniz."),
     body("status")
         .notEmpty().withMessage("Kullanıcı durumu boş olamaz.")
-        .isIn(['active', 'inactive', 'suspended', 'pending']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
+        .isIn(['active', 'inactive', 'suspended', 'pending', 'mailVerification']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
 ]
 
 export const validateUpdateUserForAdmin = [
