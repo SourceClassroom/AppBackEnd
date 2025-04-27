@@ -6,7 +6,6 @@ import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKeys, invalidateKey } from "../cache/strategies/invalidate.js";
 
 //Cache Module
-import *as postCacheModule from '../cache/modules/postModule.js';
 import *as weekCacheModule from '../cache/modules/weekModule.js';
 import *as classCacheModule from '../cache/modules/classModule.js';
 
@@ -14,6 +13,9 @@ import *as classCacheModule from '../cache/modules/classModule.js';
 import *as postDatabaseModule from '../database/modules/postModule.js';
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
+
+//Notification
+import notifyClassroom from "../notifications/notifyClassroom.js";
 
 export const createPost = async (req, res) => {
     try {
@@ -24,6 +26,8 @@ export const createPost = async (req, res) => {
 
         const classCacheKey = `class:${classId}:posts`;
         const weekCacheKey = `week:${week}:posts`;
+
+        const classroom = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
 
         const newPostData = {
             classroom: classId,
@@ -42,6 +46,16 @@ export const createPost = async (req, res) => {
             await classDatabaseModule.pushPostToClass(classId, createPost._id)
             await invalidateKeys([classCacheKey])
         }
+
+        const notificationData = {
+            type: "new_post",
+            classId,
+            subject: "Yeni bir duyuru yapildi.",
+            message: `${classroom.title} sınıfına yeni bir duyuru yapıldı.`
+        }
+
+        notifyClassroom(classId, notificationData)
+
         res.status(201).json(ApiResponse.success("Duyuru başarıyla oluşturuldu.", createPost, 201));
     } catch (error) {
         console.error('Post oluşturma hatası:', error);

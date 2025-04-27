@@ -14,7 +14,9 @@ import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
 import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
-import {getCachedAssignment} from "../cache/modules/assignmentModule.js";
+
+//Notifications
+import notifyClassroom from "../notifications/notifyClassroom.js";
 
 
 /**
@@ -63,6 +65,15 @@ export const createAssignment = async (req, res) => {
             await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
             await invalidateKey(`class:${classId}:assignments`)
         }
+
+        const notificationData = {
+            type: "new_assignment",
+            classId,
+            subject: "Yeni bir ödev oluşturuldu.",
+            message: `${classExists.title} sınıfına yeni bir ödev oluşturuldu.`
+        }
+
+        notifyClassroom(classId, notificationData)
 
         return res.status(201).json(ApiResponse.success("Ödev başarılı bir şekilde oluşturuldu.", newAssignment, 201));
     } catch (error) {

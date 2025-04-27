@@ -9,13 +9,11 @@ const UserSchema = new Schema({
         type: String,
         required: true,
         lowercase: true,
-        validate: [validator.isAlphanumeric, "Only Alphanumeric characters"]
     },
     surname: {
         type: String,
         required: true,
         lowercase: true,
-        validate: [validator.isAlphanumeric, "Only Alphanumeric characters"]
     },
     email: {
         type: String,
@@ -52,9 +50,10 @@ const UserSchema = new Schema({
             // Bildirim türlerine göre tercihler (varsayılan olarak hepsi açık)
             new_assignment: true,
             assignment_graded: true,
-            new_announcement: true,
+            new_post: true,
             new_material: true,
-            new_comment: true,
+            new_lesson: true,
+            lesson_reminder: true,
             assignment_due_reminder: true,
             submission_reminder: true,
             // Bildirim kanalları için tercihler

@@ -111,34 +111,6 @@ export const isClassMember = () => {
     };
 };
 
-/**
- * Kullanıcının kendi kaynakları üzerinde işlem yapıp yapmadığını kontrol eden middleware
- * @param {string} userIdField - Kullanıcı ID'sinin bulunduğu alan (örn: 'userId', 'createdBy')
- * @returns {Function} - Express middleware fonksiyonu
- */
-export const isResourceOwner = (userIdField = 'userId') => {
-    return async (req, res, next) => {
-        try {
-            const { user } = req;
-            const resourceUserId = req.body[userIdField] || req.params[userIdField];
-
-            // Admin her şeyi yapabilir
-            if (user.role === 'sysadmin') {
-                return next();
-            }
-
-            // Kullanıcı kendi kaynağı üzerinde işlem yapıyor mu kontrol et
-            if (resourceUserId && resourceUserId.toString() === user.id) {
-                return next();
-            }
-
-            return res.status(403).json(ApiResponse.forbidden("Bu işlem için gerekli izniniz bulunmamaktadır"));
-        } catch (error) {
-            return res.status(500).json(ApiResponse.serverError("Rol kontrolü sırasında bir hata oluştu", error));
-        }
-    };
-};
-
 export const isSysadmin = () => {
     return async (req, res, next) => {
         try {

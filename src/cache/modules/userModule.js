@@ -19,6 +19,14 @@ export const getCachedUserDashboardData = async (userId, fetchFn) => {
     }
 }
 
+export const getCachedUserNotifications = async (userId, fetchFn) => {
+    try {
+        return await getOrSet(`${USER_KEY(userId)}:notifications`, () => fetchFn(userId), 3600)
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const clearUserCache = async (userId) => {
     try {
         return await scanAndDelete(USER_KEY(userId));

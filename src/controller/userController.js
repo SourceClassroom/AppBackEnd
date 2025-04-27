@@ -13,6 +13,7 @@ import multiGet from "../cache/strategies/multiGet.js";
 
 //Cache Modules
 import * as userCacheModule from "../cache/modules/userModule.js";
+import * as onlineUserCacheModule from "../cache/modules/onlineUserModule.js";
 import * as mailVerificationCacheModule from "../cache/modules/mailVerificationModule.js";
 
 //Database Modules
@@ -20,6 +21,7 @@ import * as zoomDatabaseModule from "../database/modules/zoomModule.js";
 import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as classDatabaseModule from "../database/modules/classModule.js";
 import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
+import {removeAllUserSockets} from "../cache/modules/onlineUserModule.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -379,6 +381,7 @@ export const logoutUser = async (req, res) => {
         }
 
         await TokenService.blacklistToken(token)
+        await onlineUserCacheModule.removeAllUserSockets(req.user.id)
 
         return res.status(200).json(ApiResponse.success("Başarıyla çıkış yapıldı."))
     } catch (error) {
