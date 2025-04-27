@@ -11,7 +11,7 @@ const notificationSchema = new Schema({
     type: { type: String, required: true, enum: [
             'new_assignment',
             'assignment_graded',
-            'new_announcement',
+            'new_post',
             'new_material',
             'new_comment',
             'assignment_due_reminder',

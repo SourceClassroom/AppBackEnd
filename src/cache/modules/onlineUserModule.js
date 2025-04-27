@@ -15,7 +15,7 @@ export const getUserSockets = async (userId) => {
         throw new Error("getUserSockets: userId is required.");
     }
 
-    return await client.smembers(`${SOCKETS_PREFIX}${userId}`) || [];
+    return await client.smembers(`${SOCKETS_PREFIX}${userId}`);
 }
 
 export const removeUserSocket = async (userId, socketId) => {

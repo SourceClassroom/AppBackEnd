@@ -1,6 +1,7 @@
 import { Worker } from "bullmq";
 import { client } from "../../cache/client/redisClient.js";
 import { getSocketServer } from "../../socket/socketInstance.js";
+import { invalidateKey } from "../../cache/strategies/invalidate.js"
 import { getUserSockets } from "../../cache/modules/onlineUserModule.js";
 import { createNotification } from "../../database/modules/notificationModule.js";
 
@@ -11,11 +12,12 @@ const notificationWorker = new Worker("notificationQueue", async (job) => {
 
     // 2. Socket'e yolla
     if (allowPush) {
+        invalidateKey(`user:${userId}:notifications`)
         const io = getSocketServer();
         const sockets = await getUserSockets(userId)
-
         if (sockets && sockets.length > 0) {
             sockets.forEach((socketId) => {
+                //console.log(`Sending notification to socket: ${socketId}`);
                 io.to(socketId).emit("notification", savedNotification);
             });
         }

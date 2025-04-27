@@ -48,7 +48,7 @@ export const createPost = async (req, res) => {
         }
 
         const notificationData = {
-            type: "new_assignment",
+            type: "new_post",
             classId,
             subject: "Yeni bir duyuru yapildi.",
             message: `${classroom.title} sınıfına yeni bir duyuru yapıldı.`

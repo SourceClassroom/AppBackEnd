@@ -6,9 +6,10 @@ export default function socketHandler(server) {
     import("socket.io").then(({ Server }) => {
         const io = new Server(server, {
             cors: {
-                origin: "*", // İstersen burada CORS'u daha güvenli yapabiliriz.
+                origin: "*",
                 methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-            }
+            },
+            transports: ['websocket', 'polling']
         });
 
         setSocketServer(io); // Global olarak io'yu kaydediyoruz!

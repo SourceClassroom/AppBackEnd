@@ -13,8 +13,8 @@ export const getVerificationCode = async (mail) => {
 
 export const setVerificationCode = async (mail, code) => {
     try {
-        //return await client.set(VERIFICATION_KEY(mail), code, 'EX', 5 * 60);
-        await client.setEx(VERIFICATION_KEY(mail), 5 * 60, code)
+        return await client.set(VERIFICATION_KEY(mail), code, 'EX', 5 * 60);
+        //await client.setEx(VERIFICATION_KEY(mail), 5 * 60, code)
     } catch (error) {
         console.error('Redis set error:', error);
         throw error;

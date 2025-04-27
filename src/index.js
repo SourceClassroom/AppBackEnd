@@ -48,7 +48,10 @@ const httpServer = createServer(app); // Express'i HTTP serverla sarmalıyoruz
 app.use(hostnameCheck)
 
 app.use(express.json())
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
 app.use(cookieParser())
 app.use(express.urlencoded({extended: true}))
 

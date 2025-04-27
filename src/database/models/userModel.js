@@ -9,13 +9,11 @@ const UserSchema = new Schema({
         type: String,
         required: true,
         lowercase: true,
-        validate: [validator.isAlphanumeric, "Only Alphanumeric characters"]
     },
     surname: {
         type: String,
         required: true,
         lowercase: true,
-        validate: [validator.isAlphanumeric, "Only Alphanumeric characters"]
     },
     email: {
         type: String,

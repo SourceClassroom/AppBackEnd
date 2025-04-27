@@ -21,3 +21,57 @@ export const createNotification = async (userId, data) => {
         throw error
     }
 }
+
+export const getNotifications = async (userId) => {
+    try {
+        return await Notification.find({ user: userId }).sort({ createdAt: -1 }).select("_id");
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const getNotificationById = async (notificationId) => {
+    try {
+        return await Notification.findById(notificationId);
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const getMultiNotificationsById = async (notificationIds) => {
+    try {
+        return await Notification.find({ _id: { $in: notificationIds } });
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const markAllAsRead = async (userId) => {
+    try {
+        return await Notification.updateMany({ user: userId }, { isRead: true });
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const removeNotification = async (notificationId) => {
+    try {
+        return await Notification.findByIdAndDelete(notificationId);
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+export const markAsRead = async (notificationId) => {
+    try {
+        return await Notification.findByIdAndUpdate(notificationId, { isRead: true }, { new: true });
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}

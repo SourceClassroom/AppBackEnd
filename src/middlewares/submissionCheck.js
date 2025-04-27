@@ -2,6 +2,7 @@ import ApiResponse from "../utils/apiResponse.js";
 import {Submission} from "../database/models/submissionsModel.js";
 import {Assignment} from "../database/models/assignmentModel.js";
 
+//TODO remove direct database imports
 
 export const checkUserSubmissions = () => {
     return async (req, res, next) => {
