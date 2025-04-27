@@ -1,22 +1,20 @@
-import sendMail from "../mailer/sendMail.js";
-import { getSocketServer } from "../socket/socketInstance.js";
-import { returnUserPrefs } from  "../services/notificationService.js";
-
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
 
 //Cache Modules
 import *as classCacheModule from "../cache/modules/classModule.js";
-import *as onlineUserCacheModule from "../cache/modules/onlineUserModule.js";
 
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
 
+// Queues
+import mailQueue from "../queue/queues/mailQueue.js";
+import notificationQueue from "../queue/queues/notificationQueue.js";
+
 
 export default async (classId, notificationData) => {
     try {
-        const io = getSocketServer()
 
         const classStudentList = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
         if (!classStudentList || classStudentList.length === 0) {
@@ -31,19 +29,22 @@ export default async (classId, notificationData) => {
         for (const student of studentData) {
             const prefs = student.notificationPreferences || {};
 
-            const {allowThisNotification, allowPush, allowEmail} = returnUserPrefs(prefs, notificationData.type);
+            if (!prefs[notificationData.type]) continue;
 
-            if (!allowThisNotification) continue;
+            await notificationQueue.add("saveNotification", {
+                userId: student._id,
+                notificationData,
+                allowPush: prefs.push_notifications
+            });
 
-            const sockets = allowPush ? await onlineUserCacheModule.getUserSockets(student._id) : [];
-
-            if (sockets && sockets.length > 0) {
-                sockets.forEach((socketId) => {
-                    io.to(socketId).emit("notification", notificationData);
+            if (prefs.email_notifications) {
+                await mailQueue.add("sendMail", {
+                    email: student.email,
+                    subject: notificationData.subject,
+                    message: notificationData.message
                 });
-            } else if (allowEmail) {
-                sendMail(student.email, notificationData.subject, notificationData.message)
             }
+
         }
 
     } catch (error) {

@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import softDeleteFields from "../fields/softDeleteFields.js";
 
 const { Schema } = mongoose;
 
 const notificationSchema = new Schema({
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    classroom: { type: Schema.Types.ObjectId, ref: "Class", required: true },
-    title: { type: String, required: true },
+    classroom: { type: Schema.Types.ObjectId, ref: "Class"},
+    conversation: { type: Schema.Types.ObjectId, ref: "Conversation" },
+    subject: { type: String, required: true },
     message: { type: String, required: true },
     type: { type: String, required: true, enum: [
             'new_assignment',
@@ -18,8 +18,10 @@ const notificationSchema = new Schema({
             'submission_reminder'
         ] },
     isRead: { type: Boolean, default: false },
-    ...softDeleteFields
+    expireAt: { type: Date },
 }, { timestamps: true });
+
+notificationSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 const Notification = mongoose.model("Notification", notificationSchema);
 

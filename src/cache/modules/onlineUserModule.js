@@ -7,7 +7,7 @@ export const addUserSocket = async (userId, socketId) => {
         throw new Error("addUserSocket: userId and socketId are required.");
     }
 
-    await client.sAdd(`${SOCKETS_PREFIX}${userId}`, socketId);
+    await client.sadd(`${SOCKETS_PREFIX}${userId}`, socketId);
 }
 
 export const getUserSockets = async (userId) => {
@@ -15,7 +15,7 @@ export const getUserSockets = async (userId) => {
         throw new Error("getUserSockets: userId is required.");
     }
 
-    return await client.sMembers(`${SOCKETS_PREFIX}${userId}`) || [];
+    return await client.smembers(`${SOCKETS_PREFIX}${userId}`) || [];
 }
 
 export const removeUserSocket = async (userId, socketId) => {
@@ -23,7 +23,7 @@ export const removeUserSocket = async (userId, socketId) => {
         throw new Error("removeUserSocket: userId and socketId are required.");
     }
 
-    await client.sRem(`${SOCKETS_PREFIX}${userId}`, socketId);
+    await client.srem(`${SOCKETS_PREFIX}${userId}`, socketId);
 }
 
 export const removeAllUserSockets = async (userId) => {

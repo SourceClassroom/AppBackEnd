@@ -7,7 +7,7 @@ const mailWorker = new Worker("mailQueue", async job => {
 
     try {
         await sendMail(email, subject, message);
-        console.log(`Mail sent to ${email}`);
+        //console.log(`Mail sent to ${email}`);
     } catch (error) {
         console.error(`Failed to send mail to ${email}:`, error.message);
         throw error;
@@ -15,11 +15,11 @@ const mailWorker = new Worker("mailQueue", async job => {
 }, { connection: client });
 
 mailWorker.on('completed', (job) => {
-    console.log(`Job completed: ${job.id}`);
+    console.log(`mailWorker completed: ${job.id}`);
 });
 
 mailWorker.on('failed', (job, err) => {
-    console.error(`Job failed: ${job.id}`, err.message);
+    console.error(`mailWorker failed: ${job.id}`, err.message);
 });
 
 export default mailWorker;

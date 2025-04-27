@@ -1,7 +1,7 @@
 export const returnUserPrefs = (userPrefs, notificationType) => {
     return {
-        allowThisNotification: prefs[notificationType] === true,
-        allowEmail: prefs.email_notifications === true,
-        allowPush: prefs.push_notifications === true
+        allowThisNotification: userPrefs[notificationType],
+        allowEmail: userPrefs.email_notifications,
+        allowPush: userPrefs.push_notifications
     }
 }
