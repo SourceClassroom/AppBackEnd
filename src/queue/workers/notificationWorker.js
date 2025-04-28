@@ -9,10 +9,9 @@ const notificationWorker = new Worker("notificationQueue", async (job) => {
     const { userId, notificationData, allowPush } = job.data;
     // 1. Veritabanına kaydet
     const savedNotification = await createNotification(userId, notificationData);
-
+    await invalidateKey(`user:${userId}:notifications`)
     // 2. Socket'e yolla
     if (allowPush) {
-        invalidateKey(`user:${userId}:notifications`)
         const io = getSocketServer();
         const sockets = await getUserSockets(userId)
         if (sockets && sockets.length > 0) {

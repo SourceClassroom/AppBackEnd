@@ -15,6 +15,9 @@ import *as weekDatabaseModule from "../database/modules/weekModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
 import *as materialDatabaseModule from "../database/modules/materialModule.js";
 
+//Notifications
+import notifyClassroom from "../notifications/notifyClassroom.js";
+
 export const createMaterial = async (req, res) => {
     try {
         const { classId, title, description, week } = req.body;
@@ -34,6 +37,15 @@ export const createMaterial = async (req, res) => {
         if (week) await weekDatabaseModule.pushMaterialToWeek(week, material._id)
         else await classDatabaseModule.pushMaterialToClass(classId, material._id)
         await invalidateKeys([`class:${classId}:materials`, `week:${week}:materials`])
+
+        const notificationData = {
+            type: "new_material",
+            classId,
+            subject: "Yeni bir materyal oluşturuldu.",
+            message: `${classExists.title} sınıfına yeni bir materyal oluşturuldu.`
+        }
+
+        notifyClassroom(classId, notificationData)
 
         res.status(201).json(ApiResponse.success("Materyel başarıyla oluşturuldu.", material, 201));
     } catch (error) {

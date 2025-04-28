@@ -14,6 +14,9 @@ import * as userDatabaseModule from "../database/modules/userModule.js";
 import *as submissionDatabaseModule from '../database/modules/submissionModule.js';
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
 
+//Notifications
+import notifyUser from "../notifications/notifyUser.js";
+
 export const getUserSubmissions = async (req, res) => {
     try {
         const assignmentId = req.params.assignmentId
@@ -120,9 +123,21 @@ export const reviewSubmission = async (req, res) => {
     try {
         const { submissionId, feedback, grade } = req.body
 
+        const submission = await submissionCacheModule.getCachedSubmissionById(submissionId, submissionDatabaseModule.getSubmissionById)
+        const assignment = await assignmentCacheModule.getCachedAssignment(submission.assignment, assignmentDatabaseModule.getAssignmentById)
+
         const updateSubmission = await submissionDatabaseModule.setReview(submissionId, feedback, grade)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
         await invalidateKeys([`submission:${submissionId}`, `user:${updateSubmission.student}:submission:${updateSubmission.assignment}`])
+
+        const notificationData = {
+            type: "assignment_graded",
+            classId,
+            subject: "Ödevini puanlandı.",
+            message: `${assignment.title} ödeviniz puanlandı.`
+        }
+
+        notifyUser(updateSubmission.student, notificationData)
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {
