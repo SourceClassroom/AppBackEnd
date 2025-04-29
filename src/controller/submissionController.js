@@ -137,7 +137,7 @@ export const reviewSubmission = async (req, res) => {
             message: `${assignment.title} ödeviniz puanlandı.`
         }
 
-        notifyUser(updateSubmission.student, notificationData)
+        notifyUser(submission.student._id, notificationData)
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {

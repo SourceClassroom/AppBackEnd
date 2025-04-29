@@ -26,8 +26,9 @@ export default async (userId, notificationData) => {
             allowPush: prefs.push_notifications
         });
 
+
         if (prefs.email_notifications) {
-            await mailQueue.add({
+            await mailQueue.add("sendMail", {
                 userId,
                 subject: notificationData.subject,
                 message: notificationData.message

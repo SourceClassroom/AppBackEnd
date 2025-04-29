@@ -11,8 +11,13 @@ export default async (ids, prefix, fetchFn) => {
     const missingData = [];
 
     cachedData.forEach((data, index) => {
-        if (data) {
-            result.push(JSON.parse(data));
+        if (data !== null && data !== 'null') {
+            try {
+                result.push(JSON.parse(data));
+            } catch (e) {
+                console.error(`Redis parse error for key ${mappedIds[index]}:`, e);
+                missingData.push(ids[index]);
+            }
         } else {
             missingData.push(ids[index]);
         }
@@ -24,7 +29,8 @@ export default async (ids, prefix, fetchFn) => {
         const pipeline = client.multi();
 
         for (const data of fetchedDataFromDb) {
-            pipeline.set(`${prefix}:${data.id}`, JSON.stringify(data), 'EX', 3600);
+            const key = `${prefix}:${data.id || data._id}`; // Her iki olasılığı da kapsa
+            pipeline.set(key, JSON.stringify(data), 'EX', 3600);
             result.push(data);
         }
 
