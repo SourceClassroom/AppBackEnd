@@ -488,11 +488,19 @@ export const userDashboard = async (req, res) => {
         if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
 
         if (userData?.enrolledClasses.length > 0) {
-            userData.enrolledClasses = await multiGet(userData.enrolledClasses, "class", classDatabaseModule.getMultiClassById)
+            userData.enrolledClasses = await multiGet(
+                userData.enrolledClasses.map(c => typeof c === 'string' ? c : String(c._id)),
+                "class",
+                classDatabaseModule.getMultiClassById
+            );
         }
 
         if (userData?.teachingClasses.length > 0) {
-            userData.teachingClasses = await multiGet(userData.teachingClasses, "class", classDatabaseModule.getMultiClassById)
+            userData.teachingClasses = await multiGet(
+                userData.teachingClasses.map(c => typeof c === 'string' ? c : String(c._id)),
+                "class",
+                classDatabaseModule.getMultiClassById
+            );
         }
 
         if (userData.role === "teacher" || userData.role === "sysadmin") {

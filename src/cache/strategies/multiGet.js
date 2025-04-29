@@ -2,7 +2,6 @@ import { client } from "../client/redisClient.js";
 
 export default async (ids, prefix, fetchFn) => {
     if (!ids || ids.length === 0) return [];
-
     const mappedIds = ids.map(id => `${prefix}:${id._id || id}`);
 
     const cachedData = await client.mget(mappedIds);
@@ -30,6 +29,5 @@ export default async (ids, prefix, fetchFn) => {
 
         await pipeline.exec();
     }
-
     return result;
 };
