@@ -132,7 +132,6 @@ export const reviewSubmission = async (req, res) => {
 
         const notificationData = {
             type: "assignment_graded",
-            classId,
             subject: "Ödevini puanlandı.",
             message: `${assignment.title} ödeviniz puanlandı.`
         }
