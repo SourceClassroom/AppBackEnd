@@ -5,7 +5,7 @@ const getOrSetCache = async (key, fetchFn, ttl = 60) => {
         const cached = await client.get(key);
         if (cached !== null) {
             const parsed = JSON.parse(cached);
-            // null veya "null" string kontrolü
+
             if (parsed !== null && parsed !== "null") {
                 return parsed;
             }
