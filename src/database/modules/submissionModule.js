@@ -51,7 +51,7 @@ export const getMultiSubmissions = async (submissionIds) => {
                 path: "attachments",
                 select: "originalname size"
             })
-            .select("description grade feedback student createdAt")
+            .select("assignment description grade feedback student createdAt")
     } catch (error) {
         throw error;
     }
