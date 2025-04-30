@@ -43,7 +43,7 @@ export const createMaterial = async (req, res) => {
             subject: `${classExists.title} sınıfına yeni bir materyal oluşturuldu.`,
             classTitle: classExists.title,
             message: description || "Açıklama belirtilmemiş",
-            path: `/class/${classId}`,
+            path: `${process.env.FRONTEND_URL}/class/${classId}`,
             actionText: "Sınıfa git",
         }
 

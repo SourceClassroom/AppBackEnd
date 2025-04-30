@@ -15,7 +15,7 @@ const mailWorker = new Worker("mailQueue", async job => {
                 course: classTitle,
                 announcementTitle: subject,
                 announcementBody: message,
-                actionUrl: `${process.env.FRONTEND_URL}${path}`,
+                actionUrl: path,
                 actionText
             }
         );

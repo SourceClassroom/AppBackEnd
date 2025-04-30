@@ -31,3 +31,11 @@ export const updateLessonStatus = async (lessonId, status) => {
     throw error
   }
 };
+
+export const updateLesson = async (lessonId, data) => {
+  try {
+    return await Lesson.findOneAndUpdate({ _id: lessonId }, data, { new: true });
+  } catch (error) {
+    throw error
+  }
+};

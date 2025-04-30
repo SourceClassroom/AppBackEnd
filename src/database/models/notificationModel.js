@@ -14,6 +14,7 @@ const notificationSchema = new Schema({
             'new_post',
             'new_material',
             'new_comment',
+            'new_lesson',
             'assignment_due_reminder',
             'submission_reminder',
             'lesson_reminder'

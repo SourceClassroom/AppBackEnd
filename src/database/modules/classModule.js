@@ -116,6 +116,15 @@ export const pushPostToClass = async (classId, postId) => {
     }
 }
 
+export const pushLessonToClass = async (classId, lessonId) => {
+    try {
+        return await Class.findByIdAndUpdate(classId, { $push: { lessons: lessonId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const pushForbiddenStudents = async (classId, studentId) => {
     try {
         return await Class.findByIdAndUpdate(classId, { $push: { forbiddenStudents: studentId } }, { new: true });

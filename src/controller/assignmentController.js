@@ -71,7 +71,7 @@ export const createAssignment = async (req, res) => {
             subject: `Yeni bir ödev oluşturuldu.`,
             classTitle: classExists.title,
             message: description || "Açıklama belirtilmemiş",
-            path: `/class/${classId}`,
+            path: `${process.env.FRONTEND_URL}/class/${classId}`,
             actionText: "Ödeve git",
         }
 

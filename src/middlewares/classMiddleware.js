@@ -4,13 +4,16 @@ import ApiResponse from "../utils/apiResponse.js";
 import *as weekCacheModule from "../cache/modules/weekModule.js";
 import *as postCacheModule from "../cache/modules/postModule.js";
 import *as classCacheModule from "../cache/modules/classModule.js";
+import *as lessonCacheModule from "../cache/modules/lessonModule.js";
 import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
 
 //Database Modules
 import *as weekDatabseModule from "../database/modules/weekModule.js";
 import *as postDatabaseModule from "../database/modules/postModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
+import *as lessonDatabaseModule from "../database/modules/lessonModule.js";
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
+
 
 export const checkWeekClassroom = async (req, res, next) => {
     try {
@@ -22,10 +25,10 @@ export const checkWeekClassroom = async (req, res, next) => {
         const weekData = await weekCacheModule.getCachedWeekData(weekId, weekDatabseModule.getWeekById)
         if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
-        const classData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classData = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
-        if (weekData.classroom !== classData._id && !classData.weeks.includes(weekData._id)) {
+        if (weekData.classroom !== classData._id && !classData.includes(weekData._id)) {
             return res.status(403).json(ApiResponse.forbidden("Sınıf ve hafta eşleşmedi"))
         }
 
@@ -47,10 +50,10 @@ export const checkAssignmentClassroom = async (req, res, next) => {
         const assignmentData = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
         if (!assignmentData) return res.status(404).json(ApiResponse.error("Ödev bulunamadı"))
 
-        const classData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classData = await classCacheModule.getCachedClassAssignments(classId, classDatabaseModule.getClassAssignments)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
-        if (assignmentData.classroom !== classData._id && !classData.assignments.includes(assignmentData._id)) {
+        if (assignmentData.classroom !== classData._id && !classData.includes(assignmentData._id)) {
             return res.status(403).json(ApiResponse.forbidden("Sınıf ve ödev eşleşmedi"))
         }
 
@@ -58,7 +61,7 @@ export const checkAssignmentClassroom = async (req, res, next) => {
             const weekData = await weekCacheModule.getCachedWeekAssignments(assignmentData.week, weekDatabseModule.getWeekAssignments)
             if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
-            if (assignmentData.week !== weekId || !weekData.assignments.includes(assignmentData._id)) {
+            if (assignmentData.week !== weekId || !weekData.includes(assignmentData._id)) {
                 return res.status(403).json(ApiResponse.forbidden("Hafta ve ödev eşleşmedi"))
             }
         }
@@ -81,18 +84,18 @@ export const checkPostClassroom = async (req, res, next) => {
         const post = await postCacheModule.getCachedPost(postId, postDatabaseModule.getPostById)
         if (!post) return res.status(404).json(ApiResponse.error("Post bulunamadı"))
 
-        const classData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classData = await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
-        if (post.classroom !== classData._id && !classData.posts.includes(post._id)) {
+        if (post.classroom !== classData._id && !classData.includes(post._id)) {
             return res.status(403).json(ApiResponse.forbidden("Sınıf ve post eşleşmedi"))
         }
 
         if (post.week) {
-            const weekData = await weekCacheModule.getCachedWeekData(post.week, weekDatabseModule.getWeekById)
+            const weekData = await weekCacheModule.getCachedWeekPosts(post.week, weekDatabseModule.getWeekPosts)
             if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
-            if (post.week !== weekId || post.week !== weekData._id || !weekData.posts.includes(post._id)) {
+            if (post.week !== weekId || post.week !== weekData._id || !weekData.includes(post._id)) {
                 return res.status(403).json(ApiResponse.forbidden("Hafta ve post eşleşmedi"))
             }
         }
@@ -112,21 +115,21 @@ export const checkLessonClassroom = async (req, res, next) => {
         if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
         const weekId = req.params.weekId || req.body.weekId;
 
-        const lesson = await lessonCacheModule.getCachedLesson(lessonId, lessonDatabaseModule.getLessonById)
+        const lesson = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById)
         if (!lesson) return res.status(404).json(ApiResponse.error("Ders bulunamadı"))
 
-        const classData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classData = await classCacheModule.getClassLessons(classId, classDatabaseModule.getClassLessons)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
-        if (lesson.classroom !== classData._id && !classData.lessons.includes(lesson._id)) {
+        if (lesson.classroom !== classData._id && !classData.includes(lesson._id)) {
             return res.status(403).json(ApiResponse.forbidden("Sınıf ve ders eşleşmedi"))
         }
 
         if (lesson.week) {
-            const weekData = await weekCacheModule.getCachedWeekData(lesson.week, weekDatabseModule.getWeekById)
+            const weekData = await weekCacheModule.getCachedWeekLessons(lesson.week, weekDatabseModule.getWeekLessons)
             if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
-            if (lesson.week !== weekId || lesson.week !== weekData._id || !weekData.lessons.includes(lesson._id)) {
+            if (lesson.week !== weekId || lesson.week !== weekData._id || !weekData.includes(lesson._id)) {
                 return res.status(403).json(ApiResponse.forbidden("Hafta ve ders eşleşmedi"))
             }
         }

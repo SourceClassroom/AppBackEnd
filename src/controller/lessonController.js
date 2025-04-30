@@ -23,21 +23,27 @@ export const createLesson = async (req, res) => {
         let {topic, start_time, classId, week, description, joinUrl} = req.body
 
         const lessonData = {
-            clasroom: classId,
+            classroom: classId,
             week,
             title: topic,
             description,
             startDate: start_time,
-            joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${topic}_${generateCode(32)}`,
+            joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${generateCode(32)}`,
         }
-        await lessonDatabaseModule.createLesson(lessonData)
+        const newLessonData = await lessonDatabaseModule.createLesson(lessonData)
+        await classDatabaseModule.pushLessonToClass(classId, newLessonData._id)
         if (week) await invalidateKey(`week:${week}:lessons`)
         else await invalidateKey(`class:${classId}:lessons`)
 
+        const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);
+
         const notificationData = {
-            type: "new_post",
-            subject: "Yeni bir ders oluşturuldu.",
-            message: `${classroom.title} sınıfında yeni bir ders oluşturuldu.`
+            type: "new_lesson",
+            subject: `${classData.title} Sıfınında yeni bir ders oluşturuldu.`,
+            classTitle: classData.title,
+            message: description || "Açıklama belirtilmemiş",
+            path: `${process.env.FRONTEND_URL}/class/${classId}`,
+            actionText: "Derse Git",
         }
 
         notifyClassroom(classId, notificationData)
@@ -99,20 +105,25 @@ export const getWeekLessons = async (req, res) => {
 export const updateLessonStatus = async (req, res) => {
     try {
         const { lessonId } = req.params;
-        const { status } = req.body;
+        const { status, classId } = req.body;
 
-        const lessonData = await lessonCacheModule.getCachedLesson(lessonId, lessonDatabaseModule.getLessonById);
+        const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
 
         if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
-        if (lessonData.status === status) return res.status(400).json("Ders durumu eskisi ile aynı olamaz.")
+        if (lessonData.status === status) return res.status(400).json(ApiResponse.error("Ders zaten bu durumda."))
+        if (lessonData.status === "ended") return res.status(400).json(ApiResponse.error("Bitmiş ders tekrar başlayamaz."))
+        const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);
 
         await lessonDatabaseModule.updateLessonStatus(lessonId, status)
         await invalidateKey(`lesson:${lessonId}`);
 
         const notificationData = {
             type: "lesson_reminder",
-            subject: "Ders Başladı",
-            message: `${lessonData.title} dersi başladı koş!`
+            subject: `${lessonData.title} dersi başladı koş!`,
+            classTitle: classData.title,
+            message: lessonData.description || "Açıklama belirtilmemiş",
+            path: `${process.env.FRONTEND_URL}/class/${classId}`,
+            actionText: "Derse Git",
         }
 
         if (status === "started") notifyClassroom(lessonData.classroom, notificationData);
@@ -129,7 +140,7 @@ export const updateLesson = async (req, res) => {
         const { lessonId } = req.params;
         const { topic, start_time, description, joinUrl } = req.body;
 
-        const lessonData = await lessonCacheModule.getCachedLesson(lessonId, lessonDatabaseModule.getLessonById);
+        const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
 
         if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
 

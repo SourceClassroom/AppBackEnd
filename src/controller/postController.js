@@ -52,7 +52,7 @@ export const createPost = async (req, res) => {
             subject: `Yeni bir duyuru yapıldı.`,
             classTitle: classroom.title,
             message: content,
-            path: `/class/${classId}`,
+            path: `${process.env.FRONTEND_URL}/class/${classId}`,
             actionText: "Duyuruya git",
         }
 

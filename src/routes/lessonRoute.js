@@ -15,7 +15,7 @@ router.route("/create").post(
     lessonController.createLesson
 )
 
-router.route("/list/:classId").get(
+router.route("/:classId").get(
     authenticateToken,
     apiValidator.validateMongoId("classId"),
     apiValidator.validate,
@@ -23,7 +23,7 @@ router.route("/list/:classId").get(
     lessonController.getClassLessons
 )
 
-router.route("/list/:classId/:weekId").get(
+router.route("/:classId/:weekId").get(
     authenticateToken,
     apiValidator.validateMongoId("classId"),
     apiValidator.validateMongoId("weekId"),
