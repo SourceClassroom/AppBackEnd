@@ -68,9 +68,11 @@ export const createAssignment = async (req, res) => {
 
         const notificationData = {
             type: "new_assignment",
-            classId,
-            subject: "Yeni bir ödev oluşturuldu.",
-            message: `${classExists.title} sınıfına yeni bir ödev oluşturuldu.`
+            subject: `Yeni bir ödev oluşturuldu.`,
+            classTitle: classExists.title,
+            message: description || "Açıklama belirtilmemiş",
+            path: `/class/${classId}`,
+            actionText: "Ödeve git",
         }
 
         notifyClassroom(classId, notificationData)

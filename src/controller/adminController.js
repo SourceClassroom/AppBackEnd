@@ -10,7 +10,6 @@ import *as userCahceModule from "../cache/modules/userModule.js";
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
 import *as classDatabaseModule from "../database/modules/classModule.js";
-import {getPendingUserCount} from "../database/modules/userModule.js";
 
 
 export const getUsers = async (req, res) => {

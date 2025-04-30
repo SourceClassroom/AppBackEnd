@@ -28,7 +28,7 @@ export const createLesson = async (req, res) => {
             title: topic,
             description,
             startDate: start_time,
-            joinUrl: joinUrl ? joinUrl : `https://meet.jit.si/${topic}_${generateCode(32)}`,
+            joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${topic}_${generateCode(32)}`,
         }
         await lessonDatabaseModule.createLesson(lessonData)
         if (week) await invalidateKey(`week:${week}:lessons`)
@@ -121,5 +121,31 @@ export const updateLessonStatus = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json(ApiResponse.serverError("Ders durumu güncellenirken bir hata meydana geldi."));
+    }
+}
+
+export const updateLesson = async (req, res) => {
+    try {
+        const { lessonId } = req.params;
+        const { topic, start_time, description, joinUrl } = req.body;
+
+        const lessonData = await lessonCacheModule.getCachedLesson(lessonId, lessonDatabaseModule.getLessonById);
+
+        if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
+
+        const updateData = {
+            title: topic,
+            startDate: start_time,
+            description,
+            joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${topic}_${generateCode(32)}`,
+        }
+
+        await lessonDatabaseModule.updateLesson(lessonId, updateData)
+        await invalidateKey(`lesson:${lessonId}`);
+
+        return res.status(200).json(ApiResponse.success("Ders başarıyla güncellendi.", lessonData));
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Ders güncellenirken bir hata meydana geldi."));
     }
 }

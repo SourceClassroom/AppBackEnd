@@ -43,4 +43,14 @@ router.route("/update-status/:lessonId").put(
     lessonController.updateLessonStatus
 )
 
+router.route("/update/:lessonId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("lessonId"),
+    apiValidator.validateLesson,
+    apiValidator.validate,
+    classMiddleware.checkLessonClassroom,
+    roleCheck.isClassTeacherOrOwner(),
+    lessonController.updateLesson
+)
+
 export default router;

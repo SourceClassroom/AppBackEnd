@@ -6,11 +6,13 @@ import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
+import *as classCacheModule from "../cache/modules/classModule.js";
 import *as submissionCacheModule from '../cache/modules/submissionModule.js';
 import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
 
 //Database Modules
-import * as userDatabaseModule from "../database/modules/userModule.js";
+import *as userDatabaseModule from "../database/modules/userModule.js";
+import *as classDatabaseModule from "../database/modules/classModule.js";
 import *as submissionDatabaseModule from '../database/modules/submissionModule.js';
 import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
 
@@ -72,7 +74,7 @@ export const createSubmission = async (req, res) => {
         }
         const newSubmission = await submissionDatabaseModule.createSubmission(newSubmissionData)
         await assignmentDatabaseModule.pushSubmissionToAssignment(assignmentId, newSubmission._id)
-        await invalidateKeys([`assignment:${assignmentId}:submissions`])
+        await invalidateKeys([`assignment:${assignmentId}`])
 
         return res.status(201).json(ApiResponse.success("Gönderim başarıyla eklendi.", newSubmission, 201));
     } catch (error) {
@@ -125,6 +127,7 @@ export const reviewSubmission = async (req, res) => {
 
         const submission = await submissionCacheModule.getCachedSubmissionById(submissionId, submissionDatabaseModule.getSubmissionById)
         const assignment = await assignmentCacheModule.getCachedAssignment(submission.assignment, assignmentDatabaseModule.getAssignmentById)
+        const classData = await classCacheModule.getCachedClassData(assignment.classroom, classDatabaseModule.getClassById)
 
         const updateSubmission = await submissionDatabaseModule.setReview(submissionId, feedback, grade)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
@@ -132,14 +135,18 @@ export const reviewSubmission = async (req, res) => {
 
         const notificationData = {
             type: "assignment_graded",
-            subject: "Ödevini puanlandı.",
-            message: `${assignment.title} ödeviniz puanlandı.`
+            subject: `${assignment.title} ödeviniz puanlandı`,
+            classTitle: classData.title,
+            message: feedback ? feedback : "Geri dönüş belirtilmemiş",
+            path: `/class/${assignment.classroom}`,
+            actionText: "Sınıfa git",
         }
 
         notifyUser(submission.student._id, notificationData)
 
         return res.status(200).json(ApiResponse.success("Feedback başarı ile girildi.", updateSubmission))
     } catch (error) {
+        console.error(error)
         res.status(500).json(
             ApiResponse.serverError('Feedback girilirken bir hata meydana geldi.', error)
         );

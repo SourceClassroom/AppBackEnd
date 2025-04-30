@@ -98,7 +98,15 @@ export const createUser = async (req, res) => {
 
         const code = generateCode()
         await mailVerificationCacheModule.setVerificationCode(email, code)
-        await sendMail(email, "SourceClassroom Mail Doğrulama", `Mail doğrulama kodunuz: ${code}`)
+        await sendMail(
+            email,
+            `${process.env.APP_NAME} Mail Doğrulama`,
+            {
+                name: `${name} ${surname}`,
+                verificationCode: code
+            },
+            "email-verification.html"
+        )
 
         const userResponse = {
             _id: newUser._id,
@@ -253,7 +261,15 @@ export const generateVerificationCode = async (req, res) => {
         await invalidateKey(`code:${mail}`)
         await mailVerificationCacheModule.setVerificationCode(mail, code)
 
-        await sendMail(mail, `${process.env.APP_NAME} Mail Doğrulama`, `Mail doğrulama kodunuz: ${code}`)
+        await sendMail(
+            email,
+            `${process.env.APP_NAME} Mail Doğrulama`,
+            {
+                name: `${name} ${surname}`,
+                verificationCode: code
+            },
+            "email-verification.html"
+        )
 
         res.status(200).json(
             ApiResponse.success('Doğrulama kodu oluşturuldu.')

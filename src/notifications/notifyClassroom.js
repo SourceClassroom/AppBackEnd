@@ -40,8 +40,8 @@ export default async (classId, notificationData) => {
             if (prefs.email_notifications) {
                 await mailQueue.add("sendMail", {
                     email: student.email,
-                    subject: notificationData.subject,
-                    message: notificationData.message
+                    name: `${student.name} ${student.surname}`,
+                    notificationData
                 });
             }
 
