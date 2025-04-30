@@ -268,7 +268,22 @@ export const validateLesson = [
         .isMongoId().withMessage("Geçerli bir sınıf ID giriniz."),
     body("week")
         .optional()
-        .isMongoId().withMessage("Geçerli bir hafta ID giriniz.")
+        .isMongoId().withMessage("Geçerli bir hafta ID giriniz."),
+    body("joinUrl")
+        .optional()
+        .isURL().withMessage("Geçerli bir URL giriniz.")
+]
+
+export const validateLessonStatus = [
+    body("classId")
+        .notEmpty().withMessage("Sınıf ID alanı boş olamaz.")
+        .isMongoId().withMessage("Geçerli bir sınıf ID giriniz."),
+    body("week")
+        .optional()
+        .isMongoId().withMessage("Geçerli bir hafta ID giriniz."),
+    body("status")
+        .notEmpty().withMessage("Ders durumu boş olamaz.")
+        .isIn(['pending', 'started', 'ended']).withMessage("Geçerli bir ders durumu giriniz.")
 ]
 
 export const validateUserStatus = [

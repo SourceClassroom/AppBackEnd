@@ -15,7 +15,8 @@ const notificationSchema = new Schema({
             'new_material',
             'new_comment',
             'assignment_due_reminder',
-            'submission_reminder'
+            'submission_reminder',
+            'lesson_reminder'
         ] },
     isRead: { type: Boolean, default: false },
     expireAt: { type: Date },

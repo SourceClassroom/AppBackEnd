@@ -53,6 +53,14 @@ export const getClassWeeks = async (classId, fetchFn) => {
     }
 }
 
+export const getClassLessons = async (classId, fetchFn) => {
+    try {
+        return await getOrSet(`${CLASS_KEY(classId)}:lessons`, () => fetchFn(classId), 3600)
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const clearClassCache = async (classId) => {
     try {
         return await scanAndDelete(CLASS_KEY(classId));

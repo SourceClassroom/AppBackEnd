@@ -3,13 +3,14 @@ import ApiResponse from "../utils/apiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {processMedia} from "../services/fileService.js";
 import * as fileService from "../services/fileService.js";
-import { generateCode } from "../services/classCodeService.js";
+import { generateCode } from "../services/randomCodeService.js";
 
 //Mailer
 import sendMail from "../mailer/sendMail.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
+import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import * as userCacheModule from "../cache/modules/userModule.js";
@@ -17,11 +18,8 @@ import * as onlineUserCacheModule from "../cache/modules/onlineUserModule.js";
 import * as mailVerificationCacheModule from "../cache/modules/mailVerificationModule.js";
 
 //Database Modules
-import * as zoomDatabaseModule from "../database/modules/zoomModule.js";
 import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as classDatabaseModule from "../database/modules/classModule.js";
-import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
-import {removeAllUserSockets} from "../cache/modules/onlineUserModule.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -501,11 +499,6 @@ export const userDashboard = async (req, res) => {
                 "class",
                 classDatabaseModule.getMultiClassById
             );
-        }
-
-        if (userData.role === "teacher" || userData.role === "sysadmin") {
-            const zoomData = await zoomDatabaseModule.getUserZoomData(userId)
-            if (zoomData) userData.zoom = true
         }
 
         return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", userData, 200));

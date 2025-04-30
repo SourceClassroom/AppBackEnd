@@ -91,7 +91,7 @@ export const isClassMember = () => {
             // Class modelini import et
             const classDoc = await Class.findById(classId);
             if (!classDoc) {
-                return res.status(404).json(ApiResponse.error("Belirtilen ID ile eşleşen sınıf bulunamadı"));
+                return res.status(404).json(ApiResponse.notFound("Belirtilen ID ile eşleşen sınıf bulunamadı"));
             }
             // Kullanıcı bu sınıfın öğretmeni, üyesi veya sysadmin mi kontrol et
             if (

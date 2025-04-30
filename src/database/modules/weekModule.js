@@ -92,6 +92,16 @@ export const getWeekAssignments = async (weekId) => {
     }
 }
 
+export const getWeekLessons = async (weekId) => {
+    try {
+        const data = await Week.findById(weekId).select("lessons")
+        return data?.lessons?.reverse()  || null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const deleteWeek = async (weekId, deletedBy) => {
     try {
         return await Week.findByIdAndUpdate(weekId, { isDeleted: true, deletedBy, deletedAt: new Date() }, { new: true });

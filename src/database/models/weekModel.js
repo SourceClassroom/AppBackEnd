@@ -12,6 +12,7 @@ const weekSchema = new Schema({
     posts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
     assignments: [{ type: Schema.Types.ObjectId, ref: "Assignment" }],
     materials: [{ type: Schema.Types.ObjectId, ref: "Material" }],
+    lessons: [{ type: Schema.Types.ObjectId, ref: "Lesson" }],
     ...softDeleteFields
 });
 

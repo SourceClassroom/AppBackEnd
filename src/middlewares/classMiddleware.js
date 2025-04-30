@@ -103,3 +103,37 @@ export const checkPostClassroom = async (req, res, next) => {
         return res.status(500).json(ApiResponse.serverError("Bir hata oluştu", error))
     }
 }
+
+export const checkLessonClassroom = async (req, res, next) => {
+    try {
+        const lessonId = req.params.lessonId || req.body.lessonId;
+        if (!lessonId) return res.status(400).json(ApiResponse.error("Ders ID'si gerekli"))
+        const classId = req.params.classId || req.body.classId;
+        if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
+        const weekId = req.params.weekId || req.body.weekId;
+
+        const lesson = await lessonCacheModule.getCachedLesson(lessonId, lessonDatabaseModule.getLessonById)
+        if (!lesson) return res.status(404).json(ApiResponse.error("Ders bulunamadı"))
+
+        const classData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
+
+        if (lesson.classroom !== classData._id && !classData.lessons.includes(lesson._id)) {
+            return res.status(403).json(ApiResponse.forbidden("Sınıf ve ders eşleşmedi"))
+        }
+
+        if (lesson.week) {
+            const weekData = await weekCacheModule.getCachedWeekData(lesson.week, weekDatabseModule.getWeekById)
+            if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
+
+            if (lesson.week !== weekId || lesson.week !== weekData._id || !weekData.lessons.includes(lesson._id)) {
+                return res.status(403).json(ApiResponse.forbidden("Hafta ve ders eşleşmedi"))
+            }
+        }
+
+        return next();
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json(ApiResponse.serverError("Bir hata oluştu", error))
+    }
+}

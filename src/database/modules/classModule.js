@@ -181,6 +181,16 @@ export const getClassPosts = async (classId) => {
     }
 }
 
+export const getClassLessons = async (classId) => {
+    try {
+        const data = await Class.findById(classId).select("lessons")
+        return data?.lessons ? data.lessons.reverse() : null
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const getClassCount = async () => {
     try {
         return await Class.countDocuments()

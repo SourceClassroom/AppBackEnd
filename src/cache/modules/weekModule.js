@@ -36,6 +36,14 @@ export const getCachedWeekMaterials = async (weekId, fetchFn) => {
     }
 }
 
+export const getCachedWeekLessons = async (weekId, fetchFn) => {
+    try {
+        return await getOrSet(`${WEEK_KEY(weekId)}:lessons`, () => fetchFn(weekId), 3600)
+    } catch (error) {
+        throw error;
+    }
+}
+
 export const clearWeekCache = async (weekId) => {
     try {
         return await scanAndDelete(WEEK_KEY(weekId));

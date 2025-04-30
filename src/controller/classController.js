@@ -1,5 +1,5 @@
 import ApiResponse from "../utils/apiResponse.js";
-import { generateUniqueCode } from "../services/classCodeService.js";
+import { generateUniqueCode } from "../services/randomCodeService.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";

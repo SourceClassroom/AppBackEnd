@@ -21,6 +21,7 @@ const ClassSchema = new Schema({
     posts: [{ type: Schema.Types.ObjectId, ref: "Post" }],
     assignments: [{ type: Schema.Types.ObjectId, ref: "Assignment" }],
     material: [{ type: Schema.Types.ObjectId, ref: "Material" }],
+    lessons: [{type: Schema.Types.ObjectId, ref: "Lesson"}],
     weeks: [{ type: Schema.Types.ObjectId, ref: "Week" }],
     ...softDeleteFields
 }, { timestamps: true });
