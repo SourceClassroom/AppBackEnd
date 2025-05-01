@@ -80,7 +80,7 @@ export const createUser = async (req, res) => {
 
         // First user is sysadmin, otherwise use provided role
         const userRole = isFirstUser ? 'sysadmin' : (role || 'student');
-        const accountStatus = userRole === "teacher" ? 'pending' : 'mailVerification';
+        const accountStatus = userRole === "teacher" ? 'pending' : userRole === "sysadmin" ? 'active' : 'mailVerification';
 
         // Yeni kullanıcı oluştur
         const newUserData = {
@@ -95,18 +95,20 @@ export const createUser = async (req, res) => {
         }
 
         const newUser = await userDatabaseModule.createUser(newUserData)
+        if (userRole === "student") {
+            const code = generateCode()
+            await mailVerificationCacheModule.setVerificationCode(email, code)
+            await sendMail(
+                email,
+                `${process.env.APP_NAME} Mail Doğrulama`,
+                {
+                    name: `${name} ${surname}`,
+                    verificationCode: code
+                },
+                "email-verification.html"
+            )
+        }
 
-        const code = generateCode()
-        await mailVerificationCacheModule.setVerificationCode(email, code)
-        await sendMail(
-            email,
-            `${process.env.APP_NAME} Mail Doğrulama`,
-            {
-                name: `${name} ${surname}`,
-                verificationCode: code
-            },
-            "email-verification.html"
-        )
 
         const userResponse = {
             _id: newUser._id,
