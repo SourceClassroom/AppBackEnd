@@ -51,9 +51,10 @@ export const createMaterial = async (req, res) => {
 
         const notificationData = {
             type: "new_material",
+            classId,
             subject: `${classExists.title} sınıfına yeni bir materyal oluşturuldu.`,
             classTitle: classExists.title,
-            message: description || "Açıklama belirtilmemiş",
+            message: `${description.slice(0, 30)}...`  || "Açıklama belirtilmemiş",
             path: `${process.env.FRONTEND_URL}/class/${classId}`,
             actionText: "Sınıfa git",
         }

@@ -39,9 +39,10 @@ export const createLesson = async (req, res) => {
 
         const notificationData = {
             type: "new_lesson",
-            subject: `${classData.title} Sıfınında yeni bir ders oluşturuldu.`,
+            classId,
+            subject: `${classData.title} sıfınında yeni bir ders oluşturuldu.`,
             classTitle: classData.title,
-            message: description || "Açıklama belirtilmemiş",
+            message: `${description.slice(0, 30)}...` || "Açıklama belirtilmemiş",
             path: `${process.env.FRONTEND_URL}/class/${classId}`,
             actionText: "Derse Git",
         }

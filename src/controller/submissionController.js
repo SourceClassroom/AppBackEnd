@@ -135,9 +135,10 @@ export const reviewSubmission = async (req, res) => {
 
         const notificationData = {
             type: "assignment_graded",
+            classId,
             subject: `${assignment.title} ödeviniz puanlandı`,
             classTitle: classData.title,
-            message: feedback ? feedback : "Geri dönüş belirtilmemiş",
+            message: feedback ? `${feedback.slice(0, 30)}...` : "Geri dönüş belirtilmemiş",
             path: `${process.env.FRONTEND_URL}/class/${assignment.classroom}`,
             actionText: "Sınıfa git",
         }

@@ -49,9 +49,10 @@ export const createPost = async (req, res) => {
 
         const notificationData = {
             type: "new_post",
-            subject: `Yeni bir duyuru yapıldı.`,
+            classId,
+            subject: `${classroom.title} sıfında yeni bir duyuru yapıldı.`,
             classTitle: classroom.title,
-            message: content,
+            message: `${content.slice(0, 30)}...` ,
             path: `${process.env.FRONTEND_URL}/class/${classId}`,
             actionText: "Duyuruya git",
         }
