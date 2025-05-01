@@ -28,7 +28,7 @@ export const newEmailValidator = [
     body('email')
         .notEmpty().withMessage('E-posta alanı zorunludur')
         .isEmail().withMessage('Geçerli bir e-posta adresi girilmelidir')
-        .normalizeEmail()
+        .normalizeEmail({gmail_remove_dots: false})
 ]
 
 export const validateNotificationPreferences = [
@@ -67,7 +67,7 @@ export const userCreateValidationRules = [
     body('email')
         .notEmpty().withMessage('E-posta alanı zorunludur')
         .isEmail().withMessage('Geçerli bir e-posta adresi girilmelidir')
-        .normalizeEmail(),
+        .normalizeEmail({gmail_remove_dots: false}),
     body('password')
         .notEmpty().withMessage('Şifre alanı zorunludur')
         .isLength({ min: 8 }).withMessage('Şifre en az 8 karakter olmalıdır')
@@ -169,7 +169,7 @@ export const validateMailVerification = [
     body('mail')
         .notEmpty().withMessage('E-posta alanı zorunludur')
         .isEmail().withMessage('Geçerli bir e-posta adresi girilmelidir')
-        .normalizeEmail(),
+        .normalizeEmail({gmail_remove_dots: false}),
     body('code')
         .customSanitizer(value => value.toUpperCase())
         .isLength({ min: 6, max: 6 }).withMessage('Sınıf kodu 6 karakter olmalıdır.')
@@ -317,7 +317,7 @@ export const validateUpdateUserForAdmin = [
     body("data.email")
         .notEmpty().withMessage("Email verisi boş olamaz.")
         .isEmail().withMessage("Geçerli bir e-posta adresi giriniz.")
-        .normalizeEmail(),
+        .normalizeEmail({gmail_remove_dots: false}),
     body("data.role")
         .notEmpty().withMessage("Rol verisi boş olamaz.")
         .isIn(['student', 'teacher', 'sysadmin']).withMessage("Geçerli bir kullanıcı rolü giriniz."),
