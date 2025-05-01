@@ -1,8 +1,14 @@
 import { client } from "../client/redisClient.js";
 
-export default async (ids, prefix, fetchFn) => {
+export default async (ids, prefix, fetchFn, expression = "") => {
     if (!ids || ids.length === 0) return [];
-    const mappedIds = ids.map(id => `${prefix}:${id._id || id}`);
+
+    const mappedIds = ids.map(idObj => {
+        const id = idObj._id || idObj;
+        return expression
+            ? `${prefix}:${id}:${expression}` // class:<classId>:<expression>
+            : `${prefix}:${id}`;              // class:<classId>
+    });
 
     const cachedData = await client.mget(mappedIds);
 
@@ -28,12 +34,17 @@ export default async (ids, prefix, fetchFn) => {
         const pipeline = client.multi();
 
         for (const data of fetchedDataFromDb) {
-            const key = `${prefix}:${data.id || data._id}`; // Her iki olasılığı da kapsa
+            const id = data.id || data._id;
+            const key = expression
+                ? `${prefix}:${id}:${expression}`
+                : `${prefix}:${id}`;
+
             pipeline.set(key, JSON.stringify(data), 'EX', 3600);
             result.push(data);
         }
 
         await pipeline.exec();
     }
+
     return result;
 };

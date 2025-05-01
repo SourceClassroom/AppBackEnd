@@ -326,6 +326,38 @@ export const validateUpdateUserForAdmin = [
         .isIn(['active', 'inactive', 'suspended', 'pending', 'mailVerification']).withMessage("Geçerli bir kullanıcı durumu giriniz.")
 ]
 
+export const validateEvent = [
+    body("classId")
+        .optional()
+        .isMongoId().withMessage("Geçerli bir sınıf ID giriniz."),
+    body("userId")
+        .optional()
+        .isMongoId().withMessage("Geçerli bir kullanıcı ID giriniz."),
+    body("title")
+        .notEmpty().withMessage("Başlık boş olamaz.")
+        .isString().withMessage("Başlık bir metin olmalıdır.")
+        .isLength({min: 3, max: 32}).withMessage("Başlık 3-32 karakter arasında olmalıdır."),
+    body("description")
+        .optional()
+        .isString().withMessage("Açıklama bir metin olmalıdır.")
+        .isLength({max: 512}).withMessage("Açıklama 512 karakterden fazla olamaz."),
+    body("date")
+        .notEmpty().withMessage("Tarih boş olamaz.")
+        .isISO8601().withMessage("Geçerli bir tarih giriniz."),
+    body("type")
+        .notEmpty().withMessage("Tip boş olamaz.")
+        .isIn(['lesson', 'assignment_due', 'exam', 'other']).withMessage("Geçerli bir olay tipi giriniz."),
+    body("visibility")
+        .notEmpty().withMessage("Görünürlük boş olamaz.")
+        .isIn(['class', 'user']).withMessage("Geçerli bir görünürlük giriniz."),
+    body("metadata.tags")
+        .optional()
+        .isArray().withMessage("Etiketler bir dizi olmalıdır."),
+    body("metadata.color")
+        .optional()
+        .isHexColor().withMessage("Geçerli bir renk kodu giriniz.")
+]
+
 /**
  * MongoDB ID formatını doğrulama
  */

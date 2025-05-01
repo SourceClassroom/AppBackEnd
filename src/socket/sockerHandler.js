@@ -1,9 +1,10 @@
 import TokenService from "../services/jwtService.js";
 import { setSocketServer } from "./socketInstance.js";
+import scanAndDelete from "../cache/strategies/scanAndDelete.js";
 import * as onlineUserCacheModule from "../cache/modules/onlineUserModule.js";
 
 export default function socketHandler(server) {
-    import("socket.io").then(({ Server }) => {
+    import("socket.io").then(async ({Server}) => {
         const io = new Server(server, {
             cors: {
                 origin: "*",
@@ -11,7 +12,7 @@ export default function socketHandler(server) {
             },
             transports: ['websocket', 'polling']
         });
-
+        await scanAndDelete("socket")
         setSocketServer(io); // Global olarak io'yu kaydediyoruz!
 
         io.use(async (socket, next) => {

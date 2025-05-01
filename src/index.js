@@ -17,6 +17,7 @@ import weekRouter from './routes/weekRoute.js';
 import postRouter from './routes/postRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import classRouter from './routes/classRoute.js';
+import eventRouter from './routes/eventRoute.js';
 import lessonRouter from "./routes/lessonRoute.js";
 import commentRoute from "./routes/commentRoute.js";
 import materialRoute from "./routes/materialRoute.js";
@@ -61,6 +62,7 @@ app.use('/api/post', postRouter)
 app.use('/api/users', userRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/class', classRouter)
+app.use('/api/event', eventRouter)
 app.use('/api/lesson', lessonRouter)
 app.use('/api/comment', commentRoute)
 app.use('/api/material', materialRoute)
