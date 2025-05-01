@@ -56,13 +56,13 @@ export const userCreateValidationRules = [
         .notEmpty().withMessage('İsim alanı zorunludur')
         .isString().withMessage('İsim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir')
+        .matches(/^[a-zA-ZçÇğĞıİöÖşŞüÜ0-9 ]+$/).withMessage('İsim sadece alfanümerik karakterler içerebilir')
         .toLowerCase(),
     body('surname')
         .notEmpty().withMessage('Soyisim alanı zorunludur')
         .isString().withMessage('Soyisim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('Soyisim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir')
+        .matches(/^[a-zA-ZçÇğĞıİöÖşŞüÜ0-9 ]+$/).withMessage('Soyisim sadece alfanümerik karakterler içerebilir')
         .toLowerCase(),
     body('email')
         .notEmpty().withMessage('E-posta alanı zorunludur')
@@ -82,13 +82,13 @@ export const validateProfileUpdate = [
         .notEmpty().withMessage('İsim alanı zorunludur')
         .isString().withMessage('İsim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('İsim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('İsim sadece alfanümerik karakterler içerebilir')
+        .matches(/^[a-zA-ZçÇğĞıİöÖşŞüÜ0-9 ]+$/).withMessage('İsim sadece alfanümerik karakterler içerebilir')
         .toLowerCase(),
     body('surname')
         .notEmpty().withMessage('Soyisim alanı zorunludur')
         .isString().withMessage('Soyisim bir metin olmalıdır')
         .isLength({ min: 2, max: 32 }).withMessage('Soyisim 2-32 karakter arasında olmalıdır')
-        .isAlphanumeric('tr-TR').withMessage('Soyisim sadece alfanümerik karakterler içerebilir')
+        .matches(/^[a-zA-ZçÇğĞıİöÖşŞüÜ0-9 ]+$/).withMessage('Soyisim sadece alfanümerik karakterler içerebilir')
         .toLowerCase(),
     body('profile.bio')
         .optional()
@@ -306,13 +306,13 @@ export const validateUpdateUserForAdmin = [
         .notEmpty().withMessage("İsim verisi boş olamaz.")
         .isString().withMessage("İsim bir metin olmalıdır.")
         .isLength({min: 2, max: 32}).withMessage("İsim 2-32 karakter arasında olmalıdır.")
-        .isAlphanumeric('tr-TR').withMessage("İsim sadece alfanümerik karakterler içerebilir.")
+        .matches(/^[a-zA-ZçÇğĞıİöÖşŞüÜ0-9 ]+$/).withMessage("İsim sadece alfanümerik karakterler içerebilir.")
         .toLowerCase(),
     body("data.surname")
         .notEmpty().withMessage("Soyisim verisi boş olamaz.")
         .isString().withMessage("Soyisim bir metin olmalıdır.")
         .isLength({min: 2, max: 32}).withMessage("Soyisim 2-32 karakter arasında olmalıdır.")
-        .isAlphanumeric('tr-TR').withMessage("Soyisim sadece alfanümerik karakterler içerebilir.")
+        .matches(/^[a-zA-ZçÇğĞıİöÖşŞüÜ0-9 ]+$/).withMessage("Soyisim sadece alfanümerik karakterler içerebilir.")
         .toLowerCase(),
     body("data.email")
         .notEmpty().withMessage("Email verisi boş olamaz.")
