@@ -31,9 +31,14 @@ export const createLesson = async (req, res) => {
             joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${generateCode(32)}`,
         }
         const newLessonData = await lessonDatabaseModule.createLesson(lessonData)
-        await classDatabaseModule.pushLessonToClass(classId, newLessonData._id)
-        if (week) await invalidateKey(`week:${week}:lessons`)
-        else await invalidateKey(`class:${classId}:lessons`)
+        if (week) {
+            await weekDatabaseModule.pushLessonToWeek(week, newLessonData._id)
+            await invalidateKey(`week:${week}:lessons`)
+        }
+        else {
+            await classDatabaseModule.pushLessonToClass(classId, newLessonData._id)
+            await invalidateKey(`class:${classId}:lessons`)
+        }
 
         const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);
 
@@ -82,8 +87,9 @@ export const getClassLessons = async (req, res) => {
 
 export const getWeekLessons = async (req, res) => {
     try {
-        const { week } = req.params;
-        const weekLessons = await weekCacheModule.getCachedWeekLessons(week, weekDatabaseModule.getWeekLessons)
+
+        const { weekId } = req.params;
+        const weekLessons = await weekCacheModule.getCachedWeekLessons(weekId, weekDatabaseModule.getWeekLessons)
         let getLessonData = await multiGet(weekLessons, "lesson", lessonDatabaseModule.getMultiLessonById)
 
         if (req.user.role === "student") {

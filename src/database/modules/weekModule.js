@@ -63,6 +63,15 @@ export const pushMaterialToWeek = async (weekId, materialId) => {
     }
 }
 
+export const pushLessonToWeek = async (weekId, lessonId) => {
+    try {
+        return await Week.findByIdAndUpdate(weekId, { $push: { lessons: lessonId } }, { new: true });
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+}
+
 export const getWeekMaterials = async (weekId) => {
     try {
         const data = await Week.findById(weekId).select("materials")
