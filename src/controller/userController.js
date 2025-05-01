@@ -60,10 +60,10 @@ export const createUser = async (req, res) => {
     try {
         // Request body'den verileri al
         const { name, surname, email, password, role } = req.body;
-
+        if (role === "sysadmin") return res.status(403).json(ApiResponse.forbidden("Bu rol kullanılamaz."))
         // Check if first user
         const existingUsers = await userCacheModule.getUserCount(userDatabaseModule.getUserCount);
-        console.log(existingUsers)
+
         const isFirstUser = existingUsers === 0;
 
         // E-posta kontrolü
