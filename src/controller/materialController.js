@@ -39,9 +39,15 @@ export const createMaterial = async (req, res) => {
         }
 
         const material = await materialDatabaseModule.createMaterial(newMaterialData);
-        if (week) await weekDatabaseModule.pushMaterialToWeek(week, material._id)
-        else await classDatabaseModule.pushMaterialToClass(classId, material._id)
-        await invalidateKeys([`class:${classId}:materials`, `week:${week}:materials`])
+        if (week) {
+            await weekDatabaseModule.pushMaterialToWeek(week, material._id)
+            await invalidateKey(`week:${week}:materials`)
+        }
+        else {
+            await classDatabaseModule.pushMaterialToClass(classId, material._id)
+            await invalidateKey(`class:${classId}:materials`)
+        }
+
 
         const notificationData = {
             type: "new_material",

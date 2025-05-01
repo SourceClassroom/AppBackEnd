@@ -60,7 +60,7 @@ export const createAssignment = async (req, res) => {
         // Hafta veya sınıfa ödev ID'sini ekle
         if (week) {
             await weekDatabaseModule.pushAssignmentToWeek(week, newAssignment._id)
-            await invalidateKey(`week:${classId}:assignments`)
+            await invalidateKey(`week:${week}:assignments`)
         } else {
             await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
             await invalidateKey(`class:${classId}:assignments`)
