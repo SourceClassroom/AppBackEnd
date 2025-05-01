@@ -33,6 +33,11 @@ export const createMaterial = async (req, res) => {
             attachments: fileIds,
         };
 
+        const classExists = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        if (!classExists) {
+            return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
+        }
+
         const material = await materialDatabaseModule.createMaterial(newMaterialData);
         if (week) await weekDatabaseModule.pushMaterialToWeek(week, material._id)
         else await classDatabaseModule.pushMaterialToClass(classId, material._id)
