@@ -93,7 +93,7 @@ export const getUserLoginData = async (email) => {
 
 export const getUserDashboard = async (userId) => {
     try {
-        return await User.findById(userId, "name surname email role profile enrolledClasses teachingClasses")
+        return await User.findById(userId, "name surname email role profile enrolledClasses teachingClasses").lean()
     } catch (error) {
         console.log(error)
         throw error
