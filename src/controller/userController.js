@@ -500,11 +500,14 @@ export const updateNotificationPreferences = async (req, res) => {
 export const userDashboard = async (req, res) => {
     try {
         const userId = req.user.id;
-        let userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard)
+        let userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard);
         if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
 
+        let newEnrolledClasses = [];
+        let newTeachingClasses = [];
+
         if (userData?.enrolledClasses.length > 0) {
-            userData.enrolledClasses = await multiGet(
+            newEnrolledClasses = await multiGet(
                 userData.enrolledClasses.map(c => typeof c === 'string' ? c : String(c._id)),
                 "class",
                 classDatabaseModule.getMultiClassById
@@ -512,18 +515,24 @@ export const userDashboard = async (req, res) => {
         }
 
         if (userData?.teachingClasses.length > 0) {
-            userData.teachingClasses = await multiGet(
+            newTeachingClasses = await multiGet(
                 userData.teachingClasses.map(c => typeof c === 'string' ? c : String(c._id)),
                 "class",
                 classDatabaseModule.getMultiClassById
             );
         }
 
-        return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", userData, 200));
+        const updatedUserData = {
+            ...userData,
+            enrolledClasses: newEnrolledClasses,
+            teachingClasses: newTeachingClasses,
+        };
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", updatedUserData, 200));
     } catch (error) {
-        console.log(error)
+        console.log(error);
         return res.status(500).json(
             ApiResponse.serverError("Dashboard yüklenirken bir hata meydana geldi.", error)
         );
     }
-}
+};
