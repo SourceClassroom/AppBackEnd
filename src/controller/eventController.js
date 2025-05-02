@@ -5,12 +5,10 @@ import { invalidateKey } from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import *as userCacheModule from "../cache/modules/userModule.js";
-import *as classCacheModule from "../cache/modules/classModule.js";
 import *as eventCacheModule from "../cache/modules/eventModule.js";
 
 //Database Modules
 import *as userDatabaseModule from "../database/modules/userModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
 import *as eventDatabaseModule from "../database/modules/eventModule.js";
 
 export const createEvent = async (req, res) => {
@@ -32,15 +30,17 @@ export const createEvent = async (req, res) => {
 
 export const listUserEvents = async (req, res) => {
     try {
+        const userId = req.user.id
         const { year, month } = req.params;
         const monthKey = `${year}-${month}`;
-        const userData = await userCacheModule.getCachedUserData(req.user.id, userDatabaseModule.getUserById)
+        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
 
         const userClasses = userData.teachingClasses.concat(userData.enrolledClasses)
-        const classKeys = userClasses.map(classId => `class:${classId}:events:${monthKey}`);
+        userClasses.push(userId)
 
+       const eventData = await eventCacheModule.getMultiCachedEvents(userClasses, eventDatabaseModule.getClassEvents, monthKey)
 
-        res.status(200).json(ApiResponse.success("Eventler listelendi.", events, 200))
+        res.status(200).json(ApiResponse.success("Eventler listelendi.", eventData, 200))
     } catch (error) {
         console.error(error);
         return ApiResponse.error(res, "Eventler listelenirken bir hata meydana geldi.", error);
