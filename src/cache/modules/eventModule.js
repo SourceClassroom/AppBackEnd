@@ -1,7 +1,8 @@
 import { client } from "../client/redisClient.js"
 
-export const getMultiCachedEvents = async (ids, fetchFn, range) => {
+export const getMultiCachedEvents = async (userId, classIds, fetchFn, range) => {
     try {
+        const ids = [userId.toString(), ...classIds.map(id => id.toString())];
         const mappedIds = ids.map(id => `events:${id}:${range}`);
         const cachedEvents = await client.mget(mappedIds);
         const events = [];
@@ -14,9 +15,8 @@ export const getMultiCachedEvents = async (ids, fetchFn, range) => {
                 keysToFetch.push(ids[index]);
             }
         });
-
-if (keysToFetch.length > 0) {
-            const fetchedEvents = await fetchFn(keysToFetch);
+    if (keysToFetch.length > 0) {
+            const fetchedEvents = await fetchFn(userId, classIds, range);
             const pipeline = client.pipeline();
             fetchedEvents.forEach((event, index) => {
                 events.push(event);

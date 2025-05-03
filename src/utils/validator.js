@@ -212,15 +212,7 @@ export const validateGrade = [
         .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
     body("grade")
         .notEmpty().withMessage("Not alanı boş olamaz")
-        .isFloat({ min: 0, max: 100 }).withMessage("Not değeri 0 ile 100 arasında olmalıdır.")
-]
-export const validateFeedback = [
-    body("submissionId")
-        .notEmpty().withMessage("Gönderim ID alanı zorunludur.")
-        .isMongoId().withMessage("Geçerli bir gönderim ID giriniz."),
-    body("classId")
-        .notEmpty().withMessage('Sınıf ID alanı boş bırakılamaz.')
-        .isMongoId().withMessage('Geçerli bir sınıf ID giriniz.'),
+        .isFloat({ min: 0, max: 100 }).withMessage("Not değeri 0 ile 100 arasında olmalıdır."),
     body("feedback")
         .notEmpty().withMessage("Feedback analı boş olamaz.")
         .isLength({ max: 500 }).withMessage('Feedback en fazla 500 karakter olabilir.'),
@@ -351,8 +343,18 @@ export const validateEvent = [
         .notEmpty().withMessage("Görünürlük boş olamaz.")
         .isIn(['class', 'user']).withMessage("Geçerli bir görünürlük giriniz."),
     body("metadata.tags")
-        .optional()
-        .isArray().withMessage("Etiketler bir dizi olmalıdır."),
+            .optional()
+            .isArray().withMessage("Etiketler bir dizi olmalıdır.")
+            .custom((tags) => {
+                if (tags && Array.isArray(tags)) {
+                    for (const tag of tags) {
+                        if (typeof tag !== 'string' || tag.length < 1 || tag.length > 6) {
+                            throw new Error('Her etiket 1-6 karakter arasında olmalıdır');
+                        }
+                    }
+                }
+                return true;
+            }),
     body("metadata.color")
         .optional()
         .isHexColor().withMessage("Geçerli bir renk kodu giriniz.")

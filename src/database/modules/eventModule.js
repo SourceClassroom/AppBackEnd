@@ -1,5 +1,5 @@
 import { Event } from "../models/eventModel.js";
-import dateRange from "../../utils/dateRange.js";
+import { getMonthKey } from "../../utils/dateRange.js";
 
 export const createEvent = async (eventData) => {
     try {
@@ -12,7 +12,7 @@ export const createEvent = async (eventData) => {
 
 export const getEvents = async (userId, classIds, monthKey) => {
     try {
-        const { startDate, endDate } = dateRange(monthKey)
+        const { startDate, endDate } = getMonthKey(monthKey)
         return await Event.find({
             $or: [
                 { userId: userId },

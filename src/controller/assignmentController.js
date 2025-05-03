@@ -1,5 +1,6 @@
 import ApiResponse from "../utils/apiResponse.js";
 import { processMedia } from "../services/fileService.js";
+import { generateMonthKey } from "../utils/dateRange.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
@@ -13,6 +14,7 @@ import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
 //Database Modules
 import *as weekDatabaseModule from '../database/modules/weekModule.js';
 import *as classDatabaseModule from '../database/modules/classModule.js';
+import *as eventDatabaseModule from '../database/modules/eventModule.js';
 import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
 
 //Notifications
@@ -65,6 +67,22 @@ export const createAssignment = async (req, res) => {
             await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
             await invalidateKey(`class:${classId}:assignments`)
         }
+
+        const eventData = {
+            classId,
+            title: `${title} Ödev Teslimi.`,
+            description: description.slice(0, 20) || "Açıklama belirtilmemiş",
+            date: dueDate,
+            type: "assignment_due",
+            visibility: "class",
+            metadata: {
+                createdBy: req.user.id,
+                tags: ["ödev"],
+                color: "#2b7fff"
+            }
+        }
+
+        await eventDatabaseModule.createEvent(eventData)
 
         const notificationData = {
             type: "new_assignment",

@@ -13,6 +13,7 @@ import * as lessonCacheModule from "../cache/modules/lessonModule.js";
 //Database Modules
 import * as weekDatabaseModule from "../database/modules/weekModule.js";
 import * as classDatabaseModule from "../database/modules/classModule.js";
+import * as eventDatabaseModule from "../database/modules/eventModule.js";
 import * as lessonDatabaseModule from "../database/modules/lessonModule.js";
 
 //Notifications
@@ -41,6 +42,22 @@ export const createLesson = async (req, res) => {
         }
 
         const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);
+
+        const eventData = {
+            classId,
+            title: `${topic} Canlı Ders.`,
+            description: description.slice(0, 20) || "Açıklama belirtilmemiş",
+            date: start_time,
+            type: "lesson",
+            visibility: "class",
+            metadata: {
+                createdBy: req.user.id,
+                tags: ["ders"],
+                color: "#462627"
+            }
+        }
+
+        await eventDatabaseModule.createEvent(eventData)
 
         const notificationData = {
             type: "new_lesson",

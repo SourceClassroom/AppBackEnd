@@ -13,7 +13,7 @@ const eventSchema = new Schema({
     visibility: { type: String, enum: ['class', 'user'], required: true },
     metadata: {
         createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
-        tags: [{type: String}],
+        tags: [{type: String, maxLength: 6}],
         color: {type: String, default: '#2b7fff'}
     },
     ...softDeleteFields
