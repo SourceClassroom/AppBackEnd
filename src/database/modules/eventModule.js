@@ -10,27 +10,13 @@ export const createEvent = async (eventData) => {
     }
 }
 
-export const getClassEvents = async (classId, monthKey) => {
-    try {
-        const { startDate, endDate } = dateRange(monthKey)
-        return await Event.find({
-            classId,
-            visibility: 'class',
-            startDate: { $gte: startDate, $lte: endDate }
-        })
-    } catch (error) {
-        console.error(error)
-        throw error
-    }
-}
-
-export const getEvents = async (id, monthKey) => {
+export const getEvents = async (userId, classIds, monthKey) => {
     try {
         const { startDate, endDate } = dateRange(monthKey)
         return await Event.find({
             $or: [
-                { userId: id },
-                { classId: id }
+                { userId: userId },
+                { classId: { $in: classIds } }
             ],
             startDate: { $gte: startDate, $lte: endDate }
         })
