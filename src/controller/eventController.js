@@ -23,11 +23,13 @@ export const createEvent = async (req, res) => {
             if (!req.body?.classId) return res.status(400).json(ApiResponse.error("Lütfen bir sınıf seçiniz."))
             if (classData.teacher !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Bu işlem için yetkiniz yok"))
         }
+        if (eventData.visibility === "user") eventData.userId = req.user.id
         eventData.metadata.createdBy = req.user.id
 
         const event = await eventDatabaseModule.createEvent(eventData);
-        console.log(`user:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:events:${generateMonthKey(eventData.startDate)}`)
-        await invalidateKey(`user:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:events:${generateMonthKey(eventData.startDate)}`)
+        console.log(event)
+        console.log(`events:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:${generateMonthKey(eventData.date)}`)
+        await invalidateKey(`events:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:${generateMonthKey(eventData.date)}`)
 
         res.status(201).json(ApiResponse.success("Event oluşturuldu.", event, 201))
     } catch (error) {
@@ -46,8 +48,9 @@ export const listUserEvents = async (req, res) => {
         const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
 
         const userClasses = userData.teachingClasses.concat(userData.enrolledClasses)
+        userClasses.push(userId)
 
-       const eventData = await eventCacheModule.getMultiCachedEvents(req.user.id, userClasses, eventDatabaseModule.getEvents, monthKey)
+        const eventData = await eventCacheModule.getMultiCachedEvents(userClasses, eventDatabaseModule.getEvents, monthKey)
 
         res.status(200).json(ApiResponse.success("Eventler listelendi.", eventData, 200))
     } catch (error) {

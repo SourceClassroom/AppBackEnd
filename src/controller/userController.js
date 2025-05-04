@@ -264,7 +264,7 @@ export const generateVerificationCode = async (req, res) => {
         await mailVerificationCacheModule.setVerificationCode(mail, code)
 
         await sendMail(
-            email,
+            mail,
             `${process.env.APP_NAME} Mail Doğrulama`,
             {
                 name: `${name} ${surname}`,

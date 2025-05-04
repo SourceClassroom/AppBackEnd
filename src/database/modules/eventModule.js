@@ -10,13 +10,13 @@ export const createEvent = async (eventData) => {
     }
 }
 
-export const getEvents = async (userId, classIds, monthKey) => {
+export const getEvents = async (id, monthKey) => {
     try {
         const { startDate, endDate } = getMonthKey(monthKey)
         return await Event.find({
             $or: [
-                { userId: userId },
-                { classId: { $in: classIds } }
+                { userId: id },
+                { classId: id }
             ],
             startDate: { $gte: startDate, $lte: endDate }
         })

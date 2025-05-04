@@ -81,7 +81,8 @@ export const createAssignment = async (req, res) => {
                 color: "#2b7fff"
             }
         }
-
+        const monthKey = generateMonthKey(dueDate)
+        await invalidateKey(`events:${classId}:${monthKey}`)
         await eventDatabaseModule.createEvent(eventData)
 
         const notificationData = {

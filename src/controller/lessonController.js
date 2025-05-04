@@ -1,4 +1,5 @@
 import ApiResponse from "../utils/apiResponse.js";
+import {generateMonthKey} from "../utils/dateRange.js";
 import {generateCode} from "../services/randomCodeService.js";
 
 //Cache Strategies
@@ -56,7 +57,8 @@ export const createLesson = async (req, res) => {
                 color: "#462627"
             }
         }
-
+        const monthKey = generateMonthKey(dueDate)
+        await invalidateKey(`events:${classId}:${monthKey}`)
         await eventDatabaseModule.createEvent(eventData)
 
         const notificationData = {
