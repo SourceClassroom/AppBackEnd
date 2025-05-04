@@ -4,6 +4,7 @@ export const getMultiCachedEvents = async (userId, classIds, fetchFn, range) => 
     try {
         const ids = [userId.toString(), ...classIds.map(id => id.toString())];
         const mappedIds = ids.map(id => `events:${id}:${range}`);
+        console.log(mappedIds)
         const cachedEvents = await client.mget(mappedIds);
         const events = [];
         const keysToFetch = [];
