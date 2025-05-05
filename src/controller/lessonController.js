@@ -67,7 +67,7 @@ export const createLesson = async (req, res) => {
             subject: `${classData.title} sıfınında yeni bir ders oluşturuldu.`,
             classTitle: classData.title,
             message: `${description.slice(0, 30)}...` || "Açıklama belirtilmemiş",
-            path: `${process.env.FRONTEND_URL}/class/${classId}`,
+            path: `${process.env.FRONTEND_URL}/class/${classId}/lessons`,
             actionText: "Derse Git",
         }
 

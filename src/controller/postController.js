@@ -53,7 +53,7 @@ export const createPost = async (req, res) => {
             subject: `${classroom.title} sıfında yeni bir duyuru yapıldı.`,
             classTitle: classroom.title,
             message: `${content.slice(0, 30)}...` ,
-            path: `${process.env.FRONTEND_URL}/class/${classId}`,
+            path: `${process.env.FRONTEND_URL}/class/${classId}/announcements`,
             actionText: "Duyuruya git",
         }
 

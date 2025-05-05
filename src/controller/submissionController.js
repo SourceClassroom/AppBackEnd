@@ -139,7 +139,7 @@ export const reviewSubmission = async (req, res) => {
             subject: `${assignment.title} ödeviniz puanlandı`,
             classTitle: classData.title,
             message: feedback ? `${feedback.slice(0, 30)}...` : "Geri dönüş belirtilmemiş",
-            path: `${process.env.FRONTEND_URL}/class/${assignment.classroom}`,
+            path: `${process.env.FRONTEND_URL}/class/${assignment.classroom}/homeworks`,
             actionText: "Sınıfa git",
         }
 
