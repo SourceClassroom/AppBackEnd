@@ -57,7 +57,7 @@ export const createLesson = async (req, res) => {
                 color: "#462627"
             }
         }
-        const monthKey = generateMonthKey(dueDate)
+        const monthKey = generateMonthKey(start_time)
         await invalidateKey(`events:${classId}:${monthKey}`)
         await eventDatabaseModule.createEvent(eventData)
 
