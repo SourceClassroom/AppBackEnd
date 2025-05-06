@@ -19,18 +19,19 @@ export const getMultiCachedEvents = async (ids, fetchFn, range) => {
         });
 
         if (keysToFetch.length > 0) {
-            const fetchedEvents = [];
+            const fetchedEventsMap = {};
             for (const id of keysToFetch) {
-                const event = await fetchFn(id, id, range);
+                const event = await fetchFn(id, range);
                 if (Array.isArray(event) && event.length > 0) {
-                    fetchedEvents.push(event);
+                    fetchedEventsMap[id] = event;
+                    events.push(event);
                 }
             }
+
             const pipeline = client.pipeline();
-            fetchedEvents.forEach((event, index) => {
-                events.push(event);
-                pipeline.set(`events:${keysToFetch[index]}:${range}`, JSON.stringify(event), 'EX', 86400); // 24h TTL in seconds
-            });
+            for (const id in fetchedEventsMap) {
+                pipeline.set(`events:${id}:${range}`, JSON.stringify(fetchedEventsMap[id]), 'EX', 86400);
+            }
             await pipeline.exec();
         }
 
@@ -40,3 +41,4 @@ export const getMultiCachedEvents = async (ids, fetchFn, range) => {
         throw error;
     }
 }
+
