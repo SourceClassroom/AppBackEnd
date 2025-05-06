@@ -6,7 +6,10 @@ const { Schema } = mongoose;
 const conversationSchema = new Schema({
     participants: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
     isGroup: { type: Boolean, default: false },
-    groupName: { type: String, required: true },
+    groupName: { type: String },
+    groupOwner:  { type: Schema.Types.ObjectId, ref: "User" },
+    mutedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    isPending: { type: Boolean, default: false },
     lastMessage: { type: Schema.Types.ObjectId },
     ...softDeleteFields
 });

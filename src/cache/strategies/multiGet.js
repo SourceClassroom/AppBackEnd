@@ -1,6 +1,6 @@
 import { client } from "../client/redisClient.js";
 
-export default async (ids, prefix, fetchFn, expression = "") => {
+export default async (ids, prefix, fetchFn, expression) => {
     if (!ids || ids.length === 0) return [];
 
     const mappedIds = ids.map(idObj => {

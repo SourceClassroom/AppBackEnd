@@ -8,7 +8,7 @@ const messageSchema = new Schema({
     sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
     content: { type: String, required: true },
     attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
-    readBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
     ...softDeleteFields
 }, { timestamps: true });
 

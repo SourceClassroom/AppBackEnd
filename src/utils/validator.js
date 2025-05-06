@@ -360,6 +360,31 @@ export const validateEvent = [
         .isHexColor().withMessage("Geçerli bir renk kodu giriniz.")
 ]
 
+export const validateCreateConversation = [
+    body('participants')
+        .isArray().withMessage('Katılımcılar bir dizi olmalıdır')
+        .notEmpty().withMessage('En az bir katılımcı gereklidir')
+        .custom(participants => {
+            if (!participants.every(p => /^[0-9a-fA-F]{24}$/.test(p))) {
+                throw new Error('Tüm katılımcılar geçerli MongoDB ID olmalıdır');
+            }
+            return true;
+        }),
+    body('isGroup')
+        .isBoolean().withMessage('isGroup bir boolean değer olmalıdır')
+        .default(false),
+    body('groupName')
+        .optional({ nullable: true })
+        .custom((value, { req }) => {
+            if (req.body.isGroup && !value) {
+                throw new Error('Grup sohbetleri için grup adı zorunludur');
+            }
+            return true;
+        })
+        .isString().withMessage('Grup adı bir metin olmalıdır')
+        .trim().isLength({ min: 1, max: 16 }).withMessage('Grup adı 1-16 karakter arasında olmalıdır'),
+]
+
 /**
  * MongoDB ID formatını doğrulama
  */

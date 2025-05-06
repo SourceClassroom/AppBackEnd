@@ -1,6 +1,6 @@
 import { client } from "../client/redisClient.js";
 
-const SOCKETS_PREFIX = "socket:";
+const SOCKETS_PREFIX = "sockets:";
 
 export const addUserSocket = async (userId, socketId) => {
     if (!userId || !socketId) {

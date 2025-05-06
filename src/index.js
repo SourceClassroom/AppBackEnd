@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { createServer } from "http";
 import cookieParser from "cookie-parser"
 import initQueues from './queue/initQueues.js';
-import socketHandler from "./socket/sockerHandler.js";
+import socketHandler from "./sockets/socketIndex.js";
 import conn from "./database/client/mongodbConnection.js";
 import hostnameCheck from "./middlewares/hostnameCheck.js";
 import {redisConnect} from "./cache/client/redisClient.js";
@@ -24,6 +24,7 @@ import materialRoute from "./routes/materialRoute.js";
 import attachmentRoute from './routes/attachmentRoute.js'
 import assignmentRouter from './routes/assignmentRoute.js';
 import submissionRouter from './routes/submissionRoute.js';
+import conversationRouter from "./routes/conversationRoute.js";
 import notificationRouter from './routes/notificationRoute.js';
 
 
@@ -69,6 +70,7 @@ app.use('/api/material', materialRoute)
 app.use('/api/attachment', attachmentRoute)
 app.use('/api/assignment', assignmentRouter)
 app.use('/api/submission', submissionRouter)
+app.use('/api/conversation', conversationRouter)
 app.use('/api/notification', notificationRouter)
 
 //app.use('/public', express.static(path.join(__dirname, 'public')));
