@@ -1,11 +1,9 @@
-import { client } from "../client/client.js";
+import { client } from "../client/redisClient.js";
 import { getSocketServer } from "../../sockets/socketInstance.js";
-import { getUserSocketIds } from "../modules/onlineUserModule.js";
+import { getUserSockets } from "../modules/onlineUserModule.js";
 
 const pub = client;
 const sub = client.duplicate();
-
-await sub.connect(); // Eğer dışarıda zaten bağlanıyorsan burada değil
 
 const CHANNEL = "socket_events";
 
@@ -25,7 +23,7 @@ export async function startSocketSubscriber() {
 
                 const io = getSocketServer();
                 for (const userId of recipients) {
-                    const socketIds = await getUserSocketIds(userId);
+                    const socketIds = await getUserSockets(userId);
                     socketIds.forEach(socketId => {
                         io.to(socketId).emit("new_message", { message, conversationId });
                     });
@@ -36,7 +34,7 @@ export async function startSocketSubscriber() {
 
                 const io = getSocketServer();
                 for (const participantId of participants) {
-                    const socketIds = await getUserSocketIds(participantId);
+                    const socketIds = await getUserSockets(participantId);
                     socketIds.forEach(socketId => {
                         io.to(socketId).emit("typing_indicator", { conversationId, userId, isTyping });
                     });
