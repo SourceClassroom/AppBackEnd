@@ -120,14 +120,18 @@ export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
  */
 export const getConversationMessages = async (conversationId, limit = 50, skip = 0) => {
     try {
-        const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
-        const messageData = await messageCacheModule.getCachedMessages(
-            conversationId,
-            limit,
-            skip,
-            messageDatabaseModule.getConversationMessages
-        );
-
+        const [conversationData, messageData] = await Promise.all([
+            conversationCacheModule.getCachedConversation(
+                conversationId,
+                conversationDatabaseModule.getConversationById
+            ),
+            messageCacheModule.getCachedMessages(
+                conversationId,
+                limit,
+                skip,
+                messageDatabaseModule.getConversationMessages
+            )
+        ]);
         const participantIds = conversationData.participants.map(p => p._id.toString());
         const participantsData = await multiGet(participantIds, "user", userDatabaseModule.getMultiUserById);
 
