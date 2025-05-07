@@ -6,18 +6,49 @@ import { publishSocketEvent } from "../../cache/socket/socketPubSub.js";
 import { updateLastMessage } from "../../database/modules/conversationModule.js";
 
 new Worker("messageQueue", async job => {
-    const { conversationId, senderId, content, attachments, recipientIds } = job.data;
+    try {
+        const { conversationId, senderId, content, attachments, recipientIds, clientMessageId } = job.data;
 
-    const message = await createMessage(conversationId, senderId, content, attachments);
+        let message = null;
 
-    await updateLastMessage(conversationId, message._id)
-    await cacheMessage(conversationId, message)
+        if (clientMessageId) {
+            message = await Message.findOne({ clientMessageId });
+            if (message) {
+                console.log(`Duplicate message skipped (clientMessageId: ${clientMessageId})`);
+            }
+        }
 
-    await publishSocketEvent("new_message", {
-        message,
-        conversationId,
-        recipients: recipientIds
-    });
+        if (!message) {
+            message = await createMessage(conversationId, senderId, content, attachments, clientMessageId);
+        }
+
+        // Use Promise.all to parallelize independent asynchronous operations
+        await Promise.all([
+            updateLastMessage(conversationId, message._id),
+            cacheMessage(conversationId, message),
+            publishSocketEvent("new_message", {
+                message,
+                conversationId,
+                recipients: recipientIds
+            })
+        ]);
+
+        await publishSocketEvent("message_status_update", {
+            recipientId: senderId,
+            messageId: message._id,
+            status: "delivered",
+            timestamp: message.createdAt
+        });
+
+    } catch (error) {
+        console.error('Error processing message queue:', error);
+        await publishSocketEvent("message_status_update", {
+            recipientId: senderId,
+            status: "failed",
+            error: error.message || "Mesaj gönderilemedi"
+        });
+        throw error;
+    }
 }, {
     connection: client
 });

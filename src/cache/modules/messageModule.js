@@ -3,22 +3,40 @@ import { client } from "../client/redisClient.js";
 const MESSAGE_KEY = (conversationId) => `messages:${conversationId}`
 
 export const cacheMessage = async (conversationId, message) => {
+    const key = MESSAGE_KEY(conversationId);
+    const messageStr = JSON.stringify(message);
+
     try {
-        await client.rPush(MESSAGE_KEY(conversationId), JSON.stringify(message));
-        await client.lTrim(key, -100, -1);
+        const pipeline = client.multi();
 
-        // Get list length to determine TTL
-        const listLength = await client.lLen(MESSAGE_KEY(conversationId));
+        // Mevcut cache'i oku (son 100 mesaj varsa fazla performans düşürmez)
+        const cachedMessages = await client.lRange(key, 0, -1);
 
-        // Set TTL - 1 hour if over 100 messages, 24 hours otherwise
-        const ttl = listLength > 100 ? 3600 : 86400;
-        await client.expire(MESSAGE_KEY(conversationId), ttl);
+        const isAlreadyCached = cachedMessages.some(m => {
+            try {
+                const parsed = JSON.parse(m);
+                return parsed._id === message._id;
+            } catch {
+                return false;
+            }
+        });
+
+        if (!isAlreadyCached) {
+            // Eklenmemişse cache'e ekle
+            pipeline.rPush(key, messageStr);
+            pipeline.lTrim(key, -100, -1);
+            pipeline.expire(key, cachedMessages.length > 100 ? 3600 : 86400);
+            await pipeline.exec();
+        } else {
+            console.log(`Message ${message._id} is already cached. Skipping.`);
+        }
 
     } catch (error) {
         console.error('Error caching message:', error);
         throw error;
     }
-}
+};
+
 
 export const getCachedMessages = async (conversationId, limit = 50, skip = 0, fetchFn = null) => {
     try {

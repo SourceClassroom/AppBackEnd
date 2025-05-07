@@ -24,12 +24,13 @@ import * as conversationDatabaseModule from "../database/modules/conversationMod
  * @param {Array} attachments - Array of attachment IDs (optional)
  * @returns {Promise<Object>} - The created message
  */
-export const sendMessage = async (conversationId, senderId, content, attachments = []) => {
+export const sendMessage = async (conversationId, senderId, content, attachments = [], clientMessageId) => {
     try {
         const conversation = await conversationCacheModule.getCachedConversation(
             conversationId,
             conversationDatabaseModule.getConversationById
         );
+
         if (!conversation) throw new Error("Konuşma bulunamadı");
         if (conversation.isPending) throw new Error("Bu konuşma onay bekliyor.");
 
@@ -43,7 +44,8 @@ export const sendMessage = async (conversationId, senderId, content, attachments
             senderId,
             content,
             attachments,
-            recipientIds
+            recipientIds,
+            clientMessageId
         });
 
         return { status: "queued" };
@@ -51,6 +53,7 @@ export const sendMessage = async (conversationId, senderId, content, attachments
         throw new Error(`Mesaj kuyruğa eklenirken hata oluştu: ${error.message}`);
     }
 };
+
 
 /**
  * Mark a message as read

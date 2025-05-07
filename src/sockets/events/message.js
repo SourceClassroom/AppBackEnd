@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import * as messagingService from "../../services/messagingService.js";
 
 export async function handleSendMessage(socket, data) {
@@ -8,12 +9,15 @@ export async function handleSendMessage(socket, data) {
         return socket.emit("error", { message: "Missing required fields" });
     }
 
+    const clientMessageId = uuidv4(); // Benzersiz mesaj ID'si
+
     try {
         const message = await messagingService.sendMessage(
             conversationId,
             userId,
             content,
-            attachments || []
+            attachments || [],
+            clientMessageId
         );
         socket.emit("message_sent", { message });
     } catch (err) {

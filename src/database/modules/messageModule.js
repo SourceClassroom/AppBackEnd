@@ -9,13 +9,14 @@ import {updateLastMessage} from "./conversationModule.js";
  * @param {Array} attachments - Array of attachment IDs (optional)
  * @returns {Promise<Object>} - The created message
  */
-export const createMessage = async (conversationId, senderId, content, attachments = []) => {
+export const createMessage = async (conversationId, senderId, content, attachments = [], clientMessageId) => {
     try {
         const message = new Message({
             conversation: conversationId,
             sender: senderId,
             content,
-            attachments
+            attachments,
+            clientMessageId
         });
 
         await message.save();

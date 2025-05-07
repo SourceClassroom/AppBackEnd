@@ -1,4 +1,5 @@
 import { client } from "../client/redisClient.js";
+import broadcastNewMessage from "./broadcastNewMessage.js";
 import { getUserSockets } from "../modules/onlineUserModule.js";
 import { getSocketServer } from "../../sockets/socketInstance.js";
 
@@ -37,12 +38,7 @@ export async function startSocketSubscriber() {
             if (eventName === "new_message") {
                 const { message, conversationId, recipients } = data;
 
-                for (const userId of recipients) {
-                    const socketIds = await getUserSockets(userId);
-                    socketIds.forEach(socketId => {
-                        io.to(socketId).emit("new_message", { message, conversationId });
-                    });
-                }
+                await broadcastNewMessage(recipients, message, conversationId, io)
 
             } else if (eventName === "typing_indicator") {
                 const { conversationId, participants, userId, isTyping } = data;
@@ -53,6 +49,20 @@ export async function startSocketSubscriber() {
                         io.to(socketId).emit("typing_indicator", { conversationId, userId, isTyping });
                     });
                 }
+            } else if (eventName === "message_status_update") {
+                const { recipientId, messageId, status, timestamp,error } = data;
+
+                const socketIds = await getUserSockets(recipientId);
+                socketIds.forEach(socketId => {
+                    io.to(socketId).emit("message_status_update", { messageId, status, timestamp, error });
+                });
+            } else if (eventName === "online_status") {
+                const { userId, status } = data;
+
+                const socketIds = await getUserSockets(userId);
+                socketIds.forEach(socketId => {
+                    io.to(socketId).emit("online_status", { userId, status });
+                });
             }
 
         } catch (err) {

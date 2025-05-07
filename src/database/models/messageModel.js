@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import softDeleteFields from "../fields/softDeleteFields.js";
 
 const { Schema } = mongoose;
 
@@ -9,7 +8,11 @@ const messageSchema = new Schema({
     content: { type: String, required: true },
     attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    clientMessageId: { type: String }
 }, { timestamps: true });
+
+messageSchema.index({ conversation: 1, createdAt: -1 });
+messageSchema.index({ clientMessageId: 1 }, { unique: true, sparse: true });
 
 const Message = mongoose.model("Message", messageSchema);
 

@@ -1,3 +1,4 @@
+import validator from "validator";
 import ApiResponse from "../utils/apiResponse.js";
 import {generateMonthKey} from "../utils/dateRange.js";
 import {generateCode} from "../services/randomCodeService.js";
@@ -136,6 +137,7 @@ export const updateLessonStatus = async (req, res) => {
         const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
 
         if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
+        if (!validator.isIn(status, ['pending', 'started', 'ended'])) return res.status(400).json(ApiResponse.error("Geçersiz ders durumu."));
         if (lessonData.status === status) return res.status(400).json(ApiResponse.error("Ders zaten bu durumda."))
         if (lessonData.status === "ended") return res.status(400).json(ApiResponse.error("Bitmiş ders tekrar başlayamaz."))
         const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);

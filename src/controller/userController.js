@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import * as crypto from "node:crypto";
 import ApiResponse from "../utils/apiResponse.js";
 import TokenService from "../services/jwtService.js";
 import {processMedia} from "../services/fileService.js";
@@ -230,7 +231,8 @@ export const verifyMail = async (req, res) => {
                 ApiResponse.error('Doğrulama kodunun süresi dolmuş.')
             )
         }
-        if (verificationCode !== code) {
+
+        if (!crypto.timingSafeEqual(Buffer.from(verificationCode), Buffer.from(code))) {
             return res.status(400).json(
                 ApiResponse.error('Hatalı doğrulama kodu.')
             )

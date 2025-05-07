@@ -74,6 +74,7 @@ export const updateMaterial = async (req, res) => {
         const { title, description } = req.body;
 
         const fileIds = await processMedia(req);
+
         const currentAttachments = req.body.attachments ? JSON.parse(req.body.attachments) : [];
 
         const updatedMaterialData = {
