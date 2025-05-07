@@ -1,5 +1,5 @@
-import { Message } from "../models/messageModel.js";
-import { updateLastMessage } from "./conversationModule.js";
+import {Message} from "../models/messageModel.js";
+import {updateLastMessage} from "./conversationModule.js";
 
 /**
  * Create a new message
@@ -60,17 +60,9 @@ export const getMessage = async (messageId) => {
  */
 export const getConversationMessages = async (conversationId, limit = 50, skip = 0) => {
     try {
-        const messages = await Message.find({
+        return await Message.find({
             conversation: conversationId,
-            isDeleted: false
-        })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate('sender', 'name email profilePicture')
-        .lean();
-        
-        return messages;
+        }).sort({createdAt: -1}).skip(skip).limit(limit).lean();
     } catch (error) {
         throw new Error(`Error getting conversation messages: ${error.message}`);
     }

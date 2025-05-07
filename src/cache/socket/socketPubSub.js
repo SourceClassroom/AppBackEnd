@@ -31,9 +31,17 @@ export async function startSocketSubscriber() {
                     });
                 }
             }
+            else if (eventName === "typing_indicator") {
+                const { conversationId, participants, userId, isTyping } = data;
 
-            // Diğer event türleri buraya eklenebilir (typing, mark_read vs.)
-
+                const io = getSocketServer();
+                for (const participantId of participants) {
+                    const socketIds = await getUserSocketIds(participantId);
+                    socketIds.forEach(socketId => {
+                        io.to(socketId).emit("typing_indicator", { conversationId, userId, isTyping });
+                    });
+                }
+            }
         } catch (err) {
             console.error("Redis Subscriber Error:", err.message);
         }

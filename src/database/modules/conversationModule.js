@@ -73,7 +73,16 @@ export const getUserConversations = async (userId) => {
         throw new Error(`Error getting user conversations: ${error.message}`);
     }
 };
-/*
+
+export const getConversationById = async (conversationId) => {
+    try {
+        return await Conversation.findById(conversationId).lean();
+    } catch (error) {
+        throw new Error(`Error getting conversation: ${error.message}`);
+    }
+};
+
+/**
  * Update the last message of a conversation
  * @param {String} conversationId - The conversation ID
  * @param {String} messageId - The message ID

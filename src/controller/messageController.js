@@ -1,6 +1,11 @@
-import * as messageModule from "../database/modules/messageModule.js";
-import * as conversationModule from "../database/modules/conversationModule.js";
+import ApiResponse from "../utils/apiResponse.js";
 import * as messagingService from "../services/messagingService.js";
+
+//Cache Modules
+import * as conversationCacheModule from "../cache/modules/conversationModule.js";
+
+//Databse Modules
+import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
 
 /**
  * Send a new message
@@ -12,7 +17,7 @@ export const sendMessage = async (req, res) => {
         const { conversationId, content, attachments } = req.body;
         
         // Check if the user is a participant in the conversation
-        const conversation = await conversationModule.getConversationById(conversationId);
+        const conversation = await conversationDatabaseModule.getConversationById(conversationId);
         
         const isParticipant = conversation.participants.some(
             participant => participant._id.toString() === req.user.id
@@ -54,31 +59,25 @@ export const getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
         const { limit = 50, skip = 0 } = req.query;
-        
+
         // Check if the user is a participant in the conversation
-        const conversation = await conversationModule.getConversationById(conversationId);
-        
-        const isParticipant = conversation.participants.some(
+        const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+
+        const isParticipant = conversationData.participants.some(
             participant => participant._id.toString() === req.user.id
         );
-        
+
         if (!isParticipant) {
-            return res.status(403).json({
-                success: false,
-                message: 'You are not a participant in this conversation'
-            });
+            return res.status(403).json(ApiResponse.forbidden("Bu işlem için yetkiniz yok"));
         }
-        
-        const messages = await messageModule.getConversationMessages(
+
+        const messages = await messagingService.getConversationMessages(
             conversationId,
             parseInt(limit),
             parseInt(skip)
         );
-        
-        res.status(200).json({
-            success: true,
-            data: messages
-        });
+
+        return res.status(200).json(ApiResponse.success("Mesajlar", messages));
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -86,7 +85,6 @@ export const getMessages = async (req, res) => {
         });
     }
 };
-
 /**
  * Mark a message as read
  * @param {Object} req - Express request object
@@ -102,39 +100,6 @@ export const markMessageAsRead = async (req, res) => {
         res.status(200).json({
             success: true,
             data: message
-        });
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
-    }
-};
-
-/**
- * Delete a message
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export const deleteMessage = async (req, res) => {
-    try {
-        const { messageId } = req.params;
-        
-        // Get the message to check if the current user is the sender
-        const message = await messageModule.getMessage(messageId);
-        
-        if (message.sender.toString() !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'You can only delete your own messages'
-            });
-        }
-        
-        await messageModule.deleteMessage(messageId);
-        
-        res.status(200).json({
-            success: true,
-            message: 'Message deleted successfully'
         });
     } catch (error) {
         res.status(400).json({

@@ -9,7 +9,6 @@ const messageSchema = new Schema({
     content: { type: String, required: true },
     attachments: [{ type: Schema.Types.ObjectId, ref: "Attachment" }],
     readBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    ...softDeleteFields
 }, { timestamps: true });
 
 const Message = mongoose.model("Message", messageSchema);

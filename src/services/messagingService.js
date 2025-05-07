@@ -1,17 +1,20 @@
-import { getSocketServer } from "../sockets/socketInstance.js";
-import { getUserSockets } from "../cache/modules/onlineUserModule.js";
-import * as messageModule from "../database/modules/messageModule.js";
-import * as messageCacheModule from "../cache/modules/messageModule.js";
 import * as redisPubSubService from "./redisPubSubService.js";
+import { publishSocketEvent } from "../cache/socket/socketPubSub.js";
 
 //Queues
 import messageQueue from "../queue/queues/messageQueue.js";
 
+//Cache Strategies
+import multiGet from "../cache/strategies/multiGet.js";
+
 //Cache Modules
-import *as conversationCacheModule from "../cache/modules/conversationModule.js";
+import * as messageCacheModule from "../cache/modules/messageModule.js";
+import * as conversationCacheModule from "../cache/modules/conversationModule.js";
 
 //Database Modules
-import *as conversationDatabaseModule from "../database/modules/conversationModule.js";
+import * as userDatabaseModule from "../database/modules/userModule.js";
+import * as messageDatabaseModule from "../database/modules/messageModule.js";
+import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
 
 /**
  * Send a message to a conversation
@@ -27,8 +30,8 @@ export const sendMessage = async (conversationId, senderId, content, attachments
             conversationId,
             conversationDatabaseModule.getConversationById
         );
-        if (!conversation) throw new Error("Conversation not found");
-        if (conversation.isPending) throw new Error("This conversation is waiting for approval.");
+        if (!conversation) throw new Error("Konuşma bulunamadı");
+        if (conversation.isPending) throw new Error("Bu konuşma onay bekliyor.");
 
         const recipientIds = conversation.participants
             .filter(p => !p._id.equals(senderId))
@@ -43,9 +46,9 @@ export const sendMessage = async (conversationId, senderId, content, attachments
             recipientIds
         });
 
-        return { status: "queued" }; // Anında yanıt dön, işlem arkada yapılacak
+        return { status: "queued" };
     } catch (error) {
-        throw new Error(`Error queuing message: ${error.message}`);
+        throw new Error(`Mesaj kuyruğa eklenirken hata oluştu: ${error.message}`);
     }
 };
 
@@ -76,7 +79,7 @@ export const markAsRead = async (messageId, userId) => {
 
         return message;
     } catch (error) {
-        throw new Error(`Error marking message as read: ${error.message}`);
+        throw new Error(`Mesaj okundu olarak işaretlenirken hata oluştu: ${error.message}`);
     }
 };
 
@@ -89,25 +92,22 @@ export const markAsRead = async (messageId, userId) => {
 export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
     try {
         // Get the conversation to find participants
-        const conversation = await conversationModule.getConversationById(conversationId);
+        const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const participantIds = conversationData.participants.map(p => p._id.toString());
 
-        // Notify all participants except the sender
-        const recipientIds = conversation.participants
-            .filter(participant => participant._id.toString() !== userId)
-            .map(participant => participant._id.toString());
-
-        // Use Redis pub/sub to notify recipients
-        await redisPubSubService.publishTypingIndicator(
+        await publishSocketEvent("typing_indicator", {
             conversationId,
             userId,
             isTyping,
-            recipientIds
-        );
+            participantIds
+        })
+
+        return true;
+
     } catch (error) {
-        throw new Error(`Error sending typing indicator: ${error.message}`);
+        throw new Error(`Yazma göstergesi gönderilirken hata oluştu: ${error.message}`);
     }
 };
-
 /**
  * Get messages for a conversation with Redis caching
  * @param {String} conversationId - The conversation ID
@@ -117,77 +117,23 @@ export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
  */
 export const getConversationMessages = async (conversationId, limit = 50, skip = 0) => {
     try {
-        // Try to get messages from Redis cache first
-        const cachedMessages = await messageCacheModule.getCachedConversationMessages(
+        const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const messageData = await messageCacheModule.getCachedMessages(
             conversationId,
             limit,
-            skip
+            skip,
+            messageDatabaseModule.getConversationMessages
         );
 
-        // If messages are in cache, return them
-        if (cachedMessages && cachedMessages.length > 0) {
-            return cachedMessages;
-        }
+        const participantIds = conversationData.participants.map(p => p._id.toString());
+        const participantsData = await multiGet(participantIds, "user", userDatabaseModule.getMultiUserById);
 
-        // If not in cache, get from database
-        const messages = await messageModule.getConversationMessages(
-            conversationId,
-            limit,
-            skip
-        );
+        return messageData.map(message => ({
+            ...message,
+            sender: participantsData.find(p => p._id.toString() === message.sender.toString())
+        }));
 
-        // Cache each message
-        for (const message of messages) {
-            await messageCacheModule.cacheMessage(message);
-        }
-
-        return messages;
     } catch (error) {
-        throw new Error(`Error getting conversation messages: ${error.message}`);
-    }
-};
-
-/**
- * Delete a message with cache invalidation
- * @param {String} messageId - The message ID
- * @returns {Promise<Object>} - The deleted message
- */
-export const deleteMessage = async (messageId) => {
-    try {
-        // Delete from database
-        const message = await messageModule.deleteMessage(messageId);
-
-        // Update in Redis cache (mark as deleted)
-        await messageCacheModule.updateCachedMessage(messageId, {
-            isDeleted: true,
-            updatedAt: message.updatedAt
-        });
-
-        return message;
-    } catch (error) {
-        throw new Error(`Error deleting message: ${error.message}`);
-    }
-};
-
-/**
- * Notify users via sockets.io (legacy method, kept for backward compatibility)
- * @param {Array} userIds - Array of user IDs to notify
- * @param {String} event - The event name
- * @param {Object} data - The data to send
- */
-export const notifyUsers = async (userIds, event, data) => {
-    try {
-        const io = getSocketServer();
-
-        // For each user, get their sockets IDs and emit the event
-        for (const userId of userIds) {
-            const socketIds = await getUserSockets(userId);
-
-            for (const socketId of socketIds) {
-                io.to(socketId).emit(event, data);
-            }
-        }
-    } catch (error) {
-        console.error(`Error notifying users: ${error.message}`);
+        throw new Error(`Konuşma mesajları alınırken hata oluştu: ${error.message}`);
     }
 };
