@@ -261,8 +261,8 @@ export const banStudent = async (req, res) => {
     }
 };
 /** Sınıftaki öğrencilerin bilgilerini döner
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 export const studentList = async (req, res) => {
     try {
@@ -276,7 +276,14 @@ export const studentList = async (req, res) => {
 
         const studentData = await multiGet(getStudentIds, "user", userDatabaseModule.getMultiUserById)
 
-        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", studentData, 200))
+        const formattedStudentData = studentData.map(student => ({
+            _id: student._id,
+            name: student.name,
+            surname: student.surname,
+            profile: student.profile
+        }))
+
+        return res.status(200).json(ApiResponse.success("Sınıftaki öğrenci verisi", formattedStudentData, 200))
     } catch (error) {
         console.error('Öğrenci bilgileri alınırken bir hata meydana geldi.:', error);
         res.status(500).json(
