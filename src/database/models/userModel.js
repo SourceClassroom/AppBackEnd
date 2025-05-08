@@ -96,6 +96,8 @@ const UserSchema = new Schema({
     ...softDeleteFields
 }, {timestamps: true});
 
+UserSchema.index({ name: 1, surname: 1 });
+
 const User = mongoose.model('User', UserSchema);
 
 export { User };

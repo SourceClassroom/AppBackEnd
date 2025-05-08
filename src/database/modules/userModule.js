@@ -1,4 +1,5 @@
 import { User } from "../models/userModel.js";
+import generateNGrams from "../../utils/generateNGrams.js";
 
 export const createUser = async (userData) => {
     try {
@@ -174,32 +175,68 @@ export const getPendingUsersPaginated = async (offset, limit) => {
 
 export const searchUsers = async (searchTerm, limit = 15, offset = 0) => {
     try {
-        // Arama terimini boşluklardan ayır, trim'le ve küçük parçalara böl
-        const searchParts = searchTerm.trim().split(/\s+/);
+        const terms = searchTerm
+            .trim()
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean);
 
-        // Her parçayı name veya surname'de aramak için $or yapısı oluştur
-        const orQueries = searchParts.flatMap(part => [
-            { name: { $regex: part, $options: "i" } },
-            { surname: { $regex: part, $options: "i" } }
+        const ngrams = terms.flatMap(term => generateNGrams(term));
+
+        if (ngrams.length === 0) return { userIds: [], totalResults: 0 };
+
+        // Arama query'si: Her n-gram için name veya surname eşleşmesi
+        const orQueries = ngrams.flatMap(token => [
+            { name: { $regex: token, $options: "i" } },
+            { surname: { $regex: token, $options: "i" } }
         ]);
 
         const query = { $or: orQueries };
 
-        // Eşleşen kullanıcıları getir
-        const userIds = await User.find(query)
-            .skip(offset)
-            .limit(limit)
-            .select("_id");
+        // Skor bazlı sıralama: kaç token eşleşmiş?
+        const users = await User.aggregate([
+            { $match: query },
+            {
+                $addFields: {
+                    matchScore: {
+                        $sum: [
+                            {
+                                $size: {
+                                    $filter: {
+                                        input: ngrams,
+                                        as: "ng",
+                                        cond: { $regexMatch: { input: "$name", regex: "$$ng", options: "i" } }
+                                    }
+                                }
+                            },
+                            {
+                                $size: {
+                                    $filter: {
+                                        input: ngrams,
+                                        as: "ng",
+                                        cond: { $regexMatch: { input: "$surname", regex: "$$ng", options: "i" } }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            { $sort: { matchScore: -1 } },
+            { $skip: offset },
+            { $limit: limit },
+            { $project: { _id: 1 } }
+        ]);
 
-        // Toplam sonuç sayısını al
+        // Toplam eşleşen kullanıcı sayısı
         const totalResults = await User.countDocuments(query);
 
-        return { userIds, totalResults };
+        return { userIds: users, totalResults };
     } catch (error) {
-       console.error(error)
-       throw error
+        console.error("searchUsers error:", error);
+        throw error;
     }
-}
+};
 
 export const updateUserForAdmin = async (userId, data) => {
     try {
