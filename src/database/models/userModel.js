@@ -96,7 +96,7 @@ const UserSchema = new Schema({
     ...softDeleteFields
 }, {timestamps: true});
 
-UserSchema.index({ name: 1, surname: 1 });
+UserSchema.index({ name: "text", surname: "text" });
 
 const User = mongoose.model('User', UserSchema);
 
