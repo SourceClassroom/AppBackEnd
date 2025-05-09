@@ -9,6 +9,7 @@ import * as conversationCacheModule from "../cache/modules/conversationModule.js
 //Database Modules
 import * as messageDatabaseModule from "../database/modules/messageModule.js";
 import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
+import {invalidateKey} from "../cache/strategies/invalidate.js";
 
 
 /**
@@ -92,30 +93,19 @@ export const addParticipant = async (req, res) => {
         const { conversationId, userId } = req.body;
         
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationModule.getConversationById(conversationId);
-        
-        const isParticipant = conversation.participants.some(
-            participant => participant._id.toString() === req.user.id
-        );
-        
-        if (!isParticipant) {
-            return res.status(403).json({
-                success: false,
-                message: 'You are not a participant in this conversation'
-            });
+        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        if (!conversation) {
+            return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
-        
-        const updatedConversation = await conversationModule.addParticipant(conversationId, userId);
-        
-        res.status(200).json({
-            success: true,
-            data: updatedConversation
-        });
+        if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
+
+        const updatedConversation = await conversationDatabaseModule.addParticipant(conversationId, userId);
+        await invalidateKey(`conversation:${conversationId}`)
+
+        return res.status(200).json(ApiResponse.success("Kullanici sohbete eklendi", updatedConversation))
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
     }
 };
 
@@ -127,32 +117,21 @@ export const addParticipant = async (req, res) => {
 export const removeParticipant = async (req, res) => {
     try {
         const { conversationId, userId } = req.body;
-        
+
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationModule.getConversationById(conversationId);
-        
-        const isParticipant = conversation.participants.some(
-            participant => participant._id.toString() === req.user.id
-        );
-        
-        if (!isParticipant) {
-            return res.status(403).json({
-                success: false,
-                message: 'You are not a participant in this conversation'
-            });
+        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        if (!conversation) {
+            return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
-        
-        const updatedConversation = await conversationModule.removeParticipant(conversationId, userId);
-        
-        res.status(200).json({
-            success: true,
-            data: updatedConversation
-        });
+        if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
+
+        const updatedConversation = await conversationDatabaseModule.removeParticipant(conversationId, userId);
+        await invalidateKey(`conversation:${conversationId}`)
+
+        return res.status(200).json(ApiResponse.success("Kullanici sohbetten cikarildi", updatedConversation))
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
     }
 };
 
@@ -163,30 +142,21 @@ export const removeParticipant = async (req, res) => {
  */
 export const deleteConversation = async (req, res) => {
     try {
+        const { conversationId } = req.params;
+
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationModule.getConversationById(req.params.id);
-        
-        const isParticipant = conversation.participants.some(
-            participant => participant._id.toString() === req.user.id
-        );
-        
-        if (!isParticipant) {
-            return res.status(403).json({
-                success: false,
-                message: 'You are not a participant in this conversation'
-            });
+        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        if (!conversation) {
+            return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
-        
-        await conversationModule.deleteConversation(req.params.id);
-        
-        res.status(200).json({
-            success: true,
-            message: 'Conversation deleted successfully'
-        });
+        if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
+
+        const deletedConversation = await conversationDatabaseModule.deleteConversation(conversationId, req.user.id);
+        await invalidateKey(`conversation:${conversationId}`)
+
+        return res.status(200).json(ApiResponse.success("Sohbet silindi", {success: true}))
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message
-        });
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
     }
 };

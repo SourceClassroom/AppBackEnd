@@ -1,4 +1,3 @@
-import {Message} from "../models/messageModel.js";
 import {Conversation} from "../models/conversationModel.js";
 
 /**
@@ -108,84 +107,49 @@ export const updateLastMessage = async (conversationId, messageId) => {
  */
 export const addParticipant = async (conversationId, userId) => {
     try {
-        const conversation = await Conversation.findById(conversationId);
-        
-        if (!conversation) {
-            throw new Error('Conversation not found');
-        }
-        
-        if (!conversation.isGroup) {
-            throw new Error('Cannot add participants to a non-group conversation');
-        }
-        
-        if (conversation.participants.includes(userId)) {
-            throw new Error('User is already a participant');
-        }
-        
-        conversation.participants.push(userId);
-        await conversation.save();
-        
-        return conversation;
+        return await Conversation.findByIdAndUpdate(
+            conversationId,
+            {$push: {participants: userId}},
+            {new: true}
+        );
     } catch (error) {
         throw new Error(`Error adding participant: ${error.message}`);
     }
 };
 
 /**
- * Remove a participant from a group conversation
+ * Remove a participant from a conversation
  * @param {String} conversationId - The conversation ID
  * @param {String} userId - The user ID to remove
  * @returns {Promise<Object>} - The updated conversation
  */
 export const removeParticipant = async (conversationId, userId) => {
     try {
-        const conversation = await Conversation.findById(conversationId);
-        
-        if (!conversation) {
-            throw new Error('Conversation not found');
-        }
-        
-        if (!conversation.isGroup) {
-            throw new Error('Cannot remove participants from a non-group conversation');
-        }
-        
-        if (!conversation.participants.includes(userId)) {
-            throw new Error('User is not a participant');
-        }
-        
-        conversation.participants = conversation.participants.filter(
-            participant => participant.toString() !== userId
+        return await Conversation.findByIdAndUpdate(
+            conversationId,
+            {$pull: {participants: userId}},
+            {new: true}
         );
-        
-        await conversation.save();
-        
-        return conversation;
     } catch (error) {
         throw new Error(`Error removing participant: ${error.message}`);
     }
 };
-
 /**
  * Soft delete a conversation
  * @param {String} conversationId - The conversation ID
  * @returns {Promise<Object>} - The deleted conversation
  */
-export const deleteConversation = async (conversationId) => {
+export const deleteConversation = async (conversationId, deletedBy) => {
     try {
-        const conversation = await Conversation.findByIdAndUpdate(
+        return await Conversation.findByIdAndUpdate(
             conversationId,
-            { 
+            {
                 isDeleted: true,
-                deletedAt: new Date()
+                deletedAt: new Date(),
+                deletedBy: deletedBy
             },
-            { new: true }
+            {new: true}
         );
-        
-        if (!conversation) {
-            throw new Error('Conversation not found');
-        }
-        
-        return conversation;
     } catch (error) {
         throw new Error(`Error deleting conversation: ${error.message}`);
     }

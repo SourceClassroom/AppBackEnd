@@ -15,5 +15,23 @@ router.route("/create").post(
     apiValidator.validate,
     conversationController.createConversation
 )
+router.route("/add-participant").put(
+    authenticateToken,
+    apiValidator.validateAddRemoveParticipant,
+    apiValidator.validate,
+    conversationController.addParticipant
+)
+router.route("/remove-participant").put(
+    authenticateToken,
+    apiValidator.validateAddRemoveParticipant,
+    apiValidator.validate,
+    conversationController.removeParticipant
+)
+router.route("/delete/:conversationId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("conversationId"),
+    apiValidator.validate,
+    conversationController.deleteConversation
+)
 
 export default router;

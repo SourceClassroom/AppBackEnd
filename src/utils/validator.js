@@ -385,6 +385,14 @@ export const validateCreateConversation = [
         .trim().isLength({ min: 1, max: 16 }).withMessage('Grup adı 1-16 karakter arasında olmalıdır'),
 ]
 
+export const validateAddRemoveParticipant = [
+    body('conversationId')
+        .notEmpty().withMessage('Sohbet ID alanı boş olamaz')
+        .isMongoId().withMessage('Geçerli bir sohbet ID giriniz'),
+    body('userId')
+        .notEmpty().withMessage('Kullanıcı ID alanı boş olamaz')
+        .isMongoId().withMessage('Geçerli bir kullanıcı ID giriniz'),
+]
 /**
  * MongoDB ID formatını doğrulama
  */
