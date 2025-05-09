@@ -186,8 +186,8 @@ export const kickStudent = async (req, res) => {
 
         // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
         if (
-            !userData.enrolledClasses.toString().includes(getClassData._id) ||
-            !getClassData.students.toString().includes(userData._id)
+            !userData.enrolledClasses.includes(getClassData._id) ||
+            !getClassData.students.includes(userData._id)
         ) {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
@@ -234,8 +234,8 @@ export const banStudent = async (req, res) => {
 
         // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
         if (
-            !userData.enrolledClasses.toString().includes(getClassData._id) ||
-            !getClassData.students.toString().includes(userData._id)
+            !userData.enrolledClasses.includes(getClassData._id) ||
+            !getClassData.students.includes(userData._id)
         ) {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
@@ -311,8 +311,8 @@ export const leaveClass = async (req, res) => {
 
         // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
         if (
-            !userData.enrolledClasses.toString().includes(getClassData._id) ||
-            !getClassData.students.toString().includes(userData._id)
+            !userData.enrolledClasses.includes(getClassData._id) ||
+            !getClassData.students.includes(userData._id)
         ) {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
