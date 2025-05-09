@@ -173,7 +173,7 @@ export const kickStudent = async (req, res) => {
         const classId = req.params.classId;
 
         // Sınıf verisini al
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClassData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
@@ -185,13 +185,10 @@ export const kickStudent = async (req, res) => {
         }
 
         // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
-        if (
-            !userData.enrolledClasses.toString().includes(getClassData._id) ||
-            !getClassData.students.toString().includes(userData._id)
-        ) {
+
+        if (!getClassData.some(student => student._id.toString() === userData._id.toString())) {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
-
         // Kullanıcıdan sınıfı kaldır
         const updateUser = await userDatabaseModule.removeClassFromEnrolledClasses(userId, classId)
 
@@ -221,7 +218,7 @@ export const banStudent = async (req, res) => {
         const classId = req.params.classId;
 
         // Sınıf verisini al
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClassData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
@@ -233,10 +230,7 @@ export const banStudent = async (req, res) => {
         }
 
         // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
-        if (
-            !userData.enrolledClasses.toString().includes(getClassData._id) ||
-            !getClassData.students.toString().includes(userData._id)
-        ) {
+        if (!getClassData.some(student => student._id.toString() === userData._id.toString())) {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
 
@@ -298,7 +292,7 @@ export const leaveClass = async (req, res) => {
         const userId = req.user.id;
 
         // Sınıf verisini al
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClassData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
@@ -310,10 +304,7 @@ export const leaveClass = async (req, res) => {
         }
 
         // Kullanıcı gerçekten sınıfın bir üyesi mi kontrol et
-        if (
-            !userData.enrolledClasses.toString().includes(getClassData._id) ||
-            !getClassData.students.toString().includes(userData._id)
-        ) {
+        if (!getClassData.some(student => student._id.toString() === userData._id.toString())) {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
 
