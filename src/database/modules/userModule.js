@@ -85,7 +85,7 @@ export const updateNotificationPreferences = async (userId, notificationPreferen
 
 export const getUserLoginData = async (email) => {
     try {
-        return await User.findOne({email}).select('_id email password accountStatus role')
+        return await User.findOne({email}).select('_id name surname email password accountStatus role')
     } catch (error) {
         console.log(error)
         throw error

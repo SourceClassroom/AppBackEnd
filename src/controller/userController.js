@@ -346,12 +346,19 @@ export const changePassword = async (req, res) => {
             req.query?.token;
 
         await TokenService.blacklistToken(oldToken)
-        sendMail(userEmail, `${process.env.APP_NAME} Şifre Değiştirme Bildirimi`, `${process.env.APP_NAME} şifreniz değiştirildi. Eğer bu işlem siz yapmadıysanız lütfen bir yönetici ile iletişime geçin.`)
+        sendMail(
+            userEmail,
+            `${process.env.APP_NAME} şifreniz başarıyle değiştirildi.`,
+            {
+                name: `${user.name} ${user.surname}`,
+            },
+            "password-change.html"
+        )
         res.status(200).json(
             ApiResponse.success(
                 'Şifre başarıyla değiştirildi',
                 {
-                    token // Yeni token döndür
+                    success: true
                 }
             )
         );
