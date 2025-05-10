@@ -1,6 +1,7 @@
 import path from 'path';
 import cors from "cors";
 import dotenv from 'dotenv';
+import helmet from "helmet"
 import express from 'express';
 import { fileURLToPath } from 'url';
 import { createServer } from "http";
@@ -49,10 +50,12 @@ const httpServer = createServer(app); // Express'i HTTP serverla sarmalıyoruz
 
 app.use(hostnameCheck)
 
+app.use(helmet())
 app.use(express.json())
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    origin: process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()),
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
 }));
 app.use(cookieParser())
 app.use(express.urlencoded({extended: true}))

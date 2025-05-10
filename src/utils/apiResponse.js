@@ -84,6 +84,10 @@ class ApiResponse {
     static serverError(message = "Sunucu hatası", error = null) {
         return this.error(message, error, 500);
     }
+
+     static rateLimit(message = "Çok fazla istek") {
+        return this.error(message, null, 429);
+    }
 }
 
 export default ApiResponse;

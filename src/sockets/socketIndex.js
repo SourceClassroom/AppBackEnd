@@ -8,9 +8,11 @@ import { startSocketSubscriber } from "../cache/socket/socketPubSub.js";
 export default async function socketHandler(server) {
     const io = new Server(server, {
         cors: {
-            origin: "*",
-            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            origin: process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim()),
+            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            credentials: true
         },
+        allowEIO3: true,
         transports: ["websocket", "polling"]
     });
 

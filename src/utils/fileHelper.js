@@ -12,13 +12,6 @@ export const streamFile = (res, filePath, mimeType) => {
         return res.status(404).json(ApiResponse.notFound("Dosya sistemde bulunamadı."));
     }
 
-    const origin = '*';
-
-    res.setHeader('X-Frame-Options', 'ALLOW-FROM ' + origin);
-    res.setHeader('Content-Security-Policy', `frame-ancestors ${origin}`);
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.contentType(mimeType);
     const fileStream = fs.createReadStream(filePath);
 

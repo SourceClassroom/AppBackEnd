@@ -1,6 +1,6 @@
 import * as crypto from "node:crypto";
 
-const algorithm = 'aes-256-cbc';
+const algorithm = 'aes-256-gcm';
 const ivLength = 16;
 
 export const encrypt = (text) => {
