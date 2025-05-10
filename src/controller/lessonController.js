@@ -188,3 +188,25 @@ export const updateLesson = async (req, res) => {
         return res.status(500).json(ApiResponse.serverError("Ders güncellenirken bir hata meydana geldi."));
     }
 }
+
+export const deleteLesson = async (req, res) => {
+    try {
+        const { lessonId } = req.params;
+
+        const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
+
+        if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
+
+        await lessonDatabaseModule.deleteLesson(lessonId, req.user.id)
+        await invalidateKey(`lesson:${lessonId}`);
+
+        //TODO pull something if it deleted for every fucking thig
+        //await classDatabaseModule.pullLessonFromClass(classId, lessonId)
+        await invalidateKey(`class:${classId}:lessons`)
+
+        return res.status(200).json(ApiResponse.success("Ders başarıyla silindi.", lessonData));
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Ders silinirken bir hata meydana geldi."));
+    }
+}

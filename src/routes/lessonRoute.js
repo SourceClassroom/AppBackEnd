@@ -53,4 +53,13 @@ router.route("/update/:lessonId").put(
     lessonController.updateLesson
 )
 
+router.route("/delete/:lessonId").delete(
+    authenticateToken,
+    apiValidator.validateMongoId("lessonId"),
+    apiValidator.validate,
+    classMiddleware.checkLessonClassroom,
+    roleCheck.isClassTeacherOrOwner(),
+    lessonController.deleteLesson
+)
+
 export default router;
