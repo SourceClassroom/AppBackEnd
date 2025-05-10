@@ -8,6 +8,7 @@ import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 import * as conversationCacheModule from "../cache/modules/conversationModule.js";
 
 //Database Modules
+import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
 
 /**
@@ -65,6 +66,7 @@ export const createConversation = async (req, res) => {
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
+
 export const getConversations = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -84,6 +86,29 @@ export const getConversations = async (req, res) => {
             "conversation",
             conversationDatabaseModule.getMultiConversations
         );
+
+        // Get participants data for each conversation
+        const participantsData = await Promise.all(
+            conversationData.map(conversation =>
+                multiGet(
+                    conversation.participants,
+                    "user",
+                    userDatabaseModule.getMultiUserById
+                )
+            )
+        );
+
+        // Assign participants data back to conversations
+        conversationData.forEach((conversation, index) => {
+            conversation.participants = participantsData[index].map(user => ({
+                _id: user._id,
+                name: user.name,
+                surname: user.surname,
+                profile: {
+                    avatar: user.profile.avatar
+                },
+            }));
+        });
 
         // Get current user's read status
         const userReadStatuses = await multiGet(
@@ -128,8 +153,6 @@ export const getConversations = async (req, res) => {
         );
     }
 };
-
-
 /**
  * Add a participant to a group conversation
  * @param {Object} req - Express request object

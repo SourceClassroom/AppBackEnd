@@ -47,10 +47,11 @@ export const findPrivateConversation = async (allParticipants) => {
  */
 export const getMultiConversations = async (conversationIds) => {
     try {
-        return await Conversation.find({
-            _id: { $in: conversationIds },
-            isDeleted: { $ne: true }
-        }).populate('lastMessage').lean();
+        return await Conversation.find({ _id: { $in: conversationIds }, isDeleted: { $ne: true } })
+            .populate({
+                path: 'lastMessage',
+                model: 'Message'
+            }).lean();
     } catch (error) {
         throw new Error(`Error getting conversations: ${error.message}`);
     }
