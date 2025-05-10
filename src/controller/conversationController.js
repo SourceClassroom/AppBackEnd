@@ -2,15 +2,13 @@ import ApiResponse from "../utils/apiResponse.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
+import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import * as conversationCacheModule from "../cache/modules/conversationModule.js";
 
 //Database Modules
-import * as messageDatabaseModule from "../database/modules/messageModule.js";
 import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
-import {invalidateKey} from "../cache/strategies/invalidate.js";
-
 
 /**
  * Create a new conversation
@@ -52,6 +50,9 @@ export const createConversation = async (req, res) => {
             creatorId
         );
 
+        // Invalidate cache for all participants
+        await invalidateKeys(allParticipants.map(userId => `user:${userId}:conversations`));
+
         return res.status(201).json(ApiResponse.success("Sohbet olusturuldu.", conversation));
     } catch (error) {
         console.error(error);
@@ -66,22 +67,68 @@ export const createConversation = async (req, res) => {
  */
 export const getConversations = async (req, res) => {
     try {
-        const userId = req.user.id
-        const conversations = await conversationCacheModule.getUserConversations(userId, conversationDatabaseModule.getUserConversations)
+        const userId = req.user.id;
+        const conversations = await conversationCacheModule.getUserConversations(
+            userId,
+            conversationDatabaseModule.getUserConversations
+        );
 
-        const conversationData = await multiGet(conversations, conversation, conversationDatabaseModule.getMultiConversations)
-        
-        const conversationsWithReadStatus = conversationData.map(conversation => ({
-            ...conversation,
-            isRead: conversation.lastMessage ? conversation.lastMessage.readBy.includes(userId) : true
-        }));
+        if (!conversations || conversations.length === 0) {
+            return res.status(200).json(
+                ApiResponse.success("Sohbetler getirildi", [])
+            );
+        }
 
-        return res.status(200).json(ApiResponse.success("Sohbetler getirildi", conversationsWithReadStatus))
+        const conversationData = await multiGet(
+            conversations,
+            "conversation",
+            conversationDatabaseModule.getMultiConversations
+        );
+
+        // Get current user's read status
+        const userReadStatuses = await multiGet(
+            conversations,
+            "readStatus",
+            conversationDatabaseModule.getMultiUserReadStatus
+        ) || [];
+
+        // Get all users' read statuses for each conversation
+        const allReadStatuses = await Promise.all(
+            conversations.map(conv =>
+                conversationDatabaseModule.getReadStatus(conv.id)
+            )
+        );
+
+        const conversationsWithReadStatus = conversationData.map((conversation, index) => {
+            // Get all read statuses for this conversation
+            const conversationReadStatuses = allReadStatuses[index] || [];
+
+            // Create a map of userId to read status
+            const otherUsersReadStatus = conversationReadStatuses.reduce((acc, status) => {
+                if (status.userId !== userId) { // Exclude current user
+                    acc[status.userId] = status.isRead || false;
+                }
+                return acc;
+            }, {});
+
+            return {
+                ...conversation,
+                isRead: userReadStatuses[index] || false, // Current user's read status
+                otherUsersReadStatus // Other users' read status
+            };
+        });
+
+        return res.status(200).json(
+            ApiResponse.success("Sohbetler getirildi", conversationsWithReadStatus)
+        );
     } catch (error) {
-        console.error(error)
-        res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
+        console.error(error);
+        return res.status(500).json(
+            ApiResponse.serverError("Sunucu hatası", error)
+        );
     }
 };
+
 
 /**
  * Add a participant to a group conversation

@@ -1,7 +1,8 @@
 import { client } from "../client/redisClient.js";
-import broadcastNewMessage from "./broadcastNewMessage.js";
+import broadcastUpdate from "./broadcastUpdate.js";
 import { getUserSockets } from "../modules/onlineUserModule.js";
 import { getSocketServer } from "../../sockets/socketInstance.js";
+
 
 const pub = client;
 const sub = client.duplicate();
@@ -38,17 +39,13 @@ export async function startSocketSubscriber() {
             if (eventName === "new_message") {
                 const { message, conversationId, recipients } = data;
 
-                await broadcastNewMessage(recipients, message, conversationId, io)
+                await broadcastUpdate("new_message", recipients, message, io)
 
             } else if (eventName === "typing_indicator") {
                 const { conversationId, participants, userId, isTyping } = data;
 
-                for (const participantId of participants) {
-                    const socketIds = await getUserSockets(participantId);
-                    socketIds.forEach(socketId => {
-                        io.to(socketId).emit("typing_indicator", { conversationId, userId, isTyping });
-                    });
-                }
+                await broadcastUpdate("typing_indicator", participants, {conversationId, userId, isTyping}, io)
+
             } else if (eventName === "message_status_update") {
                 const { recipientId, messageId, status, timestamp,error } = data;
 
@@ -63,6 +60,10 @@ export async function startSocketSubscriber() {
                 socketIds.forEach(socketId => {
                     io.to(socketId).emit("online_status", { userId, status });
                 });
+            } else if (eventName === "message_read_update") {
+                const { recipients, readBy, messageId } = data;
+
+                await broadcastUpdate("message_read_update", recipients, {readBy, messageId}, io)
             }
 
         } catch (err) {

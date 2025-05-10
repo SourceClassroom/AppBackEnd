@@ -1,18 +1,18 @@
 import { Worker } from "bullmq";
 import { client } from "../../cache/client/redisClient.js";
-import {cacheMessage} from "../../cache/modules/messageModule.js";
-import { createMessage } from "../../database/modules/messageModule.js";
+import { cacheMessage } from "../../cache/modules/messageModule.js";
 import { publishSocketEvent } from "../../cache/socket/socketPubSub.js";
 import { updateLastMessage } from "../../database/modules/conversationModule.js";
+import { createMessage, getMessageByClientMessageId } from "../../database/modules/messageModule.js";
 
-new Worker("messageQueue", async job => {
+export default new Worker("messageQueue", async job => {
     try {
         const { conversationId, senderId, content, attachments, recipientIds, clientMessageId } = job.data;
 
         let message = null;
 
         if (clientMessageId) {
-            message = await Message.findOne({ clientMessageId });
+            message = await getMessageByClientMessageId(clientMessageId)
             if (message) {
                 console.log(`Duplicate message skipped (clientMessageId: ${clientMessageId})`);
             }

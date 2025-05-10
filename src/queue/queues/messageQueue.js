@@ -9,7 +9,9 @@ const messageQueue = new Queue("messageQueue",
         backoff: {
             type: 'exponential',
             delay: 1000
-        }
+        },
+        removeOnComplete: true,
+        removeOnFail: true
     }
 });
 

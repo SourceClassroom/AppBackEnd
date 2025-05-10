@@ -7,10 +7,10 @@ export const cacheMessage = async (conversationId, message) => {
     const messageStr = JSON.stringify(message);
 
     try {
-        const pipeline = client.multi();
+        const pipeline = client.pipeline();
 
         // Mevcut cache'i oku (son 100 mesaj varsa fazla performans düşürmez)
-        const cachedMessages = await client.lRange(key, 0, -1);
+        const cachedMessages = await client.lrange(key, 0, -1);
 
         const isAlreadyCached = cachedMessages.some(m => {
             try {
@@ -23,8 +23,8 @@ export const cacheMessage = async (conversationId, message) => {
 
         if (!isAlreadyCached) {
             // Eklenmemişse cache'e ekle
-            pipeline.rPush(key, messageStr);
-            pipeline.lTrim(key, -100, -1);
+            pipeline.rpush(key, messageStr);
+            pipeline.ltrim(key, -100, -1);
             pipeline.expire(key, cachedMessages.length > 100 ? 3600 : 86400);
             await pipeline.exec();
         } else {
@@ -37,17 +37,16 @@ export const cacheMessage = async (conversationId, message) => {
     }
 };
 
-
 export const getCachedMessages = async (conversationId, limit = 50, skip = 0, fetchFn = null) => {
     try {
-        const key = getMessageKey(conversationId);
-        let messages = await redisClient.lRange(key, -(limit + skip), -1 - skip);
+        const key = MESSAGE_KEY(conversationId);
+        let messages = await client.lrange(key, -(limit + skip), -1 - skip);
 
         if (messages.length === 0) {
             messages = await fetchFn(conversationId, limit, skip);
-            const pipeline = redisClient.pipeline();
+            const pipeline = client.pipeline();
             for (const msg of [...messages].reverse()) {
-                pipeline.rPush(MESSAGE_KEY(conversationId), JSON.stringify(msg));
+                pipeline.rpush(MESSAGE_KEY(conversationId), JSON.stringify(msg));
             }
             await pipeline.exec();
             const ttl = skip > 100 ? 3600 : 86400;

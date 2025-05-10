@@ -1,20 +1,19 @@
 import {getUserSockets} from "../modules/onlineUserModule.js";
 
-export default async (recipients, message, conversationId, io) => {
+export default async (emit, recipients, data, io) => {
     try {
-        // Tüm socket ID'leri parallel olarak al
+        // Get all socket IDs in parallel
         const socketPromises = recipients.map(userId => getUserSockets(userId));
         const allSocketIds = await Promise.all(socketPromises);
 
-        // Düzleştir ve tekrar eden socket ID'leri temizle
+        // Flatten and remove duplicate socket IDs
         const uniqueSocketIds = [...new Set(allSocketIds.flat())];
-
-        // Tek seferde tüm socketlere emit
+        // Emit to all sockets at once
         if (uniqueSocketIds.length > 0) {
-            io.to(uniqueSocketIds).emit("new_message", { message, conversationId });
+            io.to(uniqueSocketIds).emit(emit, data);
         }
 
-        return uniqueSocketIds.length; // Kaç kullanıcıya gönderildiğini takip için
+        return uniqueSocketIds.length; // Track how many users received the update
     } catch (error) {
         console.error("Broadcast error:", error);
         throw error;

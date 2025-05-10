@@ -57,6 +57,7 @@ export const sendMessage = async (req, res) => {
  */
 export const getMessages = async (req, res) => {
     try {
+        console.log("ANASKM")
         const { conversationId } = req.params;
         const { limit = 50, skip = 0 } = req.query;
 
@@ -64,9 +65,8 @@ export const getMessages = async (req, res) => {
         const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
 
         const isParticipant = conversationData.participants.some(
-            participant => participant._id.toString() === req.user.id
+            participant => participant.toString() === req.user.id
         );
-
         if (!isParticipant) {
             return res.status(403).json(ApiResponse.forbidden("Bu işlem için yetkiniz yok"));
         }
@@ -79,6 +79,7 @@ export const getMessages = async (req, res) => {
 
         return res.status(200).json(ApiResponse.success("Mesajlar", messages));
     } catch (error) {
+        console.error(error)
         res.status(400).json({
             success: false,
             message: error.message

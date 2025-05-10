@@ -1,4 +1,5 @@
 import {Conversation} from "../models/conversationModel.js";
+import {ConversationRead} from "../models/conversationReadModel.js";
 
 /**
  * Create a new conversation between users
@@ -41,8 +42,8 @@ export const findPrivateConversation = async (allParticipants) => {
 
 /**
  * Get a conversation by ID
- * @param {String} conversationId - The conversation ID
  * @returns {Promise<Object>} - The conversation
+ * @param conversationIds - Array of conversation IDs
  */
 export const getMultiConversations = async (conversationIds) => {
     try {
@@ -73,6 +74,38 @@ export const getUserConversations = async (userId) => {
     }
 };
 
+export const getReadStatus = async (conversationId, userId) => {
+    try {
+        const readStatus = await ConversationRead.find({ conversationId }).lean();
+        return readStatus ? readStatus : null;
+    } catch (error) {
+        throw new Error(`Error getting user read status: ${error.message}`);
+    }
+};
+
+export const getMultiUserReadStatus = async (conversationIds) => {
+    try {
+        const readStatus = await ConversationRead.find({ conversationId: { $in: conversationIds } }).lean();
+        // Always return an array, even if empty
+        return readStatus || [];
+    } catch (error) {
+        throw new Error(`Error getting user read status: ${error.message}`);
+    }
+};
+export const updateUserReadStatus = async (userId, conversationId, messageId) => {
+    try {
+        await ConversationRead.findOneAndUpdate({ conversationId, userId }, {$set: {lastReadMessage: messageId}}, { upsert: true, new: true });
+    } catch (error) {
+        throw new Error(`Error updating user read status: ${error.message}`);
+    }
+};
+
+/**
+ * Get a conversation by its ID
+ * @param {String} conversationId - The ID of the conversation to retrieve
+ * @returns {Promise<Object>} - Promise that resolves to the conversation document
+ * @throws {Error} - If there is an error retrieving the conversation
+ */
 export const getConversationById = async (conversationId) => {
     try {
         return await Conversation.findById(conversationId).lean();
@@ -80,7 +113,6 @@ export const getConversationById = async (conversationId) => {
         throw new Error(`Error getting conversation: ${error.message}`);
     }
 };
-
 /**
  * Update the last message of a conversation
  * @param {String} conversationId - The conversation ID

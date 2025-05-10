@@ -2,6 +2,7 @@ import TokenService from "../../services/jwtService.js";
 
 export default async function authMiddleware(socket, next) {
     const token = socket.handshake.auth.token;
+
     if (!token) return next(new Error("Authentication error"));
 
     try {

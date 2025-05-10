@@ -19,3 +19,12 @@ export const getUserConversations = async (userId, fetchFn) => {
         throw error;
     }
 };
+
+export const getCachedReadStatus = async (conversationId, fetchFn) => {
+    try {
+        return await getOrSet(`readStatus:${conversationId}`, () => fetchFn(conversationId), 3600)
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+};

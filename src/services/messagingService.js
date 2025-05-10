@@ -1,4 +1,4 @@
-import * as redisPubSubService from "./redisPubSubService.js";
+import { client } from "../cache/client/redisClient.js";
 import { publishSocketEvent } from "../cache/socket/socketPubSub.js";
 
 //Queues
@@ -15,6 +15,7 @@ import * as conversationCacheModule from "../cache/modules/conversationModule.js
 import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as messageDatabaseModule from "../database/modules/messageModule.js";
 import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
+import {getCachedReadStatus} from "../cache/modules/conversationModule.js";
 
 /**
  * Send a message to a conversation
@@ -35,8 +36,12 @@ export const sendMessage = async (conversationId, senderId, content, attachments
         if (conversation.isPending) throw new Error("Bu konuşma onay bekliyor.");
 
         const recipientIds = conversation.participants
-            .filter(p => !p._id.equals(senderId))
-            .map(p => p._id.toString());
+            .filter(p => {
+                // Handle both ObjectId and string formats
+                const participantId = typeof p === 'object' ? p._id.toString() : p;
+                return participantId !== senderId;
+            })
+            .map(p => typeof p === 'object' ? p._id.toString() : p);
 
         // Mesaj işini kuyruğa at
         await messageQueue.add("create_message", {
@@ -54,38 +59,58 @@ export const sendMessage = async (conversationId, senderId, content, attachments
     }
 };
 
-
 /**
  * Mark a message as read
  * @param {String} messageId - The message ID
+ * @param conversationId - The conversation ID
  * @param {String} userId - The user ID who read the message
  * @returns {Promise<Object>} - The updated message
  */
-export const markAsRead = async (messageId, userId) => {
+export const markAsRead = async (userId, conversationId, messageId) => {
     try {
         // Update the message in the database
-        const message = await messageModule.markMessageAsRead(messageId, userId);
+        const readStatus = await conversationDatabaseModule.updateUserReadStatus(userId, conversationId, messageId)
+        const conversation = await conversationCacheModule.getCachedConversation(conversationId,  conversationDatabaseModule.getConversationById)
 
-        // Update the message in Redis cache
-        await messageCacheModule.updateCachedMessage(messageId, {
-            readBy: userId,
-            updatedAt: message.updatedAt
-        });
+        const recipientIds = conversation.participants
+            .filter(p => !p._id.equals(userId))
+            .map(p => p._id.toString());
+
+        // Get existing read status array or create new one
+        let readStatusArray = []
+        const existingReadStatus = await conversationCacheModule.getCachedReadStatus(conversationId, conversationDatabaseModule.getReadStatus)
+
+        if (existingReadStatus) {
+            readStatusArray = JSON.parse(existingReadStatus)
+        }
+
+        // Update or add user's read status
+        const userIndex = readStatusArray.findIndex(status => status.userId === userId)
+        if (userIndex >= 0) {
+            readStatusArray[userIndex] = {userId, ...readStatus}
+        } else {
+            readStatusArray.push({userId, ...readStatus})
+        }
+
+        // Save updated array
+        await client.setex(
+            `readstatus:${conversationId}`,
+            3600,
+            JSON.stringify(readStatusArray)
+        )
 
         // Use Redis pub/sub to notify the sender
-        await redisPubSubService.publishMessageRead(
-            messageId,
-            userId,
-            message.conversation.toString(),
-            message.sender.toString()
-        );
+        await publishSocketEvent("message_read_update", {
+            recipientIds,
+            readBy: userId,
+            messageId
+        })
 
-        return message;
+        return conversationDatabaseModule;
     } catch (error) {
         throw new Error(`Mesaj okundu olarak işaretlenirken hata oluştu: ${error.message}`);
     }
 };
-
 /**
  * Send typing indicator to conversation participants
  * @param {String} conversationId - The conversation ID
@@ -95,7 +120,9 @@ export const markAsRead = async (messageId, userId) => {
 export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
     try {
         // Get the conversation to find participants
+        console.log(conversationId)
         const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        console.log(conversationData)
         const participantIds = conversationData.participants.map(p => p._id.toString());
 
         await publishSocketEvent("typing_indicator", {
@@ -132,13 +159,31 @@ export const getConversationMessages = async (conversationId, limit = 50, skip =
                 messageDatabaseModule.getConversationMessages
             )
         ]);
-        const participantIds = conversationData.participants.map(p => p._id.toString());
+
+        const participantIds = conversationData.participants.map(p => p.toString());
         const participantsData = await multiGet(participantIds, "user", userDatabaseModule.getMultiUserById);
 
-        return messageData.map(message => ({
-            ...message,
-            sender: participantsData.find(p => p._id.toString() === message.sender.toString())
-        }));
+        // Create a map for faster lookups
+        const participantsMap = new Map(
+            participantsData.map(p => [p._id.toString(), p])
+        );
+
+        return messageData.map(message => {
+            const sender = participantsMap.get(message.sender.toString());
+            if (!sender) return message;
+
+            return {
+                ...message,
+                sender: {
+                    _id: sender._id,
+                    name: sender.name,
+                    surname: sender.surname,
+                    profile: {
+                        avatar: sender.profile?.avatar
+                    }
+                }
+            };
+        });
 
     } catch (error) {
         throw new Error(`Konuşma mesajları alınırken hata oluştu: ${error.message}`);

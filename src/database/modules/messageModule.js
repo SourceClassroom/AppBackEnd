@@ -1,5 +1,4 @@
 import {Message} from "../models/messageModel.js";
-import {updateLastMessage} from "./conversationModule.js";
 
 /**
  * Create a new message
@@ -11,28 +10,17 @@ import {updateLastMessage} from "./conversationModule.js";
  */
 export const createMessage = async (conversationId, senderId, content, attachments = [], clientMessageId) => {
     try {
-        const message = new Message({
+        return await Message.create({
             conversation: conversationId,
             sender: senderId,
             content,
             attachments,
             clientMessageId
         });
-
-        await message.save();
-        
-        // Update the conversation's last message
-        await updateLastMessage(conversationId, message._id);
-        
-        // Populate sender information
-        await message.populate('sender', 'name email profilePicture');
-        
-        return message;
     } catch (error) {
         throw new Error(`Error creating message: ${error.message}`);
     }
 };
-
 /**
  * Get a message by ID
  * @param {String} messageId - The message ID
@@ -69,27 +57,12 @@ export const getConversationMessages = async (conversationId, limit = 50, skip =
     }
 };
 
-/**
- * Mark a message as read by a user
- * @param {String} messageId - The message ID
- * @param {String} userId - The user ID who read the message
- * @returns {Promise<Object>} - The updated message
- */
-export const markMessageAsRead = async (messageId, userId) => {
+
+export const getMessageByClientMessageId = async (clientMessageId) => {
     try {
-        const message = await Message.findByIdAndUpdate(
-            messageId,
-            { readBy: userId },
-            { new: true }
-        );
-        
-        if (!message) {
-            throw new Error('Message not found');
-        }
-        
-        return message;
+        return await Message.findOne({clientMessageId});
     } catch (error) {
-        throw new Error(`Error marking message as read: ${error.message}`);
+        throw new Error(`Error getting message by client ID: ${error.message}`);
     }
 };
 

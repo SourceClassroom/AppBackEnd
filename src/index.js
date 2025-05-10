@@ -21,6 +21,7 @@ import classRouter from './routes/classRoute.js';
 import eventRouter from './routes/eventRoute.js';
 import lessonRouter from "./routes/lessonRoute.js";
 import commentRoute from "./routes/commentRoute.js";
+import messageRoute from "./routes/messageRoute.js";
 import materialRoute from "./routes/materialRoute.js";
 import attachmentRoute from './routes/attachmentRoute.js'
 import assignmentRouter from './routes/assignmentRoute.js';
@@ -69,6 +70,7 @@ app.use('/api/class', classRouter)
 app.use('/api/event', eventRouter)
 app.use('/api/lesson', lessonRouter)
 app.use('/api/comment', commentRoute)
+app.use('/api/message',  messageRoute)
 app.use('/api/material', materialRoute)
 app.use('/api/attachment', attachmentRoute)
 app.use('/api/assignment', assignmentRouter)

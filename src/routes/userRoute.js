@@ -72,7 +72,7 @@ router.route("/change-avatar").put(
             fieldName: "files",
             minFiles: 1,
             maxFiles: 1,
-            fileSize: 10 * 1024 * 1024,
+            fileSize: 5 * 1024 * 1024,
             allowedTypes: fileTypes.images
         }),
     userController.changeAvatar

@@ -3,6 +3,7 @@ import * as messagingService from "../../services/messagingService.js";
 
 export async function handleSendMessage(socket, data) {
     const userId = socket.userId;
+    console.log(data)
     const { conversationId, content, attachments } = data;
 
     if (!conversationId || !content) {
@@ -28,14 +29,18 @@ export async function handleSendMessage(socket, data) {
 
 export async function handleMarkRead(socket, data) {
     const userId = socket.userId;
-    const { messageId } = data;
+    const { messageId, conversationId } = data;
 
     if (!messageId) {
         return socket.emit("error", { message: "Missing message ID" });
     }
 
+    if (!conversationId) {
+        return socket.emit("error", { message: "Missing conversation ID" });
+    }
+
     try {
-        await messagingService.markAsRead(messageId, userId);
+        await messagingService.markAsRead(userId, conversationId, messageId);
     } catch (err) {
         console.error("mark_read error:", err.message);
         socket.emit("error", { message: err.message });

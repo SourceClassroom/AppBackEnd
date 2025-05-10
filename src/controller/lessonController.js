@@ -55,7 +55,7 @@ export const createLesson = async (req, res) => {
             metadata: {
                 createdBy: req.user.id,
                 tags: ["ders"],
-                color: "#462627"
+                color: "#007f5c"
             }
         }
         const monthKey = generateMonthKey(start_time)
