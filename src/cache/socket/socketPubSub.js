@@ -61,9 +61,9 @@ export async function startSocketSubscriber() {
                     io.to(socketId).emit("online_status", { userId, status });
                 });
             } else if (eventName === "message_read_update") {
-                const { recipients, readBy, messageId } = data;
+                const { recipients, readBy, messageId, conversationId } = data;
 
-                await broadcastUpdate("message_read_update", recipients, {readBy, messageId}, io)
+                await broadcastUpdate("message_read_update", recipients, {readBy, messageId, conversationId}, io)
             }
 
         } catch (err) {

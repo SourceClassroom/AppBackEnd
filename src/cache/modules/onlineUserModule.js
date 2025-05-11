@@ -6,8 +6,9 @@ export const addUserSocket = async (userId, socketId) => {
     if (!userId || !socketId) {
         throw new Error("addUserSocket: userId and socketId are required.");
     }
-
-    await client.sadd(`${SOCKETS_PREFIX}${userId}`, socketId);
+    const key = `${SOCKETS_PREFIX}${userId}`;
+    await client.sadd(key, socketId);
+    await client.expire(key, 24 * 60 * 60); // 24 hours in seconds
 }
 
 export const getUserSockets = async (userId) => {

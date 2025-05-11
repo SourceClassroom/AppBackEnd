@@ -57,7 +57,7 @@ export const sendMessage = async (req, res) => {
  */
 export const getMessages = async (req, res) => {
     try {
-        console.log("ANASKM")
+
         const { conversationId } = req.params;
         const { limit = 50, skip = 0 } = req.query;
 

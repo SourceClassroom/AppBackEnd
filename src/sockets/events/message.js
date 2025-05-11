@@ -29,6 +29,7 @@ export async function handleSendMessage(socket, data) {
 
 export async function handleMarkRead(socket, data) {
     const userId = socket.userId;
+
     const { messageId, conversationId } = data;
 
     if (!messageId) {

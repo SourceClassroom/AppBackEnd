@@ -66,10 +66,11 @@ export const createConversation = async (req, res) => {
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
  */
-
 export const getConversations = async (req, res) => {
     try {
         const userId = req.user.id;
+
+        // 1. Kullanıcının sohbetlerini al
         const conversations = await conversationCacheModule.getUserConversations(
             userId,
             conversationDatabaseModule.getUserConversations
@@ -81,13 +82,14 @@ export const getConversations = async (req, res) => {
             );
         }
 
+        // 2. Konuşma detaylarını al
         const conversationData = await multiGet(
             conversations,
             "conversation",
             conversationDatabaseModule.getMultiConversations
         );
 
-        // Get participants data for each conversation
+        // 3. Her konuşma için katılımcıların bilgilerini al
         const participantsData = await Promise.all(
             conversationData.map(conversation =>
                 multiGet(
@@ -98,7 +100,7 @@ export const getConversations = async (req, res) => {
             )
         );
 
-        // Assign participants data back to conversations
+        // 4. Katılımcı bilgilerini konuşmalara ekle
         conversationData.forEach((conversation, index) => {
             conversation.participants = participantsData[index].map(user => ({
                 _id: user._id,
@@ -110,42 +112,60 @@ export const getConversations = async (req, res) => {
             }));
         });
 
-        // Get current user's read status
-        const userReadStatuses = await multiGet(
-            conversations,
-            "readStatus",
-            conversationDatabaseModule.getMultiUserReadStatus
-        ) || [];
-
-        // Get all users' read statuses for each conversation
-        const allReadStatuses = await Promise.all(
-            conversations.map(conv =>
-                conversationDatabaseModule.getReadStatus(conv.id)
-            )
+        // 5. Tüm konuşmalardaki tüm kullanıcıların okuma durumlarını getir
+        const allReadStatuses = await conversationDatabaseModule.getMultiUserReadStatus(
+            conversationData.map(c => c._id.toString())
         );
+        console.log(allReadStatuses)
 
-        const conversationsWithReadStatus = conversationData.map((conversation, index) => {
-            // Get all read statuses for this conversation
-            const conversationReadStatuses = allReadStatuses[index] || [];
+        // 6. Okuma durumlarını konuşmalara yerleştir
+        const conversationsWithReadStatus = conversationData.map(conversation => {
+            const conversationId = conversation._id?.toString();
 
-            // Create a map of userId to read status
-            const otherUsersReadStatus = conversationReadStatuses.reduce((acc, status) => {
-                if (status.userId !== userId) { // Exclude current user
-                    acc[status.userId] = status.isRead || false;
+            // Bu konuşmaya ait tüm read status kayıtlarını filtrele
+            const conversationReadStatuses = allReadStatuses.filter(
+                status => status?.conversationId?.toString() === conversationId
+            );
+
+            // userId + conversationId birleşimiyle unique kayıtları al (son kaydı baz alıyoruz)
+            const userReadMap = new Map();
+
+            for (const status of conversationReadStatuses) {
+                const key = status.userId.toString();
+                userReadMap.set(key, status); // son status overwrite eder
+            }
+
+            // Güncel kullanıcının okuma durumu
+            const currentUserStatus = userReadMap.get(userId.toString());
+            console.log(currentUserStatus)
+            const isRead =
+                currentUserStatus?.lastReadMessage?.toString() ===
+                conversation?.lastMessage?._id?.toString();
+
+            // Diğer kullanıcıların okuma durumları
+            const otherUsersReadStatus = {};
+            for (const [uid, status] of userReadMap.entries()) {
+                if (uid !== userId.toString()) {
+                    const hasRead =
+                        status.lastReadMessage?.toString() ===
+                        conversation?.lastMessage?._id?.toString();
+                    otherUsersReadStatus[uid] = hasRead;
                 }
-                return acc;
-            }, {});
+            }
 
             return {
                 ...conversation,
-                isRead: userReadStatuses[index] || false, // Current user's read status
-                otherUsersReadStatus // Other users' read status
+                isRead: !!isRead,
+                otherUsersReadStatus
             };
         });
+
+
 
         return res.status(200).json(
             ApiResponse.success("Sohbetler getirildi", conversationsWithReadStatus)
         );
+
     } catch (error) {
         console.error(error);
         return res.status(500).json(
@@ -153,6 +173,9 @@ export const getConversations = async (req, res) => {
         );
     }
 };
+
+
+
 /**
  * Add a participant to a group conversation
  * @param {Object} req - Express request object

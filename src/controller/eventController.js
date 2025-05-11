@@ -27,7 +27,7 @@ export const createEvent = async (req, res) => {
         eventData.metadata.createdBy = req.user.id
 
         const event = await eventDatabaseModule.createEvent(eventData);
-        console.log(event)
+        
         console.log(`events:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:${generateMonthKey(eventData.date)}`)
         await invalidateKey(`events:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:${generateMonthKey(eventData.date)}`)
 

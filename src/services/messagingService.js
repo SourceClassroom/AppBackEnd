@@ -72,16 +72,22 @@ export const markAsRead = async (userId, conversationId, messageId) => {
         const readStatus = await conversationDatabaseModule.updateUserReadStatus(userId, conversationId, messageId)
         const conversation = await conversationCacheModule.getCachedConversation(conversationId,  conversationDatabaseModule.getConversationById)
 
-        const recipientIds = conversation.participants
-            .filter(p => !p._id.equals(userId))
-            .map(p => p._id.toString());
+        const participantIds = conversation.participants
+            .filter(p => {
+                // Handle both ObjectId and string formats
+                const participantId = typeof p === 'object' ? p._id.toString() : p;
+                return participantId !== userId;
+            })
+            .map(p => typeof p === 'object' ? p._id.toString() : p);
 
         // Get existing read status array or create new one
         let readStatusArray = []
         const existingReadStatus = await conversationCacheModule.getCachedReadStatus(conversationId, conversationDatabaseModule.getReadStatus)
 
-        if (existingReadStatus) {
+        if (existingReadStatus && typeof existingReadStatus === 'string') {
             readStatusArray = JSON.parse(existingReadStatus)
+        } else if (existingReadStatus) {
+            readStatusArray = existingReadStatus
         }
 
         // Update or add user's read status
@@ -101,13 +107,15 @@ export const markAsRead = async (userId, conversationId, messageId) => {
 
         // Use Redis pub/sub to notify the sender
         await publishSocketEvent("message_read_update", {
-            recipientIds,
+            recipients: participantIds,
             readBy: userId,
-            messageId
+            messageId,
+            conversationId
         })
 
         return conversationDatabaseModule;
     } catch (error) {
+        console.log(error)
         throw new Error(`Mesaj okundu olarak işaretlenirken hata oluştu: ${error.message}`);
     }
 };
@@ -120,16 +128,20 @@ export const markAsRead = async (userId, conversationId, messageId) => {
 export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
     try {
         // Get the conversation to find participants
-        console.log(conversationId)
         const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
-        console.log(conversationData)
-        const participantIds = conversationData.participants.map(p => p._id.toString());
+        const participantIds = conversationData.participants
+            .filter(p => {
+                // Handle both ObjectId and string formats
+                const participantId = typeof p === 'object' ? p._id.toString() : p;
+                return participantId !== userId;
+            })
+            .map(p => typeof p === 'object' ? p._id.toString() : p);
 
         await publishSocketEvent("typing_indicator", {
             conversationId,
+            participants: participantIds,
             userId,
-            isTyping,
-            participantIds
+            isTyping
         })
 
         return true;

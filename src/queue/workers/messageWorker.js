@@ -1,5 +1,6 @@
 import { Worker } from "bullmq";
 import { client } from "../../cache/client/redisClient.js";
+import setWithTtl from "../../cache/strategies/setWithTtl.js";
 import { cacheMessage } from "../../cache/modules/messageModule.js";
 import { publishSocketEvent } from "../../cache/socket/socketPubSub.js";
 import { updateLastMessage } from "../../database/modules/conversationModule.js";
@@ -21,9 +22,8 @@ export default new Worker("messageQueue", async job => {
         if (!message) {
             message = await createMessage(conversationId, senderId, content, attachments, clientMessageId);
         }
-
         // Use Promise.all to parallelize independent asynchronous operations
-        await Promise.all([
+        const [updatedConversation] = await Promise.all([
             updateLastMessage(conversationId, message._id),
             cacheMessage(conversationId, message),
             publishSocketEvent("new_message", {
@@ -32,6 +32,8 @@ export default new Worker("messageQueue", async job => {
                 recipients: recipientIds
             })
         ]);
+
+        setWithTtl(`conversation:${conversationId}`, updatedConversation, 3600)
 
         await publishSocketEvent("message_status_update", {
             recipientId: senderId,

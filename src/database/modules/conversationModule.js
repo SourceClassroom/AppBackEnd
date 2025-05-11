@@ -1,6 +1,7 @@
 import {Conversation} from "../models/conversationModel.js";
 import {ConversationRead} from "../models/conversationReadModel.js";
 
+
 /**
  * Create a new conversation between users
  * @param {Array} participants - Array of user IDs
@@ -93,6 +94,7 @@ export const getMultiUserReadStatus = async (conversationIds) => {
         throw new Error(`Error getting user read status: ${error.message}`);
     }
 };
+
 export const updateUserReadStatus = async (userId, conversationId, messageId) => {
     try {
         await ConversationRead.findOneAndUpdate({ conversationId, userId }, {$set: {lastReadMessage: messageId}}, { upsert: true, new: true });
@@ -126,7 +128,10 @@ export const updateLastMessage = async (conversationId, messageId) => {
             conversationId,
             {lastMessage: messageId},
             {new: true}
-        );
+        ).populate({
+            path: 'lastMessage',
+            model: 'Message'
+        }).lean();
     } catch (error) {
         throw new Error(`Error updating last message: ${error.message}`);
     }
