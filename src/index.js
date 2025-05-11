@@ -19,6 +19,7 @@ import postRouter from './routes/postRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import classRouter from './routes/classRoute.js';
 import eventRouter from './routes/eventRoute.js';
+import healthRoute from "./routes/healthRoute.js";
 import lessonRouter from "./routes/lessonRoute.js";
 import commentRoute from "./routes/commentRoute.js";
 import messageRoute from "./routes/messageRoute.js";
@@ -68,6 +69,7 @@ app.use('/api/users', userRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/class', classRouter)
 app.use('/api/event', eventRouter)
+app.use('/api/health', healthRoute)
 app.use('/api/lesson', lessonRouter)
 app.use('/api/comment', commentRoute)
 app.use('/api/message',  messageRoute)
