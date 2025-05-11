@@ -145,7 +145,7 @@ export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
  * @param {Number} skip - Number of messages to skip (for pagination)
  * @returns {Promise<Array>} - Array of messages
  */
-export const getConversationMessages = async (conversationId, limit = 50, skip = 0) => {
+export const getConversationMessages = async (conversationId, limit = 100, skip = 0) => {
     try {
         const [conversationData, messageData] = await Promise.all([
             conversationCacheModule.getCachedConversation(

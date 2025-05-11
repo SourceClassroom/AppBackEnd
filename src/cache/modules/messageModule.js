@@ -37,7 +37,7 @@ export const cacheMessage = async (conversationId, message) => {
     }
 };
 
-export const getCachedMessages = async (conversationId, limit = 50, skip = 0, fetchFn = null) => {
+export const getCachedMessages = async (conversationId, limit = 100, skip = 0, fetchFn = null) => {
     try {
         const key = MESSAGE_KEY(conversationId);
         let messages = await client.lrange(key, -(limit + skip), -1 - skip);

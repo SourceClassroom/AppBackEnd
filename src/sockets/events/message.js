@@ -3,7 +3,7 @@ import * as messagingService from "../../services/messagingService.js";
 
 export async function handleSendMessage(socket, data) {
     const userId = socket.userId;
-    console.log(data)
+
     const { conversationId, content, attachments } = data;
 
     if (!conversationId || !content) {
