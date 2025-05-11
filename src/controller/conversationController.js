@@ -105,7 +105,7 @@ export const getConversations = async (req, res) => {
                 name: user.name,
                 surname: user.surname,
                 profile: {
-                    avatar: user.profile.avatar
+                    avatar: user?.profile?.avatar
                 },
             }));
         });
