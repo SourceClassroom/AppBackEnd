@@ -6,16 +6,18 @@ import messageQueue from "../queue/queues/messageQueue.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
+import setWithTtl from "../cache/strategies/setWithTtl.js";
 
 //Cache Modules
 import * as messageCacheModule from "../cache/modules/messageModule.js";
 import * as conversationCacheModule from "../cache/modules/conversationModule.js";
+import * as conversationReadCacheModule from "../cache/modules/conversationReadModule.js";
 
 //Database Modules
 import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as messageDatabaseModule from "../database/modules/messageModule.js";
 import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
-import {getCachedReadStatus} from "../cache/modules/conversationModule.js";
+import * as conversationReadDatabaseModule from "../database/modules/conversationReadModule.js";
 
 /**
  * Send a message to a conversation
@@ -68,50 +70,54 @@ export const sendMessage = async (conversationId, senderId, content, attachments
  */
 export const markAsRead = async (userId, conversationId, messageId) => {
     try {
-        // Update the message in the database
-        const readStatus = await conversationDatabaseModule.updateUserReadStatus(userId, conversationId, messageId)
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId,  conversationDatabaseModule.getConversationById)
+        const readStatus = await conversationDatabaseModule.updateUserReadStatus(userId, conversationId, messageId);
+        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById);
 
         const participantIds = conversation.participants
-            .filter(p => {
-                // Handle both ObjectId and string formats
-                const participantId = typeof p === 'object' ? p._id.toString() : p;
-                return participantId !== userId;
-            })
+            .filter(p => (typeof p === 'object' ? p._id.toString() : p) !== userId)
             .map(p => typeof p === 'object' ? p._id.toString() : p);
 
-        // Get existing read status array or create new one
-        let readStatusArray = []
-        const existingReadStatus = await conversationCacheModule.getCachedReadStatus(conversationId, conversationDatabaseModule.getReadStatus)
+        let readStatusArray;
+        const existingReadStatus = await conversationReadCacheModule.getCachedReadStatus(conversationId, conversationReadDatabaseModule.getReadStatus);
 
         if (existingReadStatus && typeof existingReadStatus === 'string') {
-            readStatusArray = JSON.parse(existingReadStatus)
+            readStatusArray = JSON.parse(existingReadStatus);
         } else if (existingReadStatus) {
-            readStatusArray = existingReadStatus
-        }
-
-        // Update or add user's read status
-        const userIndex = readStatusArray.findIndex(status => status.userId === userId)
-        if (userIndex >= 0) {
-            readStatusArray[userIndex] = {userId, ...readStatus}
+            readStatusArray = existingReadStatus;
         } else {
-            readStatusArray.push({userId, ...readStatus})
+            readStatusArray = [];
         }
 
-        // Use Redis pub/sub to notify the sender
+        const userIndex = readStatusArray.findIndex(status => status.userId === userId);
+
+        // Güncellenecek veri
+        const updatedStatus = {
+            lastReadMessage: messageId,
+            updatedAt: new Date().toISOString(),
+        };
+
+        if (userIndex >= 0) {
+            readStatusArray[userIndex] = {...readStatusArray[userIndex], ...updatedStatus};
+        } else {
+            readStatusArray.push({userId, conversationId, ...updatedStatus});
+        }
+
+        await setWithTtl(`readStatus:${conversationId}`, readStatusArray, 86400);
+
         await publishSocketEvent("message_read_update", {
             recipients: participantIds,
             readBy: userId,
             messageId,
             conversationId
-        })
+        });
 
         return conversationDatabaseModule;
     } catch (error) {
-        console.log(error)
+        console.error(error);
         throw new Error(`Mesaj okundu olarak işaretlenirken hata oluştu: ${error.message}`);
     }
 };
+
 /**
  * Send typing indicator to conversation participants
  * @param {String} conversationId - The conversation ID
