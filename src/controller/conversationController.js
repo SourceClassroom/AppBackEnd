@@ -6,6 +6,7 @@ import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import * as conversationCacheModule from "../cache/modules/conversationModule.js";
+import * as conversationReadCacheModule from "../cache/modules/conversationReadModule.js";
 
 //Database Modules
 import * as userDatabaseModule from "../database/modules/userModule.js";
@@ -113,31 +114,45 @@ export const getConversations = async (req, res) => {
         });
 
         // 5. Tüm konuşmalardaki tüm kullanıcıların okuma durumlarını getir
-        const allReadStatuses = await conversationDatabaseModule.getMultiUserReadStatus(
-            conversationData.map(c => c._id.toString())
-        );
-        console.log(allReadStatuses)
+        const readStatusPromises = conversationData.map(async conversation => {
+            const conversationId = conversation._id.toString();
+            const cachedStatus = await conversationReadCacheModule.getConversationReadStatus(conversationId);
+            console.log(cachedStatus)
+            // Cache'de yoksa veritabanından al ve cache'e kaydet
+            if (!cachedStatus) {
+                const dbStatus = await conversationDatabaseModule.getMultiUserReadStatus([conversationId]);
+                console.log(dbStatus)
+                if (dbStatus && dbStatus.length > 0) {
+                    await conversationReadCacheModule.setConversationReadStatus(conversationId, dbStatus);
+                    return dbStatus;
+                }
+                return [];
+            }
+            return cachedStatus;
+        });
+
+        const allReadStatuses = await Promise.all(readStatusPromises);
+        const flattenedReadStatuses = allReadStatuses.flat();
 
         // 6. Okuma durumlarını konuşmalara yerleştir
         const conversationsWithReadStatus = conversationData.map(conversation => {
             const conversationId = conversation._id?.toString();
 
             // Bu konuşmaya ait tüm read status kayıtlarını filtrele
-            const conversationReadStatuses = allReadStatuses.filter(
+            const conversationReadStatuses = flattenedReadStatuses.filter(
                 status => status?.conversationId?.toString() === conversationId
             );
 
-            // userId + conversationId birleşimiyle unique kayıtları al (son kaydı baz alıyoruz)
+            // userId + conversationId birleşimiyle unique kayıtları al
             const userReadMap = new Map();
 
             for (const status of conversationReadStatuses) {
                 const key = status.userId.toString();
-                userReadMap.set(key, status); // son status overwrite eder
+                userReadMap.set(key, status);
             }
 
             // Güncel kullanıcının okuma durumu
             const currentUserStatus = userReadMap.get(userId.toString());
-            console.log(currentUserStatus)
             const isRead =
                 currentUserStatus?.lastReadMessage?.toString() ===
                 conversation?.lastMessage?._id?.toString();
@@ -160,8 +175,6 @@ export const getConversations = async (req, res) => {
             };
         });
 
-
-
         return res.status(200).json(
             ApiResponse.success("Sohbetler getirildi", conversationsWithReadStatus)
         );
@@ -173,7 +186,6 @@ export const getConversations = async (req, res) => {
         );
     }
 };
-
 
 
 /**

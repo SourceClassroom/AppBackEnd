@@ -98,13 +98,6 @@ export const markAsRead = async (userId, conversationId, messageId) => {
             readStatusArray.push({userId, ...readStatus})
         }
 
-        // Save updated array
-        await client.setex(
-            `readstatus:${conversationId}`,
-            3600,
-            JSON.stringify(readStatusArray)
-        )
-
         // Use Redis pub/sub to notify the sender
         await publishSocketEvent("message_read_update", {
             recipients: participantIds,

@@ -1,5 +1,6 @@
 import {Conversation} from "../models/conversationModel.js";
 import {ConversationRead} from "../models/conversationReadModel.js";
+import setWithTtl from "../../cache/strategies/setWithTtl.js";
 
 
 /**
@@ -87,14 +88,33 @@ export const getReadStatus = async (conversationId, userId) => {
 
 export const getMultiUserReadStatus = async (conversationIds) => {
     try {
-        const readStatus = await ConversationRead.find({ conversationId: { $in: conversationIds } }).lean();
-        // Always return an array, even if empty
-        return readStatus || [];
+        const readStatuses = await ConversationRead.find({
+            conversationId: { $in: conversationIds }
+        }).select({
+            conversationId: 1,
+            userId: 1,
+            lastReadMessage: 1,
+            updatedAt: 1
+        }).lean();
+
+        // Redis'e kaydet
+        for (const conversationId of conversationIds) {
+            const conversationReadStatuses = readStatuses.filter(
+                status => status.conversationId.toString() === conversationId
+            );
+            console.log(conversationReadStatuses)
+            if (conversationReadStatuses.length > 0) {
+                await setWithTtl(`readStatus:${conversationId}`, conversationReadStatuses, 60 * 60 * 24);
+            }
+        }
+
+        return readStatuses;
+
     } catch (error) {
-        throw new Error(`Error getting user read status: ${error.message}`);
+        console.error('getMultiUserReadStatus error:', error);
+        throw error;
     }
 };
-
 export const updateUserReadStatus = async (userId, conversationId, messageId) => {
     try {
         await ConversationRead.findOneAndUpdate({ conversationId, userId }, {$set: {lastReadMessage: messageId}}, { upsert: true, new: true });
