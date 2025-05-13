@@ -113,14 +113,22 @@ export const validateAndUpload = (options = {}) => {
                 createUploadDir(uploadPath);
 
                 // Memory'deki tüm dosyaları diske yaz
+                // Sanitize filename by removing any path traversal characters
                 req.files.forEach((file, index) => {
                     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-                    const fileExt = path.extname(file.originalname);
-                    const filename = file.fieldname + '-' + uniqueSuffix + fileExt;
-                    const filePath = path.join(uploadPath, filename);
-                    fs.writeFileSync(filePath, file.buffer);
+                    const fileExt = path.extname(file.originalname).toLowerCase();
+                    // Only allow alphanumeric chars, dash and underscore in filename
+                    const sanitizedFieldname = file.fieldname.replace(/[^a-zA-Z0-9-_]/g, '');
+                    const filename = sanitizedFieldname + '-' + uniqueSuffix + fileExt;
+                    // Ensure path does not contain traversal
+                    const safePath = path.normalize(path.join(uploadPath, filename))
+                        .replace(/^(\.\.[\/\\])+/, '');
+                    if (!safePath.startsWith(uploadPath)) {
+                        throw new Error('Invalid file path detected');
+                    }
+                    fs.writeFileSync(safePath, file.buffer);
                     req.files[index].destination = uploadPath;
-                    req.files[index].path = filePath;
+                    req.files[index].path = safePath;
                     req.files[index].filename = filename;
                 });
 
@@ -135,7 +143,7 @@ export const validateAndUpload = (options = {}) => {
             }
         }
     ];
-};
+}
 // Orijinal multer yapılandırması (direkt kullanım için)
 const diskStorage = multer.diskStorage({
     destination: (req, file, cb) => {

@@ -67,26 +67,26 @@ class ApiResponse {
 
     //Yetkilendirme hatası yanıtı
     static unauthorized(message = "Yetkilendirme başarısız") {
-        return this.error(message, null, 401);
+        return ApiResponse.error(message, null, 401);
     }
 
     //Erişim reddi hatası yanıtı
     static forbidden(message = "Bu işlem için yetkiniz yok", errors = null) {
-        return this.error(message, errors, 403);
+        return ApiResponse.error(message, errors, 403);
     }
 
     //Bulunamadı hatası yanıtı
     static notFound(message = "Kaynak bulunamadı") {
-        return this.error(message, null, 404);
+        return ApiResponse.error(message, null, 404);
     }
 
     //Sunucu hatası yanıtı
     static serverError(message = "Sunucu hatası", error = null) {
-        return this.error(message, error, 500);
+        return ApiResponse.error(message, error, 500);
     }
 
      static rateLimit(message = "Çok fazla istek") {
-        return this.error(message, null, 429);
+        return ApiResponse.error(message, null, 429);
     }
 }
 

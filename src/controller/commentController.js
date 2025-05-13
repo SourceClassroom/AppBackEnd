@@ -41,7 +41,7 @@ export const getComments = async (req, res) => {
         let comments = await commentCacheModule.getPostComments(postId, commentDatabaseModule.getPostComments);
 
         if (!comments || comments.length === 0) {
-            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı", null, 404));
+            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı"));
         }
 
         // Saf objeye dönüştür
@@ -81,7 +81,7 @@ export const deleteComment = async (req, res) => {
 
         const comment = await commentDatabaseModule.deleteComment(commentId, req.user.id)
         if (!comment) {
-            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı", null, 404))
+            return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı"))
         }
 
         await invalidateKey(`comments:${comment.post}`)

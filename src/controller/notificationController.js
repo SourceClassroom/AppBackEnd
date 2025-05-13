@@ -29,7 +29,7 @@ export const markAsRead = async (req, res) => {
     try {
         const {notificationId} = req.params
         const updateNotification = await notificationDatabaseModule.markAsRead(notificationId)
-        if (!updateNotification) return res.status(404).json(ApiResponse.notFound("Bildirim bulunamadı.", null))
+        if (!updateNotification) return res.status(404).json(ApiResponse.notFound("Bildirim bulunamadı."))
         await invalidateKey(`notification:${notificationId}`)
         res.status(200).json(ApiResponse.success("Bildirim başarıyla okundu.", updateNotification))
     } catch (error) {
@@ -58,7 +58,7 @@ export const removeNotification = async (req, res) => {
     try {
         const {notificationId} = req.params
         const deletedNotification = await notificationDatabaseModule.removeNotification(notificationId)
-        if (!deletedNotification) return res.status(404).json(ApiResponse.notFound("Bildirim bulunamadı.", null))
+        if (!deletedNotification) return res.status(404).json(ApiResponse.notFound("Bildirim bulunamadı."))
         await invalidateKeys([`notification:${notificationId}`, `user:${req.user.id}:notifications`])
         res.status(200).json(ApiResponse.success("Bildirim başarıyla silindi.", deletedNotification))
     } catch (error) {

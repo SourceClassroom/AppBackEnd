@@ -46,9 +46,8 @@ export const processMedia = async (req) => {
 export const deleteAttachment = async (attachmentId) => {
     try {
         if (!attachmentId) return;
-        let attachment;
         //Cacheden attachment bilgisini al
-        const getAttachmentDataFromCache = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
+        const attachment = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
         //Resimi Sil
         fs.unlinkSync(attachment.path)
         // Veritabanından kaldır

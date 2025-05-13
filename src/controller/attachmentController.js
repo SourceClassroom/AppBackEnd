@@ -54,6 +54,7 @@ export const downloadAttachment = async (req, res) => {
         );
     }
 }
+
 export const viewAttachment = async (req, res) => {
     try {
         const attachmentId = req.params.id;
