@@ -1,4 +1,6 @@
 import ApiResponse from "../utils/apiResponse.js";
+import {processMedia} from "../services/fileService.js";
+import * as fileService from "../services/fileService.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
@@ -226,6 +228,31 @@ export const deleteConversation = async (req, res) => {
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Sohbet silindi", {success: true}))
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
+    }
+};
+
+
+export const changeGroupImage = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        // Get the conversation to check if the current user is a participant
+        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        if (!conversation) {
+            return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
+        }
+        if (!conversation.isGroup) return res.status(403).json(ApiResponse.forbidden("Özel mesajlarda resim değiştirilemez.", null))
+        if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
+
+        const fileIds = await processMedia(req)
+
+        const updatedConversation = await conversationDatabaseModule.changeGroupImage(conversationId, fileIds[0]);
+        await invalidateKey(`conversation:${conversationId}`)
+
+        return res.status(200).json(ApiResponse.success("Sohbet guncellendi", updatedConversation))
     } catch (error) {
         console.error(error);
         return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))

@@ -1,7 +1,9 @@
 import express from 'express';
+import upload from "../middlewares/upload.js";
 import *as apiValidator from "../utils/validator.js";
 import { authenticateToken } from '../middlewares/authMiddleware.js';
 import * as conversationController from '../controller/conversationController.js';
+import {fileTypes} from "../utils/fileTypes.js";
 
 const router = express.Router();
 
@@ -32,6 +34,19 @@ router.route("/delete/:conversationId").delete(
     apiValidator.validateMongoId("conversationId"),
     apiValidator.validate,
     conversationController.deleteConversation
+)
+router.route("/change-image/:conversationId").put(
+    authenticateToken,
+    upload.validateAndUpload({
+        fieldName: "files",
+        minFiles: 0,
+        maxFiles: 1,
+        fileSize: 5 * 1024 * 1024,
+        allowedTypes: fileTypes.images
+    }),
+    apiValidator.validateMongoId("conversationId"),
+    apiValidator.validate,
+    conversationController.changeGroupImage
 )
 
 export default router;

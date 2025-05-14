@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import * as crypto from "node:crypto";
 import ApiResponse from "../utils/apiResponse.js";
 import TokenService from "../services/jwtService.js";
-import {processMedia} from "../services/fileService.js";
 import * as fileService from "../services/fileService.js";
 import { generateCode } from "../services/randomCodeService.js";
 
@@ -426,7 +425,7 @@ export const changeAvatar = async (req, res) => {
             return res.status(400).json(ApiResponse.error("En az 1 dosya yüklenmeli."));
         }
         const currentUserData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
-        const fileIds = await processMedia(req)
+        const fileIds = await fileService.processMedia(req)
 
         await userDatabaseModule.changeAvatar(userId, fileIds[0])
 

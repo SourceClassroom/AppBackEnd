@@ -35,10 +35,20 @@ export const findPrivateConversation = async (allParticipants) => {
     try {
         return await Conversation.findOne({
             participants: {$all: allParticipants, $size: 2},
-            isGroup: false
+            isGroup: false,
+            isDeleted: false
         });
     } catch (error) {
         throw new Error(`Error finding private conversation: ${error.message}`);
+    }
+};
+
+
+export const changeGroupImage = async (conversationId, groupImage) => {
+    try {
+        return await Conversation.findByIdAndUpdate(conversationId, {groupImage}, {new: true});
+    } catch (error) {
+        throw new Error(`Error changing group image: ${error.message}`);
     }
 };
 
