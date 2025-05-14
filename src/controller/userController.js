@@ -42,7 +42,8 @@ export const getUserProfile = async (req, res) => {
 
         const isUserBlock = await userBlockCacheHandler.hasUserBlocked(reqUser, userId, userBlockDatabaseRepository.getBlockData)
         const isBlocked = await userBlockCacheHandler.hasUserBlocked(userId, reqUser, userBlockDatabaseRepository.getBlockData)
-        const isUserOnline = (await onlineUserCacheHandler.getUserSockets(userId)) > 0
+        const socketCount = await onlineUserCacheHandler.getUserSockets(userId);
+        const isUserOnline = socketCount > 0;
 
         const formattedData = {
             profile: userData.profile,
