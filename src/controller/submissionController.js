@@ -5,16 +5,16 @@ import {processMedia} from "../services/fileService.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKeys} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as classCacheModule from "../cache/modules/classModule.js";
-import *as submissionCacheModule from '../cache/modules/submissionModule.js';
-import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
+//Cache Handlers
+import *as classCacheHandler from "../cache/handlers/classCacheHandler.js";
+import *as submissionCacheHandler from '../cache/handlers/submissionCacheHandler.js';
+import *as assignmentCacheHandler from "../cache/handlers/assignmentCacheHandler.js";
 
-//Database Modules
-import *as userDatabaseModule from "../database/modules/userModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
-import *as submissionDatabaseModule from '../database/modules/submissionModule.js';
-import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
+//Database Repositories
+import *as userDatabaseRepository from "../database/repositories/userRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
+import *as submissionDatabaseRepository from '../database/repositories/submissionRepository.js';
+import *as assignmentDatabaseRepository from "../database/repositories/assignmentRepository.js";
 
 //Notifications
 import notifyUser from "../notifications/notifyUser.js";
@@ -24,7 +24,7 @@ export const getUserSubmissions = async (req, res) => {
         const assignmentId = req.params.assignmentId
         const userId = req.user.id
 
-        const submissions = await submissionCacheModule.getCachedUserSubmissions(userId, assignmentId, submissionDatabaseModule.getUserSubmission)
+        const submissions = await submissionCacheHandler.getCachedUserSubmissions(userId, assignmentId, submissionDatabaseRepository.getUserSubmission)
         if (!submissions) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
 
         return res.status(200).json(ApiResponse.success("Gönderim verisi.", submissions));
@@ -39,7 +39,7 @@ export const getASubmission = async (req, res) => {
     try {
         const submissionId = req.params.submissionId;
 
-        const submissionData = await submissionCacheModule.getCachedSubmissionById(submissionId, submissionDatabaseModule.getSubmissionById)
+        const submissionData = await submissionCacheHandler.getCachedSubmissionById(submissionId, submissionDatabaseRepository.getSubmissionById)
         if (!submissionData) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
 
         return res.status(200).json(ApiResponse.success("Gönderim verisi.", submissionData));
@@ -55,7 +55,7 @@ export const createSubmission = async (req, res) => {
         const { assignmentId, description } = req.body;
         req.body.permission = 2
 
-        const getAssignment = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
+        const getAssignment = await assignmentCacheHandler.getCachedAssignment(assignmentId, assignmentDatabaseRepository.getAssignmentById)
         if (!getAssignment) return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı"))
 
         //Check assignment dueDate
@@ -72,8 +72,8 @@ export const createSubmission = async (req, res) => {
             description,
             attachments: fileIds
         }
-        const newSubmission = await submissionDatabaseModule.createSubmission(newSubmissionData)
-        await assignmentDatabaseModule.pushSubmissionToAssignment(assignmentId, newSubmission._id)
+        const newSubmission = await submissionDatabaseRepository.createSubmission(newSubmissionData)
+        await assignmentDatabaseRepository.pushSubmissionToAssignment(assignmentId, newSubmission._id)
         await invalidateKeys([`assignment:${assignmentId}`])
 
         return res.status(201).json(ApiResponse.success("Gönderim başarıyla eklendi.", newSubmission, 201));
@@ -88,14 +88,14 @@ export const getSubmissions = async (req, res) => {
     try {
         const assignmentId = req.params.assignmentId
 
-        const submissions = await assignmentCacheModule.getCachedSubmissions(assignmentId, assignmentDatabaseModule.getAssignmentSubmissions)
+        const submissions = await assignmentCacheHandler.getCachedSubmissions(assignmentId, assignmentDatabaseRepository.getAssignmentSubmissions)
         if (!submissions) return res.status(404).json(ApiResponse.notFound("Bu ödev için gönderim bulunamadı"))
 
-        const submissionsData = (await multiGet(submissions, "submission", submissionDatabaseModule.getMultiSubmissions))
+        const submissionsData = (await multiGet(submissions, "submission", submissionDatabaseRepository.getMultiSubmissions))
             .map(sub => sub.toObject ? sub.toObject() : sub);
 
         const users = submissionsData.map(sub => sub.student);
-        const userData = (await multiGet(users, "user", userDatabaseModule.getMultiUserById))
+        const userData = (await multiGet(users, "user", userDatabaseRepository.getMultiUserById))
             .map(u => u.toObject ? u.toObject() : u);
 
         const responseData = submissionsData.map(submission => {
@@ -125,11 +125,11 @@ export const reviewSubmission = async (req, res) => {
     try {
         const { submissionId, feedback, grade } = req.body
 
-        const submission = await submissionCacheModule.getCachedSubmissionById(submissionId, submissionDatabaseModule.getSubmissionById)
-        const assignment = await assignmentCacheModule.getCachedAssignment(submission.assignment, assignmentDatabaseModule.getAssignmentById)
-        const classData = await classCacheModule.getCachedClassData(assignment.classroom, classDatabaseModule.getClassById)
+        const submission = await submissionCacheHandler.getCachedSubmissionById(submissionId, submissionDatabaseRepository.getSubmissionById)
+        const assignment = await assignmentCacheHandler.getCachedAssignment(submission.assignment, assignmentDatabaseRepository.getAssignmentById)
+        const classData = await classCacheHandler.getCachedClassData(assignment.classroom, classDatabaseRepository.getClassById)
 
-        const updateSubmission = await submissionDatabaseModule.setReview(submissionId, feedback, grade)
+        const updateSubmission = await submissionDatabaseRepository.setReview(submissionId, feedback, grade)
         if (!updateSubmission) return res.status(404).json(ApiResponse.notFound("Gönderim bulunamadı."))
         await invalidateKeys([`submission:${submissionId}`, `user:${updateSubmission.student}:submission:${updateSubmission.assignment}`])
 

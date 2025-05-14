@@ -5,19 +5,19 @@ import { generateUniqueCode } from "../services/randomCodeService.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKey, invalidateKeys } from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as userCacheModule from "../cache/modules/userModule.js";
-import *as classCacheModule from '../cache/modules/classModule.js';
+//Cache Handlers
+import *as userCacheHandler from "../cache/handlers/userCacheHandler.js";
+import *as classCacheHandler from '../cache/handlers/classCacheHandler.js';
 
-//Database Modules
-import *as userDatabaseModule from "../database/modules/userModule.js";
-import *as classDatabaseModule from '../database/modules/classModule.js';
+//Database Repositories
+import *as userDatabaseRepository from "../database/repositories/userRepository.js";
+import *as classDatabaseRepository from '../database/repositories/classRepository.js';
 
 export const getClass = async (req, res) => {
     try {
         const classId = req.params.classId;
 
-        const getClass = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClass = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
         if (!getClass) return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
 
         const formatData = {
@@ -57,12 +57,12 @@ export const createClass = async (req, res) => {
             teacher
         }
         //Class oluştur
-        const newClass = await classDatabaseModule.createClass(classData)
+        const newClass = await classDatabaseRepository.createClass(classData)
 
         //Kullanıcının öğretim yaptığı sınıfları güncelle
-        const updatedTeacher = await userDatabaseModule.pushNewTeachingClass(teacher, newClass._id)
+        const updatedTeacher = await userDatabaseRepository.pushNewTeachingClass(teacher, newClass._id)
 
-        await userCacheModule.clearUserCache(teacher)
+        await userCacheHandler.clearUserCache(teacher)
         return res.status(201).json(
             ApiResponse.success("Sınıf başarılı bir şekilde oluşturuldu.", {updatedTeacher, newClass})
         );
@@ -79,7 +79,7 @@ export const updateClass = async (req, res) => {
         const classId = req.params.classId;
         const { title, description } = req.body;
 
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClassData = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
@@ -89,8 +89,8 @@ export const updateClass = async (req, res) => {
             description
         };
         await invalidateKey(`class:${classId}`)
-        const updateClass = await classDatabaseModule.updateClassById(classId, updateClassData)
-        await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const updateClass = await classDatabaseRepository.updateClassById(classId, updateClassData)
+        await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
         return res.status(200).json(ApiResponse.success("Sınıf başarıyla güncellendi.", updateClass, 200));
     } catch (error) {
         console.error('Sınıf güncelleme hatası:', error);
@@ -103,13 +103,13 @@ export const updateClass = async (req, res) => {
 export const deleteClass = async (req, res) => {
     try {
         const classId = req.params.classId;
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClassData = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        const deleteClass = await classDatabaseModule.deleteClassById(classId, req.user.id)
-        await classCacheModule.clearClassCache(classId)
+        const deleteClass = await classDatabaseRepository.deleteClassById(classId, req.user.id)
+        await classCacheHandler.clearClassCache(classId)
         return res.status(200).json(ApiResponse.success("Sınıf başarıyla silindi.", deleteClass, 200));
     } catch (error) {
         console.error('Sınıf silme hatası:', error);
@@ -129,7 +129,7 @@ export const joinClass = async (req, res) => {
         const classCode = req.params.classCode;
         const userId = req.user.id;
         //Get Class Data
-        const getClassData = await classDatabaseModule.getClassByCode(classCode)
+        const getClassData = await classDatabaseRepository.getClassByCode(classCode)
         //Check Class is avalible
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."))
@@ -139,15 +139,15 @@ export const joinClass = async (req, res) => {
         const classId = getClassData._id.toString();
 
         //Get user data
-        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
+        const userData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById);
         //Check for user already member of class
         if (userData.enrolledClasses.includes(classId) || userData.teachingClasses.includes(classId)) {
             return res.status(400).json(ApiResponse.error("Kullanıcı zaten bu sınıfa üye.",  null, 400))
         }
         //Update class students
-        const updateClass = await classDatabaseModule.pushNewStudent(classId, userId)
+        const updateClass = await classDatabaseRepository.pushNewStudent(classId, userId)
         //Update user classes
-        const updateUser = await userDatabaseModule.pushNewEnrolledClass(userId, classId)
+        const updateUser = await userDatabaseRepository.pushNewEnrolledClass(userId, classId)
 
         //Clear cache
         await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`, `class:${classId}`, `class:${classId}:students`])
@@ -173,13 +173,13 @@ export const kickStudent = async (req, res) => {
         const classId = req.params.classId;
 
         // Sınıf verisini al
-        const getClassData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        const getClassData = await classCacheHandler.getCachedStudentList(classId, classDatabaseRepository.getStudentsByClassId)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
 
         // Kullanıcı verisini al
-        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
+        const userData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById);
         if (!userData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir kullanıcı bulunamadı."));
         }
@@ -190,10 +190,10 @@ export const kickStudent = async (req, res) => {
             return res.status(400).json(ApiResponse.error("Kullanıcı bu sınıfın üyesi değil", null, 400));
         }
         // Kullanıcıdan sınıfı kaldır
-        const updateUser = await userDatabaseModule.removeClassFromEnrolledClasses(userId, classId)
+        const updateUser = await userDatabaseRepository.removeClassFromEnrolledClasses(userId, classId)
 
         // Sınıftan kullanıcıyı kaldır
-        const updateClass = await classDatabaseModule.removeStudentFromClass(classId, userId)
+        const updateClass = await classDatabaseRepository.removeStudentFromClass(classId, userId)
 
         //Clear cache
         await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`, `class:${classId}`, `class:${classId}:students`])
@@ -218,13 +218,13 @@ export const banStudent = async (req, res) => {
         const classId = req.params.classId;
 
         // Sınıf verisini al
-        const getClassData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        const getClassData = await classCacheHandler.getCachedStudentList(classId, classDatabaseRepository.getStudentsByClassId)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
 
         // Kullanıcı verisini al
-        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
+        const userData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById);
         if (!userData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir kullanıcı bulunamadı."));
         }
@@ -235,13 +235,13 @@ export const banStudent = async (req, res) => {
         }
 
         // Kullanıcıdan sınıfı kaldır
-        const updateUser = await userDatabaseModule.removeClassFromEnrolledClasses(userId, classId)
+        const updateUser = await userDatabaseRepository.removeClassFromEnrolledClasses(userId, classId)
 
         // Sınıftan kullanıcıyı kaldır
-        await classDatabaseModule.removeStudentFromClass(classId, userId);
+        await classDatabaseRepository.removeStudentFromClass(classId, userId);
 
         //Kullanıcıyı engelle
-        const newClassData = await classDatabaseModule.pushForbiddenStudents(classId, userId)
+        const newClassData = await classDatabaseRepository.pushForbiddenStudents(classId, userId)
 
         //Clear cache
         await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`, `class:${classId}`, `class:${classId}:students`])
@@ -263,12 +263,12 @@ export const studentList = async (req, res) => {
         const classId = req.params.classId
 
         //Ogrenci Id verisi al
-        const getStudentIds = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        const getStudentIds = await classCacheHandler.getCachedStudentList(classId, classDatabaseRepository.getStudentsByClassId)
         if (!getStudentIds) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
 
-        const studentData = await multiGet(getStudentIds, "user", userDatabaseModule.getMultiUserById)
+        const studentData = await multiGet(getStudentIds, "user", userDatabaseRepository.getMultiUserById)
 
         const formattedStudentData = studentData.map(student => ({
             _id: student._id,
@@ -292,13 +292,13 @@ export const leaveClass = async (req, res) => {
         const userId = req.user.id;
 
         // Sınıf verisini al
-        const getClassData = await classCacheModule.getCachedStudentList(classId, classDatabaseModule.getStudentsByClassId)
+        const getClassData = await classCacheHandler.getCachedStudentList(classId, classDatabaseRepository.getStudentsByClassId)
         if (!getClassData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir sınıf bulunamadı."));
         }
 
         // Kullanıcı verisini al
-        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
+        const userData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById);
         if (!userData) {
             return res.status(404).json(ApiResponse.notFound("Böyle bir kullanıcı bulunamadı."));
         }
@@ -309,10 +309,10 @@ export const leaveClass = async (req, res) => {
         }
 
         // Kullanıcıdan sınıfı kaldır
-        const updateUser = await userDatabaseModule.removeClassFromEnrolledClasses(userId, classId)
+        const updateUser = await userDatabaseRepository.removeClassFromEnrolledClasses(userId, classId)
 
         // Sınıftan kullanıcıyı kaldır
-        await classDatabaseModule.removeStudentFromClass(classId, userId)
+        await classDatabaseRepository.removeStudentFromClass(classId, userId)
 
         //Clear cache
         await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`, `class:${classId}`, `class:${classId}:students`])

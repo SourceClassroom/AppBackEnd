@@ -6,16 +6,16 @@ import { generateMonthKey } from "../utils/dateRange.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as weekCacheModule from '../cache/modules/weekModule.js';
-import *as classCacheModule from '../cache/modules/classModule.js';
-import *as assignmentCacheModule from '../cache/modules/assignmentModule.js';
+//Cache Handlers
+import *as weekCacheHandler from '../cache/handlers/weekCacheHandler.js';
+import *as classCacheHandler from '../cache/handlers/classCacheHandler.js';
+import *as assignmentCacheHandler from '../cache/handlers/assignmentCacheHandler.js';
 
-//Database Modules
-import *as weekDatabaseModule from '../database/modules/weekModule.js';
-import *as classDatabaseModule from '../database/modules/classModule.js';
-import *as eventDatabaseModule from '../database/modules/eventModule.js';
-import *as assignmentDatabaseModule from '../database/modules/assignmentModule.js';
+//Database Repositories
+import *as weekDatabaseRepository from '../database/repositories/weekRepository.js';
+import *as classDatabaseRepository from '../database/repositories/classRepository.js';
+import *as eventDatabaseRepository from '../database/repositories/eventRepository.js';
+import *as assignmentDatabaseRepository from '../database/repositories/assignmentRepository.js';
 
 //Notifications
 import notifyClassroom from "../notifications/notifyClassroom.js";
@@ -32,13 +32,13 @@ export const createAssignment = async (req, res) => {
         req.body.permission = 1
 
         // Sınıfı getir
-        const classExists = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classExists = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
         if (!classExists) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
         //Hafta Kontrolu
         if (week) {
-            const weekExists = await weekCacheModule.getCachedWeekData(week, weekDatabaseModule.getWeekById)
+            const weekExists = await weekCacheHandler.getCachedWeekData(week, weekDatabaseRepository.getWeekById)
             if (!weekExists) {
                 return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
             }
@@ -57,14 +57,14 @@ export const createAssignment = async (req, res) => {
         };
 
         // Ödev oluştur
-        const newAssignment = await assignmentDatabaseModule.createAssignment(newAssignmentData);
+        const newAssignment = await assignmentDatabaseRepository.createAssignment(newAssignmentData);
 
         // Hafta veya sınıfa ödev ID'sini ekle
         if (week) {
-            await weekDatabaseModule.pushAssignmentToWeek(week, newAssignment._id)
+            await weekDatabaseRepository.pushAssignmentToWeek(week, newAssignment._id)
             await invalidateKey(`week:${week}:assignments`)
         } else {
-            await classDatabaseModule.pushAssignmentToClass(classId, newAssignment._id)
+            await classDatabaseRepository.pushAssignmentToClass(classId, newAssignment._id)
             await invalidateKey(`class:${classId}:assignments`)
         }
 
@@ -83,7 +83,7 @@ export const createAssignment = async (req, res) => {
         }
         const monthKey = generateMonthKey(dueDate)
         await invalidateKey(`events:${classId}:${monthKey}`)
-        await eventDatabaseModule.createEvent(eventData)
+        await eventDatabaseRepository.createEvent(eventData)
 
         const notificationData = {
             type: "new_assignment",
@@ -110,12 +110,12 @@ export const getClassAssignments = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classAssignments = await classCacheModule.getCachedClassAssignments(classId, classDatabaseModule.getClassAssignments);
+        const classAssignments = await classCacheHandler.getCachedClassAssignments(classId, classDatabaseRepository.getClassAssignments);
         if (!classAssignments) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        const assignmentsData = await multiGet(classAssignments, 'assignment', assignmentDatabaseModule.getMultiAssignments)
+        const assignmentsData = await multiGet(classAssignments, 'assignment', assignmentDatabaseRepository.getMultiAssignments)
 
         return res.status(200).json(
             ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignmentsData, 200)
@@ -132,12 +132,12 @@ export const getWeekAssignments = async (req, res) => {
     try {
         const { weekId } = req.params;
 
-        const weekAssignments = await weekCacheModule.getCachedWeekAssignments(weekId, weekDatabaseModule.getWeekAssignments);
+        const weekAssignments = await weekCacheHandler.getCachedWeekAssignments(weekId, weekDatabaseRepository.getWeekAssignments);
         if (!weekAssignments) {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
 
-        const assignmentsData = await multiGet(weekAssignments, 'assignment', assignmentDatabaseModule.getMultiAssignments)
+        const assignmentsData = await multiGet(weekAssignments, 'assignment', assignmentDatabaseRepository.getMultiAssignments)
 
         return res.status(200).json(
             ApiResponse.success("Ödevler başarılı bir şekilde getirildi.", assignmentsData, 200)
@@ -156,7 +156,7 @@ export const updateAssignment = async (req, res) => {
         const { title, description, dueDate } = req.body;
 
         // Ödevi getir
-        const assignment = await assignmentDatabaseModule.getAssignmentById(assignmentId);
+        const assignment = await assignmentDatabaseRepository.getAssignmentById(assignmentId);
         if (!assignment) {
             return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı."));
         }
@@ -168,7 +168,7 @@ export const updateAssignment = async (req, res) => {
             dueDate: dueDate || assignment.dueDate,
         };
 
-        const updatedAssignment = await assignmentDatabaseModule.updateAssignment(assignmentId, updatedAssignmentData);
+        const updatedAssignment = await assignmentDatabaseRepository.updateAssignment(assignmentId, updatedAssignmentData);
         await invalidateKeys([`assignment:${assignmentId}`])
 
         return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde güncellendi.", updatedAssignment, 200));
@@ -185,13 +185,13 @@ export const deleteAssignment = async (req, res) => {
         const { assignmentId } = req.params;
 
         // Ödevi getir
-        const assignment = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
+        const assignment = await assignmentCacheHandler.getCachedAssignment(assignmentId, assignmentDatabaseRepository.getAssignmentById)
         if (!assignment) {
             return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı."));
         }
 
         // Ödevi sil
-        await assignmentDatabaseModule.deleteAssignment(assignmentId, req.user.id);
+        await assignmentDatabaseRepository.deleteAssignment(assignmentId, req.user.id);
         await invalidateKeys([`assignment:${assignmentId}`])
 
         return res.status(200).json(ApiResponse.success("Ödev başarılı bir şekilde silindi.", null, 200));

@@ -4,13 +4,13 @@ import ApiResponse from "../utils/apiResponse.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKeys} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as weekCacheModule from "../cache/modules/weekModule.js";
-import *as classCacheModule from "../cache/modules/classModule.js";
+//Cache Handlers
+import *as weekCacheHandler from "../cache/handlers/weekCacheHandler.js";
+import *as classCacheHandler from "../cache/handlers/classCacheHandler.js";
 
-//Database Modules
-import *as weekDatabaseModule from "../database/modules/weekModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
+//Database Repositories
+import *as weekDatabaseRepository from "../database/repositories/weekRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
 
 /**
  * Hafta oluşturma
@@ -21,7 +21,7 @@ export const createWeek = async (req, res) => {
     try {
         const { classId, title, description, startDate, endDate } = req.body;
         // Sınıfı getir
-        const getClassData = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const getClassData = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
 
         // Sınıf mevcut mu kontrol et
         if (!getClassData) {
@@ -29,8 +29,8 @@ export const createWeek = async (req, res) => {
         }
 
         // Get existing weeks for this class
-        const existingWeeks = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId);
-        const weeksData = await multiGet(existingWeeks, 'week', weekDatabaseModule.getMultiWeeks);
+        const existingWeeks = await classCacheHandler.getClassWeeks(classId, classDatabaseRepository.getWeeksByClassId);
+        const weeksData = await multiGet(existingWeeks, 'week', weekDatabaseRepository.getMultiWeeks);
 
         // Check for date overlap with existing weeks
         const newStartDate = new Date(startDate);
@@ -56,8 +56,8 @@ export const createWeek = async (req, res) => {
         };
 
         // Veritabanına kaydet
-        const newWeek = await weekDatabaseModule.createWeek(newWeekData)
-        await classDatabaseModule.pushWeekToClass(classId, newWeek._id)
+        const newWeek = await weekDatabaseRepository.createWeek(newWeekData)
+        await classDatabaseRepository.pushWeekToClass(classId, newWeek._id)
         await invalidateKeys([`class:${classId}:weeks`])
 
         // Başarılı yanıt
@@ -75,7 +75,7 @@ export const updateWeek = async (req, res) => {
         const { weekId } = req.params;
         const { title, description, startDate, endDate } = req.body;
 
-        const getWeekData = await weekCacheModule.getCachedWeekData(weekId, weekDatabaseModule.getWeekById)
+        const getWeekData = await weekCacheHandler.getCachedWeekData(weekId, weekDatabaseRepository.getWeekById)
         if (!getWeekData) {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
@@ -84,8 +84,8 @@ export const updateWeek = async (req, res) => {
         const classId = getWeekData.classroom;
 
         // Get all weeks for this class
-        const existingWeeks = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId);
-        const weeksData = await multiGet(existingWeeks, 'week', weekDatabaseModule.getMultiWeeks);
+        const existingWeeks = await classCacheHandler.getClassWeeks(classId, classDatabaseRepository.getWeeksByClassId);
+        const weeksData = await multiGet(existingWeeks, 'week', weekDatabaseRepository.getMultiWeeks);
 
         // Check for date overlap with existing weeks
         const newStartDate = new Date(startDate);
@@ -111,7 +111,7 @@ export const updateWeek = async (req, res) => {
             endDate: newEndDate
         };
 
-        const updateWeek = await weekDatabaseModule.updateWeek(weekId, updateWeekData)
+        const updateWeek = await weekDatabaseRepository.updateWeek(weekId, updateWeekData)
         await invalidateKeys([`week:${weekId}`])
 
         return res.status(200).json(ApiResponse.success("Hafta başarıyla güncellendi.", updateWeek, 200));
@@ -127,12 +127,12 @@ export const getClassWeeks = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const getClassWeeks = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId)
+        const getClassWeeks = await classCacheHandler.getClassWeeks(classId, classDatabaseRepository.getWeeksByClassId)
         if (!getClassWeeks) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        const weeksData = await multiGet(getClassWeeks, 'week', weekDatabaseModule.getMultiWeeks)
+        const weeksData = await multiGet(getClassWeeks, 'week', weekDatabaseRepository.getMultiWeeks)
 
         return res.status(200).json(ApiResponse.success("Sınıf haftaları.", weeksData));
     } catch (error) {
@@ -147,13 +147,13 @@ export const deleteWeek = async (req, res) => {
     try {
         const { weekId, classId } = req.params;
 
-        const getWeekData = await weekCacheModule.getCachedWeekData(weekId, weekDatabaseModule.getWeekById)
+        const getWeekData = await weekCacheHandler.getCachedWeekData(weekId, weekDatabaseRepository.getWeekById)
         if (!getWeekData) {
             return res.status(404).json(ApiResponse.notFound("Hafta bulunamadı."));
         }
 
-        const deleteWeek = await weekDatabaseModule.deleteWeek(weekId, req.user.id)
-        await weekCacheModule.clearWeekCache(weekId)
+        const deleteWeek = await weekDatabaseRepository.deleteWeek(weekId, req.user.id)
+        await weekCacheHandler.clearWeekCache(weekId)
 
         return res.status(200).json(ApiResponse.success("Hafta başarıyla silindi.", deleteWeek, 200));
     } catch (error) {

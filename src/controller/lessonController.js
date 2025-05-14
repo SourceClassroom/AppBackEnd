@@ -7,16 +7,16 @@ import {generateCode} from "../services/randomCodeService.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKey } from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import * as weekCacheModule from "../cache/modules/weekModule.js";
-import * as classCacheModule from "../cache/modules/classModule.js";
-import * as lessonCacheModule from "../cache/modules/lessonModule.js";
+//Cache Handlers
+import * as weekCacheHandler from "../cache/handlers/weekCacheHandler.js";
+import * as classCacheHandler from "../cache/handlers/classCacheHandler.js";
+import * as lessonCacheHandler from "../cache/handlers/lessonCacheHandler.js";
 
-//Database Modules
-import * as weekDatabaseModule from "../database/modules/weekModule.js";
-import * as classDatabaseModule from "../database/modules/classModule.js";
-import * as eventDatabaseModule from "../database/modules/eventModule.js";
-import * as lessonDatabaseModule from "../database/modules/lessonModule.js";
+//Database Repositories
+import * as weekDatabaseRepository from "../database/repositories/weekRepository.js";
+import * as classDatabaseRepository from "../database/repositories/classRepository.js";
+import * as eventDatabaseRepository from "../database/repositories/eventRepository.js";
+import * as lessonDatabaseRepository from "../database/repositories/lessonRepository.js";
 
 //Notifications
 import notifyClassroom from "../notifications/notifyClassroom.js";
@@ -33,17 +33,17 @@ export const createLesson = async (req, res) => {
             startDate: start_time,
             joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${generateCode(32)}`,
         }
-        const newLessonData = await lessonDatabaseModule.createLesson(lessonData)
+        const newLessonData = await lessonDatabaseRepository.createLesson(lessonData)
         if (week) {
-            await weekDatabaseModule.pushLessonToWeek(week, newLessonData._id)
+            await weekDatabaseRepository.pushLessonToWeek(week, newLessonData._id)
             await invalidateKey(`week:${week}:lessons`)
         }
         else {
-            await classDatabaseModule.pushLessonToClass(classId, newLessonData._id)
+            await classDatabaseRepository.pushLessonToClass(classId, newLessonData._id)
             await invalidateKey(`class:${classId}:lessons`)
         }
 
-        const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);
+        const classData = await classCacheHandler.getCachedClassData(lessonData.classroom, classDatabaseRepository.getClassById);
 
         const eventData = {
             classId,
@@ -60,7 +60,7 @@ export const createLesson = async (req, res) => {
         }
         const monthKey = generateMonthKey(start_time)
         await invalidateKey(`events:${classId}:${monthKey}`)
-        await eventDatabaseModule.createEvent(eventData)
+        await eventDatabaseRepository.createEvent(eventData)
 
         const notificationData = {
             type: "new_lesson",
@@ -85,8 +85,8 @@ export const getClassLessons = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classLessons = await classCacheModule.getClassLessons(classId, classDatabaseModule.getClassLessons);
-        let getLessonData = await multiGet(classLessons, "lesson", lessonDatabaseModule.getMultiLessonById);
+        const classLessons = await classCacheHandler.getClassLessons(classId, classDatabaseRepository.getClassLessons);
+        let getLessonData = await multiGet(classLessons, "lesson", lessonDatabaseRepository.getMultiLessonById);
 
         if (req.user.role === "student") {
             getLessonData = getLessonData.map(lesson => {
@@ -109,8 +109,8 @@ export const getWeekLessons = async (req, res) => {
     try {
 
         const { weekId } = req.params;
-        const weekLessons = await weekCacheModule.getCachedWeekLessons(weekId, weekDatabaseModule.getWeekLessons)
-        let getLessonData = await multiGet(weekLessons, "lesson", lessonDatabaseModule.getMultiLessonById)
+        const weekLessons = await weekCacheHandler.getCachedWeekLessons(weekId, weekDatabaseRepository.getWeekLessons)
+        let getLessonData = await multiGet(weekLessons, "lesson", lessonDatabaseRepository.getMultiLessonById)
 
         if (req.user.role === "student") {
             getLessonData = getLessonData.map(lesson => {
@@ -134,15 +134,15 @@ export const updateLessonStatus = async (req, res) => {
         const { lessonId } = req.params;
         const { status, classId } = req.body;
 
-        const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
+        const lessonData = await lessonCacheHandler.getCachedLessonData(lessonId, lessonDatabaseRepository.getLessonById);
 
         if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
         if (!validator.isIn(status, ['pending', 'started', 'ended'])) return res.status(400).json(ApiResponse.error("Geçersiz ders durumu."));
         if (lessonData.status === status) return res.status(400).json(ApiResponse.error("Ders zaten bu durumda."))
         if (lessonData.status === "ended") return res.status(400).json(ApiResponse.error("Bitmiş ders tekrar başlayamaz."))
-        const classData = await classCacheModule.getCachedClassData(lessonData.classroom, classDatabaseModule.getClassById);
+        const classData = await classCacheHandler.getCachedClassData(lessonData.classroom, classDatabaseRepository.getClassById);
 
-        await lessonDatabaseModule.updateLessonStatus(lessonId, status)
+        await lessonDatabaseRepository.updateLessonStatus(lessonId, status)
         await invalidateKey(`lesson:${lessonId}`);
 
         const notificationData = {
@@ -168,7 +168,7 @@ export const updateLesson = async (req, res) => {
         const { lessonId } = req.params;
         const { topic, start_time, description, joinUrl } = req.body;
 
-        const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
+        const lessonData = await lessonCacheHandler.getCachedLessonData(lessonId, lessonDatabaseRepository.getLessonById);
 
         if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
 
@@ -179,7 +179,7 @@ export const updateLesson = async (req, res) => {
             joinUrl: joinUrl ? joinUrl : `${process.env.JITSI_URL}/${topic}_${generateCode(32)}`,
         }
 
-        await lessonDatabaseModule.updateLesson(lessonId, updateData)
+        await lessonDatabaseRepository.updateLesson(lessonId, updateData)
         await invalidateKey(`lesson:${lessonId}`);
 
         return res.status(200).json(ApiResponse.success("Ders başarıyla güncellendi.", lessonData));
@@ -193,15 +193,15 @@ export const deleteLesson = async (req, res) => {
     try {
         const { lessonId } = req.params;
 
-        const lessonData = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById);
+        const lessonData = await lessonCacheHandler.getCachedLessonData(lessonId, lessonDatabaseRepository.getLessonById);
 
         if (!lessonData) return res.status(404).json(ApiResponse.notFound("Ders bulunamadı."));
 
-        await lessonDatabaseModule.deleteLesson(lessonId, req.user.id)
+        await lessonDatabaseRepository.deleteLesson(lessonId, req.user.id)
         await invalidateKey(`lesson:${lessonId}`);
 
         //TODO pull something if it deleted for every fucking thig
-        //await classDatabaseModule.pullLessonFromClass(classId, lessonId)
+        //await classDatabaseRepository.pullLessonFromClass(classId, lessonId)
         await invalidateKey(`class:${classId}:lessons`)
 
         return res.status(200).json(ApiResponse.success("Ders başarıyla silindi.", lessonData));

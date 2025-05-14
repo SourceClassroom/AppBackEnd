@@ -3,7 +3,7 @@ import authMiddleware from "./middleware/auth.js";
 import { setSocketServer } from "./socketInstance.js";
 import { registerSocketEvents } from "./listeners/default.js";
 import scanAndDelete from "../cache/strategies/scanAndDelete.js";
-import { startSocketSubscriber } from "../cache/socket/socketPubSub.js";
+import { startSocketSubscriber } from "../cache/redisSocketPubSub/socketPubSub.js";
 
 export default async function socketHandler(server) {
     const io = new Server(server, {

@@ -4,19 +4,18 @@ import ApiResponse from "../utils/apiResponse.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKey, invalidateKeys } from "../cache/strategies/invalidate.js";
 
-//Cahce Modules
-import *as userCacheModule from "../cache/modules/userModule.js";
-import *as notificationCacheModule from "../cache/modules/notificationModule.js";
+//Cache Handlers
+import *as userCacheHandler from "../cache/handlers/userCacheHandler.js";
 
-//Database Modules
-import *as notificationDatabaseModule from "../database/modules/notificationModule.js";
+//Database Repositories
+import *as notificationDatabaseRepository from "../database/repositories/notificationRepository.js";
 
 export const getNotifications = async (req, res) => {
     try {
         const userId = req.user.id
-        const userNotifications = await userCacheModule.getCachedUserNotifications(userId, notificationDatabaseModule.getNotifications)
+        const userNotifications = await userCacheHandler.getCachedUserNotifications(userId, notificationDatabaseRepository.getNotifications)
 
-        const notifications = await multiGet(userNotifications, "notification", notificationDatabaseModule.getMultiNotificationsById)
+        const notifications = await multiGet(userNotifications, "notification", notificationDatabaseRepository.getMultiNotificationsById)
 
         res.status(200).json(ApiResponse.success("Bildirimler başarıyla getirildi.", notifications))
     } catch (error) {
@@ -28,7 +27,7 @@ export const getNotifications = async (req, res) => {
 export const markAsRead = async (req, res) => {
     try {
         const {notificationId} = req.params
-        const updateNotification = await notificationDatabaseModule.markAsRead(notificationId)
+        const updateNotification = await notificationDatabaseRepository.markAsRead(notificationId)
         if (!updateNotification) return res.status(404).json(ApiResponse.notFound("Bildirim bulunamadı."))
         await invalidateKey(`notification:${notificationId}`)
         res.status(200).json(ApiResponse.success("Bildirim başarıyla okundu.", updateNotification))
@@ -41,8 +40,8 @@ export const markAsRead = async (req, res) => {
 export const markAllAsRead = async (req, res) => {
     try {
         const userId = req.user.id
-        const userNotifications = await userCacheModule.getCachedUserNotifications(userId, notificationDatabaseModule.getNotifications)
-        await notificationDatabaseModule.markAllAsRead(userNotifications)
+        const userNotifications = await userCacheHandler.getCachedUserNotifications(userId, notificationDatabaseRepository.getNotifications)
+        await notificationDatabaseRepository.markAllAsRead(userNotifications)
         await invalidateKey(`user:${userId}:notifications`)
         for (const userNotification of userNotifications) {
             invalidateKey(`notification:${userNotification._id}`)
@@ -57,7 +56,7 @@ export const markAllAsRead = async (req, res) => {
 export const removeNotification = async (req, res) => {
     try {
         const {notificationId} = req.params
-        const deletedNotification = await notificationDatabaseModule.removeNotification(notificationId)
+        const deletedNotification = await notificationDatabaseRepository.removeNotification(notificationId)
         if (!deletedNotification) return res.status(404).json(ApiResponse.notFound("Bildirim bulunamadı."))
         await invalidateKeys([`notification:${notificationId}`, `user:${req.user.id}:notifications`])
         res.status(200).json(ApiResponse.success("Bildirim başarıyla silindi.", deletedNotification))

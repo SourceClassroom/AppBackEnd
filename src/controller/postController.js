@@ -5,14 +5,14 @@ import {processMedia} from "../services/fileService.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import { invalidateKeys, invalidateKey } from "../cache/strategies/invalidate.js";
 
-//Cache Module
-import *as weekCacheModule from '../cache/modules/weekModule.js';
-import *as classCacheModule from '../cache/modules/classModule.js';
+//Cache Handlers
+import *as weekCacheHandler from '../cache/handlers/weekCacheHandler.js';
+import *as classCacheHandler from '../cache/handlers/classCacheHandler.js';
 
-//Database Module
-import *as postDatabaseModule from '../database/modules/postModule.js';
-import *as weekDatabaseModule from '../database/modules/weekModule.js';
-import *as classDatabaseModule from '../database/modules/classModule.js';
+//Database Repositories
+import *as postDatabaseRepository from '../database/repositories/postRepository.js';
+import *as weekDatabaseRepository from '../database/repositories/weekRepository.js';
+import *as classDatabaseRepository from '../database/repositories/classRepository.js';
 
 //Notification
 import notifyClassroom from "../notifications/notifyClassroom.js";
@@ -27,7 +27,7 @@ export const createPost = async (req, res) => {
         const classCacheKey = `class:${classId}:posts`;
         const weekCacheKey = `week:${week}:posts`;
 
-        const classroom = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classroom = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
 
         const newPostData = {
             classroom: classId,
@@ -38,12 +38,12 @@ export const createPost = async (req, res) => {
             week
         }
 
-        const createPost = await postDatabaseModule.createPost(newPostData)
+        const createPost = await postDatabaseRepository.createPost(newPostData)
         if (week) {
-            await weekDatabaseModule.pushPostToWeek(week, createPost._id)
+            await weekDatabaseRepository.pushPostToWeek(week, createPost._id)
             await invalidateKeys([weekCacheKey])
         } else {
-            await classDatabaseModule.pushPostToClass(classId, createPost._id)
+            await classDatabaseRepository.pushPostToClass(classId, createPost._id)
             await invalidateKeys([classCacheKey])
         }
 
@@ -72,9 +72,9 @@ export const getClassPosts = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classPosts = await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
+        const classPosts = await classCacheHandler.getCachedClassPosts(classId, classDatabaseRepository.getClassPosts)
 
-        const postData = await multiGet(classPosts, "post", postDatabaseModule.getMultiPosts)
+        const postData = await multiGet(classPosts, "post", postDatabaseRepository.getMultiPosts)
 
         return res.status(200).json(ApiResponse.success("Sınıf post verisi.", postData));
     } catch (error) {
@@ -89,9 +89,9 @@ export const getWeekPosts = async (req, res) => {
     try {
         const { weekId } = req.params;
 
-        const weekPosts = await weekCacheModule.getCachedWeekPosts(weekId, weekDatabaseModule.getWeekPosts)
+        const weekPosts = await weekCacheHandler.getCachedWeekPosts(weekId, weekDatabaseRepository.getWeekPosts)
 
-        const postData = await multiGet(weekPosts, "post", postDatabaseModule.getMultiPosts)
+        const postData = await multiGet(weekPosts, "post", postDatabaseRepository.getMultiPosts)
 
         return res.status(200).json(ApiResponse.success("Hafta post verisi.", postData));
     } catch (error) {
@@ -107,7 +107,7 @@ export const updatePost = async (req, res) => {
         const { postId } = req.params;
         const { content, title } = req.body;
 
-        const updatedPost = await postDatabaseModule.updatePost(postId, { content, title });
+        const updatedPost = await postDatabaseRepository.updatePost(postId, { content, title });
         if (!updatedPost) {
             return res.status(404).json(ApiResponse.notFound('Post bulunamadı.'));
         }
@@ -128,7 +128,7 @@ export const deletePost = async (req, res) => {
     try {
         const { postId } = req.params;
 
-        const deletedPost = await postDatabaseModule.deletePost(postId, req.user.id);
+        const deletedPost = await postDatabaseRepository.deletePost(postId, req.user.id);
         if (!deletedPost) {
             return res.status(404).json(ApiResponse.notFound('Post bulunamadı.'));
         }

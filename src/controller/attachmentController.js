@@ -4,13 +4,13 @@ import ApiResponse from "../utils/apiResponse.js";
 import { streamFile } from "../utils/fileHelper.js";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 
-//Cache modules
-import *as userCacheModule from '../cache/modules/userModule.js';
-import *as attachmentCacheModule from '../cache/modules/attachmentModule.js';
+//Cache repositories
+import *as userCacheHandler from '../cache/handlers/userCacheHandler.js';
+import *as attachmentCacheHandler from '../cache/handlers/attachmentCacheHandler.js';
 
 //Database Models
-import *as userDatabaseModule from '../database/modules/userModule.js';
-import *as attachmentDatabaseModule from '../database/modules/attachmentModule.js';
+import *as userDatabaseRepository from '../database/repositories/userRepository.js';
+import *as attachmentDatabaseRepository from '../database/repositories/attachmentRepository.js';
 
 const studentRateLimiter = new RateLimiterMemory({
     points: 5,
@@ -32,7 +32,7 @@ export const downloadAttachment = async (req, res) => {
             }
         }
 
-        const file = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
+        const file = await attachmentCacheHandler.getCachedAttachmentData(attachmentId, attachmentDatabaseRepository.getAttachmentById)
 
         if (!file) {
             res.sendStatus(404).json(ApiResponse.json('Dosya bulunamadı.'))
@@ -59,7 +59,7 @@ export const viewAttachment = async (req, res) => {
     try {
         const attachmentId = req.params.id;
 
-        const file = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
+        const file = await attachmentCacheHandler.getCachedAttachmentData(attachmentId, attachmentDatabaseRepository.getAttachmentById)
         if (!file) {
             return res.status(404).json(ApiResponse.notFound("Dosya bulunamadı."));
         }
@@ -80,13 +80,13 @@ export const viewUserAvatar = async (req, res) => {
     try {
         const userId = req.params.userId;
 
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById);
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById);
 
         if (!user || !user.profile?.avatar) {
             return res.status(404).json(ApiResponse.notFound("Avatar bulunamadı."));
         }
 
-        const attachmentData = await attachmentCacheModule.getCachedAttachmentData(user.profile.avatar, attachmentDatabaseModule.getAttachmentById)
+        const attachmentData = await attachmentCacheHandler.getCachedAttachmentData(user.profile.avatar, attachmentDatabaseRepository.getAttachmentById)
 
         // Validate attachment path
         const normalizedPath = path.normalize(attachmentData.path).replace(/^(\.\.(\/|\\|$))+/, '');

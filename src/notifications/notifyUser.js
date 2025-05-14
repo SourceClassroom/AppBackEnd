@@ -1,8 +1,8 @@
-//Cache Modules
-import *as userCacheModule from "../cache/modules/userModule.js";
+//Cache Handlers
+import *as userCacheHandler from "../cache/handlers/userCacheHandler.js";
 
-//Database Modules
-import *as userDatabaseModule from "../database/modules/userModule.js";
+//Database Repositories
+import *as userDatabaseRepository from "../database/repositories/userRepository.js";
 
 // Queues
 import mailQueue from "../queue/queues/mailQueue.js";
@@ -10,7 +10,7 @@ import notificationQueue from "../queue/queues/notificationQueue.js";
 
 export default async (userId, notificationData) => {
     try {
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
 
         if (!user) {
             console.error(`User not found for ID: ${userId}`);

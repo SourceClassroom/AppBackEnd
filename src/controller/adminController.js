@@ -4,12 +4,12 @@ import ApiResponse from "../utils/apiResponse.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKey} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as userCahceModule from "../cache/modules/userModule.js";
+//Cache Handlers
+import *as userCacheHandler from "../cache/handlers/userCacheHandler.js";
 
-//Database Modules
-import *as userDatabaseModule from "../database/modules/userModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
+//Database Repositories
+import *as userDatabaseRepository from "../database/repositories/userRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
 
 
 export const getUsers = async (req, res) => {
@@ -18,8 +18,8 @@ export const getUsers = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        const userIds = await userDatabaseModule.getUsersPaginated(offset, limit);
-        const totalUsers = await userDatabaseModule.getUserCount()
+        const userIds = await userDatabaseRepository.getUsersPaginated(offset, limit);
+        const totalUsers = await userDatabaseRepository.getUserCount()
 
         const totalPages = Math.ceil(totalUsers / limit);
 
@@ -27,7 +27,7 @@ export const getUsers = async (req, res) => {
             return res.status(200).json(ApiResponse.paginated("Bu sayfa için kullanıcı bulunamadı.", [], { page, limit, totalDocs: totalUsers, totalPages }));
         }
 
-        const users = await multiGet(userIds, "user", userDatabaseModule.getMultiUserById);
+        const users = await multiGet(userIds, "user", userDatabaseRepository.getMultiUserById);
 
         res.status(200).json(ApiResponse.paginated("Kullanıcılar başarıyla getirildi.", users, {page, limit, totalDocs: totalUsers,totalPages}));
     } catch (error) {
@@ -42,8 +42,8 @@ export const getPendingUsers = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        const userIds = await userDatabaseModule.getPendingUsersPaginated(offset, limit);
-        const totalUsers = await userDatabaseModule.getPendingUserCount()
+        const userIds = await userDatabaseRepository.getPendingUsersPaginated(offset, limit);
+        const totalUsers = await userDatabaseRepository.getPendingUserCount()
 
         const totalPages = Math.ceil(totalUsers / limit);
 
@@ -51,7 +51,7 @@ export const getPendingUsers = async (req, res) => {
             return res.status(200).json(ApiResponse.paginated("Bu sayfa için kullanıcı bulunamadı.", [], { page, limit, totalDocs: totalUsers, totalPages }));
         }
 
-        const users = await multiGet(userIds, "user", userDatabaseModule.getMultiUserById);
+        const users = await multiGet(userIds, "user", userDatabaseRepository.getMultiUserById);
 
         res.status(200).json(ApiResponse.paginated("Kullanıcılar başarıyla getirildi.", users, {page, limit, totalDocs: totalUsers, totalPages}));
     } catch (error) {
@@ -66,8 +66,8 @@ export const getClasses = async (req, res) => {
         const limit = 6;
         const offset = (page - 1) * limit;
 
-        const classIds = await classDatabaseModule.getClassesPaginated(offset, limit);
-        const totalClasses = await classDatabaseModule.getClassCount()
+        const classIds = await classDatabaseRepository.getClassesPaginated(offset, limit);
+        const totalClasses = await classDatabaseRepository.getClassCount()
 
         const totalPages = Math.ceil(totalClasses / limit);
 
@@ -75,7 +75,7 @@ export const getClasses = async (req, res) => {
             return res.status(200).json(ApiResponse.paginated("Bu sayfa için kullanıcı bulunamadı.", [], { page, limit, totalDocs: totalUsers, totalPages }));
         }
 
-        const classes = await multiGet(classIds, "class", classDatabaseModule.getMultiClassById)
+        const classes = await multiGet(classIds, "class", classDatabaseRepository.getMultiClassById)
 
         return res.status(200).json(ApiResponse.paginated("Sınıflar başarıyla getirildi.", classes, {page, limit, totalDocs: totalClasses, totalPages}))
     } catch (error) {
@@ -90,7 +90,7 @@ export const searchUsers = async (req, res) => {
         const limit = 10;
         const offset = (page - 1) * limit;
 
-        const { userIds, totalResults } = await userDatabaseModule.searchUsers(searchTerm, limit, offset);
+        const { userIds, totalResults } = await userDatabaseRepository.searchUsers(searchTerm, limit, offset);
 
         const totalPages = Math.ceil(totalResults / limit);
 
@@ -98,7 +98,7 @@ export const searchUsers = async (req, res) => {
             return res.status(200).json(ApiResponse.paginated("Bu sayfa için kullanıcı bulunamadı.", [], { page, limit, totalDocs: totalResults, totalPages }));
         }
 
-        const users = await multiGet(userIds, "user", userDatabaseModule.getMultiUserById);
+        const users = await multiGet(userIds, "user", userDatabaseRepository.getMultiUserById);
 
         res.status(200).json(ApiResponse.paginated("Kullanıcılar başarıyla getirildi.", users, {page, limit, totalDocs: totalResults, totalPages}));
     } catch (error) {
@@ -110,7 +110,7 @@ export const searchUsers = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const {userId, data} = req.body
-        const newUser = await userDatabaseModule.updateUserForAdmin(userId, data)
+        const newUser = await userDatabaseRepository.updateUserForAdmin(userId, data)
         if (!newUser) {
             return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
         }
@@ -125,7 +125,7 @@ export const updateUser = async (req, res) => {
 export const updateUserStatus = async (req, res) => {
     try {
         const { userId, status } = req.body;
-        const user = await userDatabaseModule.updateUserStatus(userId, status)
+        const user = await userDatabaseRepository.updateUserStatus(userId, status)
         if (!user) {
             return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
         }

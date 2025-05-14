@@ -4,20 +4,20 @@ import { generateMonthKey } from "../utils/dateRange.js";
 //Cache Strategies
 import { invalidateKey } from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as userCacheModule from "../cache/modules/userModule.js";
-import *as classCacheModule from "../cache/modules/classModule.js";
-import *as eventCacheModule from "../cache/modules/eventModule.js";
+//Cache Handlers
+import *as userCacheHandler from "../cache/handlers/userCacheHandler.js";
+import *as classCacheHandler from "../cache/handlers/classCacheHandler.js";
+import *as eventCacheHandler from "../cache/handlers/eventCacheHandler.js";
 
-//Database Modules
-import *as userDatabaseModule from "../database/modules/userModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
-import *as eventDatabaseModule from "../database/modules/eventModule.js";
+//Database Repositories
+import *as userDatabaseRepository from "../database/repositories/userRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
+import *as eventDatabaseRepository from "../database/repositories/eventRepository.js";
 
 export const createEvent = async (req, res) => {
     try {
         let eventData =  req.body;
-        const classData = await classCacheModule.getCachedClassData(eventData.classroom, classDatabaseModule.getClassById)
+        const classData = await classCacheHandler.getCachedClassData(eventData.classroom, classDatabaseRepository.getClassById)
         if (eventData.visibility === 'class') {
             if (req.user.role === "student") return res.status(403).json(ApiResponse.forbidden("Bu işlem için yetkiniz yok"))
             if (!req.body?.classId) return res.status(400).json(ApiResponse.error("Lütfen bir sınıf seçiniz."))
@@ -26,8 +26,8 @@ export const createEvent = async (req, res) => {
         if (eventData.visibility === "user") eventData.userId = req.user.id
         eventData.metadata.createdBy = req.user.id
 
-        const event = await eventDatabaseModule.createEvent(eventData);
-        
+        const event = await eventDatabaseRepository.createEvent(eventData);
+
         console.log(`events:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:${generateMonthKey(eventData.date)}`)
         await invalidateKey(`events:${eventData.visibility === "class" ? eventData.classroom : req.user.id}:${generateMonthKey(eventData.date)}`)
 
@@ -45,12 +45,12 @@ export const listUserEvents = async (req, res) => {
         if (!year || !month) return res.status(400).json(ApiResponse.error("Lütfen yıl ve ay bilgilerini sağlayın."))
         const monthKey = `${year}-${month}`;
 
-        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const userData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
 
         const userClasses = userData.teachingClasses.concat(userData.enrolledClasses)
         userClasses.push(userId)
 
-        const eventData = await eventCacheModule.getMultiCachedEvents(userClasses, eventDatabaseModule.getEvents, monthKey)
+        const eventData = await eventCacheHandler.getMultiCachedEvents(userClasses, eventDatabaseRepository.getEvents, monthKey)
 
         res.status(200).json(ApiResponse.success("Eventler listelendi.", eventData, 200))
     } catch (error) {

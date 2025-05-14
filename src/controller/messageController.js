@@ -1,11 +1,11 @@
 import ApiResponse from "../utils/apiResponse.js";
 import * as messagingService from "../services/messagingService.js";
 
-//Cache Modules
-import * as conversationCacheModule from "../cache/modules/conversationModule.js";
+//Cache Handlers
+import * as conversationCacheHandler from "../cache/handlers/conversationCacheHandler.js";
 
-//Databse Modules
-import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
+//Database Repositories
+import * as conversationDatabaseRepository from "../database/repositories/conversationRepository.js";
 
 /**
  * Send a new message
@@ -15,21 +15,21 @@ import * as conversationDatabaseModule from "../database/modules/conversationMod
 export const sendMessage = async (req, res) => {
     try {
         const { conversationId, content, attachments } = req.body;
-        
+
         // Check if the user is a participant in the conversation
-        const conversation = await conversationDatabaseModule.getConversationById(conversationId);
-        
+        const conversation = await conversationDatabaseRepository.getConversationById(conversationId);
+
         const isParticipant = conversation.participants.some(
             participant => participant._id.toString() === req.user.id
         );
-        
+
         if (!isParticipant) {
             return res.status(403).json({
                 success: false,
                 message: 'You are not a participant in this conversation'
             });
         }
-        
+
         // Send the message using the messaging service
         const message = await messagingService.sendMessage(
             conversationId,
@@ -37,7 +37,7 @@ export const sendMessage = async (req, res) => {
             content,
             attachments || []
         );
-        
+
         res.status(201).json({
             success: true,
             data: message
@@ -62,7 +62,7 @@ export const getMessages = async (req, res) => {
         const { limit = 50, skip = 0 } = req.query;
 
         // Check if the user is a participant in the conversation
-        const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversationData = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
 
         const isParticipant = conversationData.participants.some(
             participant => participant.toString() === req.user.id
@@ -94,10 +94,10 @@ export const getMessages = async (req, res) => {
 export const markMessageAsRead = async (req, res) => {
     try {
         const { messageId } = req.params;
-        
+
         // Mark the message as read using the messaging service
         const message = await messagingService.markAsRead(messageId, req.user.id);
-        
+
         res.status(200).json({
             success: true,
             data: message

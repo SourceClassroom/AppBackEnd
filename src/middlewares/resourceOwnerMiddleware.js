@@ -1,10 +1,10 @@
 import ApiResponse from "../utils/apiResponse.js";
 
-//Cahce Modules
-import *as notificationCacheModule from "../cache/modules/notificationModule.js";
+//Cache Handlers
+import *as notificationCacheHandler from "../cache/handlers/notificationCacheHandler.js";
 
-//Database Modules
-import *as notificationDatabaseModule from "../database/modules/notificationModule.js";
+//Database Repositories
+import *as notificationDatabaseRepository from "../database/repositories/notificationRepository.js";
 
 export const checkNotificationOwner = async (req, res, next) => {
     try {
@@ -15,7 +15,7 @@ export const checkNotificationOwner = async (req, res, next) => {
             return res.status(400).json(ApiResponse.error("Lütfen geçerli bir bildirim ID'si belirtin"));
         }
 
-        const notification = await notificationCacheModule.getCachedNotificationData(notificationId, notificationDatabaseModule.getNotificationById)
+        const notification = await notificationCacheHandler.getCachedNotificationData(notificationId, notificationDatabaseRepository.getNotificationById)
         if (!notification) {
             return res.status(404).json(ApiResponse.error("Belirtilen ID ile eşleşen bildirim bulunamadı"));
         }

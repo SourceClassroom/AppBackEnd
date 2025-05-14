@@ -1,10 +1,10 @@
 import { Worker } from "bullmq";
 import { client } from "../../cache/client/redisClient.js";
 import setWithTtl from "../../cache/strategies/setWithTtl.js";
-import { cacheMessage } from "../../cache/modules/messageModule.js";
-import { publishSocketEvent } from "../../cache/socket/socketPubSub.js";
-import { updateLastMessage } from "../../database/modules/conversationModule.js";
-import { createMessage, getMessageByClientMessageId } from "../../database/modules/messageModule.js";
+import { cacheMessage } from "../../cache/handlers/messageCacheHandler.js";
+import { publishSocketEvent } from "../../cache/redisSocketPubSub/socketPubSub.js";
+import { updateLastMessage } from "../../database/repositories/conversationRepository.js";
+import { createMessage, getMessageByClientMessageId } from "../../database/repositories/messageRepository.js";
 
 export default new Worker("messageQueue", async job => {
     try {

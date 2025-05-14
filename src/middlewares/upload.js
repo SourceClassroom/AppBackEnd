@@ -6,7 +6,7 @@ import ApiResponse from "../utils/apiResponse.js";
 import {allAllowedFileTypes} from "../utils/fileTypes.js"
 
 //Database Modules
-import *as  assignmentDatabaseModule from "../database/modules/assignmentModule.js";
+import *as  assignmentDatabaseModule from "../database/repositories/assignmentRepository.js";
 
 // __dirname'in ESM karşılığını elde etme
 const __filename = fileURLToPath(import.meta.url);

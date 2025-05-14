@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 import {client} from "../cache/client/redisClient.js";
 
-//Cache Modules
-import *as tokenCacheModule from '../cache/modules/tokenModule.js';
+//Cache Handlers
+import *as tokenCacheHandler from '../cache/handlers/tokenCacheHandler.js';
 
-//Database Modules
-import *as userDatabaseModule from '../database/modules/userModule.js';
+//Database Repositories
+import *as userDatabaseRepository from '../database/repositories/userRepository.js';
 
 /*
  * Token servis sınıfı
@@ -14,12 +14,12 @@ import *as userDatabaseModule from '../database/modules/userModule.js';
 class TokenService {
     static blacklistToken = async (token) => {
         try {
-            // Token'ı kara listeye ekleyip süresi dolana kadar Redis’te tut
+            // Token'ı kara listeye ekleyip süresi dolana kadar Redis'te tut
             const decoded = await TokenService.verifyToken(token);
             const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
 
             if (expiresIn > 0) {
-                await tokenCacheModule.blacklistToken(token, expiresIn)
+                await tokenCacheHandler.blacklistToken(token, expiresIn)
             }
 
             return true
@@ -59,7 +59,7 @@ class TokenService {
                     }
 
                     try {
-                        // Token’ı Redis’e ekle (expire süresini belirle)
+                        // Token'ı Redis'e ekle (expire süresini belirle)
                         const expireSeconds = process.env.JWT_EXPIRE
                             ? parseInt(process.env.JWT_EXPIRE) * 60 * 60 * 24 // 1 gün
                             : 86400; // 1 gün (varsayılan)
@@ -101,7 +101,7 @@ class TokenService {
                     try {
                         // Kullanıcıyı bul
                         //const user = await User.findById(decoded.id);
-                        const user = await userDatabaseModule.getUserById(decoded.id);
+                        const user = await userDatabaseRepository.getUserById(decoded.id);
 
                         if (!user) {
                             return reject(new Error("Kullanıcı bulunamadı"));

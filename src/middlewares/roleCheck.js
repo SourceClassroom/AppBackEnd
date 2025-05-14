@@ -1,11 +1,11 @@
 import ApiResponse from "../utils/apiResponse.js";
 import {Class} from "../database/models/classModel.js";
 
-//Cache Modules
-import *as attachmentCacheModule from "../cache/modules/attachmentModule.js";
+//Cache Handlers
+import *as attachmentCacheHandler from "../cache/handlers/attachmentCacheHandler.js";
 
-//Database Modules
-import *as attachmentDatabaseModule from "../database/modules/attachmentModule.js";
+//Database Repositories
+import *as attachmentDatabaseRepository from "../database/repositories/attachmentRepository.js";
 
 /**
  * Kullanıcının belirli rollere sahip olup olmadığını kontrol eden middleware
@@ -144,7 +144,7 @@ export const checkFilePermission = (userIdField = 'userId', attachmentIdField = 
             }
 
             // Cache kontrolü
-            let attachmentData = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
+            let attachmentData = await attachmentCacheHandler.getCachedAttachmentData(attachmentId, attachmentDatabaseRepository.getAttachmentById)
 
             const { permission, classroom } = attachmentData;
 
@@ -167,4 +167,3 @@ export const checkFilePermission = (userIdField = 'userId', attachmentIdField = 
         }
     };
 };
-

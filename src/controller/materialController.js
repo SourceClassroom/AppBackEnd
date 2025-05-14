@@ -3,17 +3,16 @@ import {processMedia} from "../services/fileService.js";
 
 //Cache Strategies
 import multiGet from "../cache/strategies/multiGet.js";
-import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
+import {invalidateKey} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as weekCacheModule from "../cache/modules/weekModule.js";
-import *as classCacheModule from "../cache/modules/classModule.js";
-import *as materialCacheModule from "../cache/modules/materialModule.js";
+//Cache Handlers
+import *as weekCacheHandler from "../cache/handlers/weekCacheHandler.js";
+import *as classCacheHandler from "../cache/handlers/classCacheHandler.js";
 
-//Database Modules
-import *as weekDatabaseModule from "../database/modules/weekModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
-import *as materialDatabaseModule from "../database/modules/materialModule.js";
+//Database Repositories
+import *as weekDatabaseRepository from "../database/repositories/weekRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
+import *as materialDatabaseRepository from "../database/repositories/materialRepository.js";
 
 //Notifications
 import notifyClassroom from "../notifications/notifyClassroom.js";
@@ -33,18 +32,18 @@ export const createMaterial = async (req, res) => {
             attachments: fileIds,
         };
 
-        const classExists = await classCacheModule.getCachedClassData(classId, classDatabaseModule.getClassById)
+        const classExists = await classCacheHandler.getCachedClassData(classId, classDatabaseRepository.getClassById)
         if (!classExists) {
             return res.status(404).json(ApiResponse.notFound("Sınıf bulunamadı."));
         }
 
-        const material = await materialDatabaseModule.createMaterial(newMaterialData);
+        const material = await materialDatabaseRepository.createMaterial(newMaterialData);
         if (week) {
-            await weekDatabaseModule.pushMaterialToWeek(week, material._id)
+            await weekDatabaseRepository.pushMaterialToWeek(week, material._id)
             await invalidateKey(`week:${week}:materials`)
         }
         else {
-            await classDatabaseModule.pushMaterialToClass(classId, material._id)
+            await classDatabaseRepository.pushMaterialToClass(classId, material._id)
             await invalidateKey(`class:${classId}:materials`)
         }
 
@@ -83,7 +82,7 @@ export const updateMaterial = async (req, res) => {
             attachments: currentAttachments.concat(fileIds),
         };
 
-        const updatedMaterial = await materialDatabaseModule.updateMaterial(materialId, updatedMaterialData);
+        const updatedMaterial = await materialDatabaseRepository.updateMaterial(materialId, updatedMaterialData);
         await invalidateKey(`material:${materialId}`)
 
         res.status(200).json(ApiResponse.success("Materyal başarıyla güncellendi.", updatedMaterial, 200));
@@ -97,9 +96,9 @@ export const getClassMaterials = async (req, res) => {
     try {
         const { classId } = req.params;
 
-        const classMaterials = await classCacheModule.getCachedClassMaterials(classId, classDatabaseModule.getClassMaterials);
+        const classMaterials = await classCacheHandler.getCachedClassMaterials(classId, classDatabaseRepository.getClassMaterials);
 
-        const materials = await multiGet(classMaterials, 'material', materialDatabaseModule.getMultiMaterials)
+        const materials = await multiGet(classMaterials, 'material', materialDatabaseRepository.getMultiMaterials)
 
         res.status(200).json(ApiResponse.success("Materyaller başarıyla getirildi.", materials, 200));
     } catch (error) {
@@ -112,9 +111,9 @@ export const getWeekMaterials = async (req, res) => {
     try {
         const { classId, weekId } = req.params;
 
-        const weekMaterials = await weekCacheModule.getCachedWeekMaterials(weekId, weekDatabaseModule.getWeekMaterials);
+        const weekMaterials = await weekCacheHandler.getCachedWeekMaterials(weekId, weekDatabaseRepository.getWeekMaterials);
 
-        const materials = await multiGet(weekMaterials, 'material', materialDatabaseModule.getMultiMaterials)
+        const materials = await multiGet(weekMaterials, 'material', materialDatabaseRepository.getMultiMaterials)
 
         res.status(200).json(ApiResponse.success("Materyaller başarıyla getirildi.", materials, 200));
     } catch (error) {
@@ -127,7 +126,7 @@ export const deleteMaterial = async (req, res) => {
     try {
         const { materialId } = req.params;
 
-        await materialDatabaseModule.deleteMaterial(materialId, req.user.id);
+        await materialDatabaseRepository.deleteMaterial(materialId, req.user.id);
         await invalidateKey(`material:${materialId}`)
 
         res.status(200).json(ApiResponse.success("Materyal başarıyla silindi.", null, 200));

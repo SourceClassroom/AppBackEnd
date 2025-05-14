@@ -1,5 +1,4 @@
-import { client } from "../cache/client/redisClient.js";
-import { publishSocketEvent } from "../cache/socket/socketPubSub.js";
+import { publishSocketEvent } from "../cache/redisSocketPubSub/socketPubSub.js";
 
 //Queues
 import messageQueue from "../queue/queues/messageQueue.js";
@@ -8,16 +7,16 @@ import messageQueue from "../queue/queues/messageQueue.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import setWithTtl from "../cache/strategies/setWithTtl.js";
 
-//Cache Modules
-import * as messageCacheModule from "../cache/modules/messageModule.js";
-import * as conversationCacheModule from "../cache/modules/conversationModule.js";
-import * as conversationReadCacheModule from "../cache/modules/conversationReadModule.js";
+//Cache Handlers
+import * as messageCacheHandler from "../cache/handlers/messageCacheHandler.js";
+import * as conversationCacheHandler from "../cache/handlers/conversationCacheHandler.js";
+import * as conversationReadCacheHandler from "../cache/handlers/conversationReadCacheHandler.js";
 
-//Database Modules
-import * as userDatabaseModule from "../database/modules/userModule.js";
-import * as messageDatabaseModule from "../database/modules/messageModule.js";
-import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
-import * as conversationReadDatabaseModule from "../database/modules/conversationReadModule.js";
+//Database Repositories
+import * as userDatabaseRepository from "../database/repositories/userRepository.js";
+import * as messageDatabaseRepository from "../database/repositories/messageRepository.js";
+import * as conversationDatabaseRepository from "../database/repositories/conversationRepository.js";
+import * as conversationReadDatabaseRepository from "../database/repositories/conversationReadRepository.js";
 
 /**
  * Send a message to a conversation
@@ -29,9 +28,9 @@ import * as conversationReadDatabaseModule from "../database/modules/conversatio
  */
 export const sendMessage = async (conversationId, senderId, content, attachments = [], clientMessageId) => {
     try {
-        const conversation = await conversationCacheModule.getCachedConversation(
+        const conversation = await conversationCacheHandler.getCachedConversation(
             conversationId,
-            conversationDatabaseModule.getConversationById
+            conversationDatabaseRepository.getConversationById
         );
 
         if (!conversation) throw new Error("Konuşma bulunamadı");
@@ -70,15 +69,15 @@ export const sendMessage = async (conversationId, senderId, content, attachments
  */
 export const markAsRead = async (userId, conversationId, messageId) => {
     try {
-        const readStatus = await conversationDatabaseModule.updateUserReadStatus(userId, conversationId, messageId);
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById);
+        const readStatus = await conversationDatabaseRepository.updateUserReadStatus(userId, conversationId, messageId);
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById);
 
         const participantIds = conversation.participants
             .filter(p => (typeof p === 'object' ? p._id.toString() : p) !== userId)
             .map(p => typeof p === 'object' ? p._id.toString() : p);
 
         let readStatusArray;
-        const existingReadStatus = await conversationReadCacheModule.getCachedReadStatus(conversationId, conversationReadDatabaseModule.getReadStatus);
+        const existingReadStatus = await conversationReadCacheHandler.getCachedReadStatus(conversationId, conversationReadDatabaseRepository.getReadStatus);
 
         if (existingReadStatus && typeof existingReadStatus === 'string') {
             readStatusArray = JSON.parse(existingReadStatus);
@@ -111,7 +110,7 @@ export const markAsRead = async (userId, conversationId, messageId) => {
             conversationId
         });
 
-        return conversationDatabaseModule;
+        return conversationDatabaseRepository;
     } catch (error) {
         console.error(error);
         throw new Error(`Mesaj okundu olarak işaretlenirken hata oluştu: ${error.message}`);
@@ -127,7 +126,7 @@ export const markAsRead = async (userId, conversationId, messageId) => {
 export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
     try {
         // Get the conversation to find participants
-        const conversationData = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversationData = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         const participantIds = conversationData.participants
             .filter(p => {
                 // Handle both ObjectId and string formats
@@ -159,20 +158,20 @@ export const sendTypingIndicator = async (conversationId, userId, isTyping) => {
 export const getConversationMessages = async (conversationId, limit = 100, skip = 0) => {
     try {
         const [conversationData, messageData] = await Promise.all([
-            conversationCacheModule.getCachedConversation(
+            conversationCacheHandler.getCachedConversation(
                 conversationId,
-                conversationDatabaseModule.getConversationById
+                conversationDatabaseRepository.getConversationById
             ),
-            messageCacheModule.getCachedMessages(
+            messageCacheHandler.getCachedMessages(
                 conversationId,
                 limit,
                 skip,
-                messageDatabaseModule.getConversationMessages
+                messageDatabaseRepository.getConversationMessages
             )
         ]);
 
         const participantIds = conversationData.participants.map(p => p.toString());
-        const participantsData = await multiGet(participantIds, "user", userDatabaseModule.getMultiUserById);
+        const participantsData = await multiGet(participantIds, "user", userDatabaseRepository.getMultiUserById);
 
         // Create a map for faster lookups
         const participantsMap = new Map(

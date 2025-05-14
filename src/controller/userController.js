@@ -12,18 +12,18 @@ import sendMail from "../mailer/sendMail.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import * as userCacheModule from "../cache/modules/userModule.js";
-import * as userBlockCacheModule from "../cache/modules/userBlockModule.js";
-import * as onlineUserCacheModule from "../cache/modules/onlineUserModule.js";
-import * as mailVerificationCacheModule from "../cache/modules/mailVerificationModule.js";
+//Cache Handlers
+import * as userCacheHandler from "../cache/handlers/userCacheHandler.js";
+import * as userBlockCacheHandler from "../cache/handlers/userBlockCacheHandler.js";
+import * as onlineUserCacheHandler from "../cache/handlers/onlineUserCacheHandler.js";
+import * as mailVerificationCacheHandler from "../cache/handlers/mailVerificationCacheHandler.js";
 
-//Database Modules
-import * as userDatabaseModule from "../database/modules/userModule.js";
-import * as classDatabaseModule from "../database/modules/classModule.js";
-import * as userBlockDatabaseModule from "../database/modules/userBlockModule.js";
-import {isBlockBetWeen} from "../database/modules/userBlockModule.js";
-import {isBlockedBetween} from "../cache/modules/userBlockModule.js";
+//Database Repositories
+import * as userDatabaseRepository from "../database/repositories/userRepository.js";
+import * as classDatabaseRepository from "../database/repositories/classRepository.js";
+import * as userBlockDatabaseRepository from "../database/repositories/userBlockRepository.js";
+import {isBlockBetWeen} from "../database/repositories/userBlockRepository.js";
+import {isBlockedBetween} from "../cache/handlers/userBlockCacheHandler.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -34,15 +34,15 @@ export const getUserProfile = async (req, res) => {
     try {
         const reqUser = req.user.id
         const userId = req.params.id;
-        const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const userData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
 
         if (!userData) {
             return res.status(404).jsonp(ApiResponse.notFound("Bu id ile bir kullanic bulunamadi"))
         }
 
-        const isUserBlock = await userBlockCacheModule.hasUserBlocked(reqUser, userId, userBlockDatabaseModule.getBlockData)
-        const isBlocked = await userBlockCacheModule.hasUserBlocked(userId, reqUser, userBlockDatabaseModule.getBlockData)
-        const isUserOnline = (await onlineUserCacheModule.getUserSockets(userId)) > 0
+        const isUserBlock = await userBlockCacheHandler.hasUserBlocked(reqUser, userId, userBlockDatabaseRepository.getBlockData)
+        const isBlocked = await userBlockCacheHandler.hasUserBlocked(userId, reqUser, userBlockDatabaseRepository.getBlockData)
+        const isUserOnline = (await onlineUserCacheHandler.getUserSockets(userId)) > 0
 
         const formattedData = {
             profile: userData.profile,
@@ -72,12 +72,12 @@ export const createUser = async (req, res) => {
         const { name, surname, email, password, role } = req.body;
         if (role === "sysadmin") return res.status(403).json(ApiResponse.forbidden("Bu rol kullanılamaz."))
         // Check if first user
-        const existingUsers = await userCacheModule.getUserCount(userDatabaseModule.getUserCount);
+        const existingUsers = await userCacheHandler.getUserCount(userDatabaseRepository.getUserCount);
 
         const isFirstUser = existingUsers === 0;
 
         // E-posta kontrolü
-        const existingUser = await userDatabaseModule.getUserByEmail(email)
+        const existingUser = await userDatabaseRepository.getUserByEmail(email)
         if (existingUser) {
             return res.status(400).json(
                 ApiResponse.error('Bu e-posta adresi zaten kullanılıyor')
@@ -104,10 +104,10 @@ export const createUser = async (req, res) => {
             tokenVersion: TokenService.generateVersionCode()
         }
 
-        const newUser = await userDatabaseModule.createUser(newUserData)
+        const newUser = await userDatabaseRepository.createUser(newUserData)
         if (userRole === "student") {
             const code = generateCode()
-            await mailVerificationCacheModule.setVerificationCode(email, code)
+            await mailVerificationCacheHandler.setVerificationCode(email, code)
             await sendMail(
                 email,
                 `${process.env.APP_NAME} Mail Doğrulama`,
@@ -146,6 +146,7 @@ export const createUser = async (req, res) => {
         );
     }
 }
+
 /**
  * Kullanıcı girişi
  * @route POST /api/users/login
@@ -157,7 +158,7 @@ export const loginUser = async (req, res) => {
         const { email, password } = req.body;
 
         // Kullanıcıyı bul
-        const user = await userDatabaseModule.getUserLoginData(email)
+        const user = await userDatabaseRepository.getUserLoginData(email)
         if (!user) {
             return res.status(401).json(
                 ApiResponse.error('Geçersiz kimlik bilgileri', null, 401)
@@ -205,7 +206,7 @@ export const loginUser = async (req, res) => {
             email: user.email,
             role: user.role
         };
-        await userDatabaseModule.updateLastLogin(user._id)
+        await userDatabaseRepository.updateLastLogin(user._id)
 
         // Başarılı yanıt
         res.status(200).json(
@@ -229,11 +230,11 @@ export const verifyMail = async (req, res) => {
     try {
         const { mail, code } = req.body
 
-        const user = await userDatabaseModule.getUserByEmail(mail)
+        const user = await userDatabaseRepository.getUserByEmail(mail)
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."))
         if (user.mailVerification === true) return res.status(400).json(ApiResponse.error("Mail adresi zaten doğrulanmış."))
 
-        const verificationCode = await mailVerificationCacheModule.getVerificationCode(mail)
+        const verificationCode = await mailVerificationCacheHandler.getVerificationCode(mail)
 
         if (!verificationCode) {
             return res.status(400).json(
@@ -247,8 +248,8 @@ export const verifyMail = async (req, res) => {
             )
         }
 
-        const newUserData = await userDatabaseModule.verifyUser(mail)
-        await userCacheModule.clearUserCache(newUserData._id)
+        const newUserData = await userDatabaseRepository.verifyUser(mail)
+        await userCacheHandler.clearUserCache(newUserData._id)
         await invalidateKeys([`code:${mail}`])
 
         res.status(200).json(
@@ -266,13 +267,13 @@ export const generateVerificationCode = async (req, res) => {
     try {
         const { mail } = req.body
 
-        const user = await userDatabaseModule.getUserByEmail(mail)
+        const user = await userDatabaseRepository.getUserByEmail(mail)
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."))
         if (user.mailVerification === true) return res.status(400).json(ApiResponse.error("Mail adresi zaten doğrulanmış."))
 
         const code = generateCode()
         await invalidateKey(`code:${mail}`)
-        await mailVerificationCacheModule.setVerificationCode(mail, code)
+        await mailVerificationCacheHandler.setVerificationCode(mail, code)
 
         await sendMail(
             mail,
@@ -314,7 +315,7 @@ export const changePassword = async (req, res) => {
         }
 
         // Kullanıcıyı bul (şifre dahil)
-        const user = await userDatabaseModule.getUserLoginData(userEmail)
+        const user = await userDatabaseRepository.getUserLoginData(userEmail)
         if (!user) {
             return res.status(404).json(
                 ApiResponse.error('Kullanıcı bulunamadı')
@@ -340,7 +341,7 @@ export const changePassword = async (req, res) => {
         const newTokenVersion = TokenService.generateVersionCode();
 
         // Kullanıcıyı güncelle
-        await userDatabaseModule.changePassword(userId, hashedPassword, newTokenVersion)
+        await userDatabaseRepository.changePassword(userId, hashedPassword, newTokenVersion)
 
         // Yeni JWT token oluştur (yeni tokenVersion ile)
         const token = await TokenService.generateAccessToken({
@@ -388,11 +389,11 @@ export const changeEmail = async (req, res) => {
 
         if (!email) return res.status(400).json(ApiResponse.error("Email alanı zorunludur."))
 
-        const findUser = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const findUser = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         if(findUser.email === email) return res.status(400).json(ApiResponse.error("Yeni mail eskisi ile aynı olamaz."))
 
-        const updateUser = await userDatabaseModule.changeEmail(userId, email)
-        await userCacheModule.clearUserCache(userId)
+        const updateUser = await userDatabaseRepository.changeEmail(userId, email)
+        await userCacheHandler.clearUserCache(userId)
 
         return res.status(200).json(ApiResponse.success("Email adresi başarıyla değişti.", updateUser));
     } catch (error) {
@@ -415,7 +416,7 @@ export const logoutUser = async (req, res) => {
         }
 
         await TokenService.blacklistToken(token)
-        await onlineUserCacheModule.removeAllUserSockets(req.user.id)
+        await onlineUserCacheHandler.removeAllUserSockets(req.user.id)
 
         return res.status(200).json(ApiResponse.success("Başarıyla çıkış yapıldı."))
     } catch (error) {
@@ -434,13 +435,13 @@ export const changeAvatar = async (req, res) => {
         if (req.files.length === 0 || !req.files) {
             return res.status(400).json(ApiResponse.error("En az 1 dosya yüklenmeli."));
         }
-        const currentUserData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const currentUserData = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         const fileIds = await fileService.processMedia(req)
 
-        await userDatabaseModule.changeAvatar(userId, fileIds[0])
+        await userDatabaseRepository.changeAvatar(userId, fileIds[0])
 
         //await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
-        await userCacheModule.clearUserCache(userId)
+        await userCacheHandler.clearUserCache(userId)
         await fileService.deleteAttachment(currentUserData.profile?.avatar)
 
         return res.status(200).json(ApiResponse.success("Avatar başarılı bir şekilde değiştirildi."))
@@ -458,7 +459,7 @@ export const updateProfile = async (req, res) => {
         const { name, surname, profile } = req.body;
         const cacheKey = `user:${userId}`;
 
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         if (!user) {
             return res.status(404).json(ApiResponse.error("Kullanıcı bulunamadı."));
         }
@@ -474,8 +475,8 @@ export const updateProfile = async (req, res) => {
             }
         };
 
-        await userDatabaseModule.updateProfile(userId, updatedProfileData)
-        await userCacheModule.clearUserCache(userId)
+        await userDatabaseRepository.updateProfile(userId, updatedProfileData)
+        await userCacheHandler.clearUserCache(userId)
         //await invalidateKeys([`user:${userId}`, `user:${userId}:dashboard`])
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
@@ -492,7 +493,7 @@ export const updateNotificationPreferences = async (req, res) => {
         const { notificationPreferences } = req.body;
 
         // Kullanıcıyı bul
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById(userId))
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById(userId))
         if (!user) {
             return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
         }
@@ -503,8 +504,8 @@ export const updateNotificationPreferences = async (req, res) => {
             ...notificationPreferences
         };
 
-        await userDatabaseModule.updateNotificationPreferences(userId, newNotificationPreferences)
-        await userCacheModule.clearUserCache(userId)
+        await userDatabaseRepository.updateNotificationPreferences(userId, newNotificationPreferences)
+        await userCacheHandler.clearUserCache(userId)
 
         return res.status(200).json(ApiResponse.success("Bildirim tercihleri başarıyla güncellendi.", user.notificationPreferences));
     } catch (error) {
@@ -518,7 +519,7 @@ export const updateNotificationPreferences = async (req, res) => {
 export const userDashboard = async (req, res) => {
     try {
         const userId = req.user.id;
-        let userData = await userCacheModule.getCachedUserDashboardData(userId, userDatabaseModule.getUserDashboard);
+        let userData = await userCacheHandler.getCachedUserDashboardData(userId, userDatabaseRepository.getUserDashboard);
         if (!userData) return res.status(404).json(ApiResponse.notFound("Kullanici verisi bulunamadi."));
 
         let newEnrolledClasses = [];
@@ -528,7 +529,7 @@ export const userDashboard = async (req, res) => {
             newEnrolledClasses = await multiGet(
                 userData.enrolledClasses.map(c => typeof c === 'string' ? c : String(c._id)),
                 "class",
-                classDatabaseModule.getMultiClassById
+                classDatabaseRepository.getMultiClassById
             );
         }
 
@@ -536,7 +537,7 @@ export const userDashboard = async (req, res) => {
             newTeachingClasses = await multiGet(
                 userData.teachingClasses.map(c => typeof c === 'string' ? c : String(c._id)),
                 "class",
-                classDatabaseModule.getMultiClassById
+                classDatabaseRepository.getMultiClassById
             );
         }
 
@@ -560,13 +561,13 @@ export const blockUser = async (req, res) => {
         const { userId } = req.params;
         const currentUser = req.user.id
 
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanici bulunamadi."))
-        const getBlockData = await userBlockDatabaseModule.getBlockData(currentUser, userId)
+        const getBlockData = await userBlockDatabaseRepository.getBlockData(currentUser, userId)
         if (getBlockData) return res.status(400).json(ApiResponse.error("Kullanıcı zaten engellenmiş."))
 
-        await userBlockDatabaseModule.blockUser(currentUser, userId)
-        await userBlockCacheModule.addBlock(currentUser, userId)
+        await userBlockDatabaseRepository.blockUser(currentUser, userId)
+        await userBlockCacheHandler.addBlock(currentUser, userId)
 
         return res.status(200).json(ApiResponse.success("Kullanıcı engellendi.", user))
     } catch (error) {
@@ -582,13 +583,13 @@ export const unblockUser = async (req, res) => {
         const { userId } = req.params;
         const currentUser = req.user.id
 
-        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanici bulunamadi."))
-        const getBlockData = await await userBlockDatabaseModule.getBlockData(currentUser, userId)
+        const getBlockData = await await userBlockDatabaseRepository.getBlockData(currentUser, userId)
         if (!getBlockData) return res.status(400).json(ApiResponse.error("Kullanıcı zaten engellenmemiş."))
 
-        await userBlockDatabaseModule.unblockUser(currentUser, userId)
-        await userBlockCacheModule.removeBlock(currentUser, userId)
+        await userBlockDatabaseRepository.unblockUser(currentUser, userId)
+        await userBlockCacheHandler.removeBlock(currentUser, userId)
 
         return res.status(200).json(ApiResponse.success("Kullanıcı engeli kaldırıldı.", user))
     } catch (error) {

@@ -1,6 +1,6 @@
 import { client } from "../client/redisClient.js";
 import broadcastUpdate from "./broadcastUpdate.js";
-import { getUserSockets } from "../modules/onlineUserModule.js";
+import { getUserSockets } from "../handlers/onlineUserCacheHandler.js";
 import { getSocketServer } from "../../sockets/socketInstance.js";
 
 

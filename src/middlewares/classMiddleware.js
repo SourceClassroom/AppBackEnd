@@ -1,18 +1,18 @@
 import ApiResponse from "../utils/apiResponse.js";
 
 //Cache Modules
-import *as weekCacheModule from "../cache/modules/weekModule.js";
-import *as postCacheModule from "../cache/modules/postModule.js";
-import *as classCacheModule from "../cache/modules/classModule.js";
-import *as lessonCacheModule from "../cache/modules/lessonModule.js";
-import *as assignmentCacheModule from "../cache/modules/assignmentModule.js";
+import *as weekCacheHandler from "../cache/handlers/weekCacheHandler.js";
+import *as postCacheHandler from "../cache/handlers/postCacheHandler.js";
+import *as classCacheHandler from "../cache/handlers/classCacheHandler.js";
+import *as lessonCacheHandler from "../cache/handlers/lessonCacheHandler.js";
+import *as assignmentCacheHandler from "../cache/handlers/assignmentCacheHandler.js";
 
 //Database Modules
-import *as weekDatabseModule from "../database/modules/weekModule.js";
-import *as postDatabaseModule from "../database/modules/postModule.js";
-import *as classDatabaseModule from "../database/modules/classModule.js";
-import *as lessonDatabaseModule from "../database/modules/lessonModule.js";
-import *as assignmentDatabaseModule from "../database/modules/assignmentModule.js";
+import *as weekDatabaseRepository from "../database/repositories/weekRepository.js";
+import *as postDatabaseRepository from "../database/repositories/postRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
+import *as lessonDatabaseRepository from "../database/repositories/lessonRepository.js";
+import *as assignmentDatabaseRepository from "../database/repositories/assignmentRepository.js";
 
 
 export const checkWeekClassroom = async (req, res, next) => {
@@ -22,10 +22,10 @@ export const checkWeekClassroom = async (req, res, next) => {
         const classId = req.params.classId || req.body.classId;
         if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
 
-        const weekData = await weekCacheModule.getCachedWeekData(weekId, weekDatabseModule.getWeekById)
+        const weekData = await weekCacheHandler.getCachedWeekData(weekId, weekDatabaseRepository.getWeekById)
         if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
-        const classData = await classCacheModule.getClassWeeks(classId, classDatabaseModule.getWeeksByClassId)
+        const classData = await classCacheHandler.getClassWeeks(classId, classDatabaseRepository.getWeeksByClassId)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
         if (weekData.classroom !== classData._id && !classData.includes(weekData._id)) {
@@ -47,10 +47,10 @@ export const checkAssignmentClassroom = async (req, res, next) => {
         if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
         const weekId = req.params.weekId || req.body.weekId;
 
-        const assignmentData = await assignmentCacheModule.getCachedAssignment(assignmentId, assignmentDatabaseModule.getAssignmentById)
+        const assignmentData = await assignmentCacheHandler.getCachedAssignment(assignmentId, assignmentDatabaseRepository.getAssignmentById)
         if (!assignmentData) return res.status(404).json(ApiResponse.error("Ödev bulunamadı"))
 
-        const classData = await classCacheModule.getCachedClassAssignments(classId, classDatabaseModule.getClassAssignments)
+        const classData = await classCacheHandler.getCachedClassAssignments(classId, classDatabaseRepository.getClassAssignments)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
         if (assignmentData.classroom !== classData._id && !classData.includes(assignmentData._id)) {
@@ -58,7 +58,7 @@ export const checkAssignmentClassroom = async (req, res, next) => {
         }
 
         if (assignmentData.week) {
-            const weekData = await weekCacheModule.getCachedWeekAssignments(assignmentData.week, weekDatabseModule.getWeekAssignments)
+            const weekData = await weekCacheHandler.getCachedWeekAssignments(assignmentData.week, weekDatabaseRepository.getWeekAssignments)
             if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
             if (assignmentData.week !== weekId || !weekData.includes(assignmentData._id)) {
@@ -81,10 +81,10 @@ export const checkPostClassroom = async (req, res, next) => {
         if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
         const weekId = req.params.weekId || req.body.weekId;
 
-        const post = await postCacheModule.getCachedPost(postId, postDatabaseModule.getPostById)
+        const post = await postCacheHandler.getCachedPost(postId, postDatabaseRepository.getPostById)
         if (!post) return res.status(404).json(ApiResponse.error("Post bulunamadı"))
 
-        const classData = await classCacheModule.getCachedClassPosts(classId, classDatabaseModule.getClassPosts)
+        const classData = await classCacheHandler.getCachedClassPosts(classId, classDatabaseRepository.getClassPosts)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
         if (post.classroom !== classData._id && !classData.includes(post._id)) {
@@ -92,7 +92,7 @@ export const checkPostClassroom = async (req, res, next) => {
         }
 
         if (post.week) {
-            const weekData = await weekCacheModule.getCachedWeekPosts(post.week, weekDatabseModule.getWeekPosts)
+            const weekData = await weekCacheHandler.getCachedWeekPosts(post.week, weekDatabaseRepository.getWeekPosts)
             if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
             if (post.week !== weekId || post.week !== weekData._id || !weekData.includes(post._id)) {
@@ -115,10 +115,10 @@ export const checkLessonClassroom = async (req, res, next) => {
         if (!classId) return res.status(400).json(ApiResponse.error("Sınıf ID'si gerekli"))
         const weekId = req.params.weekId || req.body.weekId;
 
-        const lesson = await lessonCacheModule.getCachedLessonData(lessonId, lessonDatabaseModule.getLessonById)
+        const lesson = await lessonCacheHandler.getCachedLessonData(lessonId, lessonDatabaseRepository.getLessonById)
         if (!lesson) return res.status(404).json(ApiResponse.error("Ders bulunamadı"))
 
-        const classData = await classCacheModule.getClassLessons(classId, classDatabaseModule.getClassLessons)
+        const classData = await classCacheHandler.getClassLessons(classId, classDatabaseRepository.getClassLessons)
         if (!classData) return res.status(404).json(ApiResponse.error("Sınıf bulunamadı"))
 
         if (lesson.classroom !== classData._id && !classData.includes(lesson._id)) {
@@ -126,7 +126,7 @@ export const checkLessonClassroom = async (req, res, next) => {
         }
 
         if (lesson.week) {
-            const weekData = await weekCacheModule.getCachedWeekLessons(lesson.week, weekDatabseModule.getWeekLessons)
+            const weekData = await weekCacheHandler.getCachedWeekLessons(lesson.week, weekDatabaseRepository.getWeekLessons)
             if (!weekData) return res.status(404).json(ApiResponse.error("Hafta bulunamadı"))
 
             if (lesson.week !== weekId || lesson.week !== weekData._id || !weekData.includes(lesson._id)) {

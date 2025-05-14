@@ -4,13 +4,13 @@ import ApiResponse from "../utils/apiResponse.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKeys, invalidateKey} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import *as commentCacheModule from "../cache/modules/commentModule.js";
+//Cache Handlers
+import *as commentCacheHandler from "../cache/handlers/commentCacheHandler.js";
 
-//Database Modules
-import *as userDatabaseModule from "../database/modules/userModule.js";
-import *as postDatabaseModule from "../database/modules/postModule.js";
-import *as commentDatabaseModule from "../database/modules/commentModule.js";
+//Database Repositories
+import *as userDatabaseRepository from "../database/repositories/userRepository.js";
+import *as postDatabaseRepository from "../database/repositories/postRepository.js";
+import *as commentDatabaseRepository from "../database/repositories/commentRepository.js";
 
 export const createComment = async (req, res) => {
     try {
@@ -22,8 +22,8 @@ export const createComment = async (req, res) => {
             author: req.user.id
         }
 
-        const newComment = await commentDatabaseModule.createComment(commentData)
-        await postDatabaseModule.pushCommentToPost(postId, newComment._id)
+        const newComment = await commentDatabaseRepository.createComment(commentData)
+        await postDatabaseRepository.pushCommentToPost(postId, newComment._id)
         await invalidateKeys([`comments:${postId}`, `post:${postId}`])
 
         res.status(201).json(ApiResponse.success("Comment created successfully", newComment, 201))
@@ -38,7 +38,7 @@ export const getComments = async (req, res) => {
         const { postId } = req.params;
 
         // Cache üzerinden veya DB'den yorumları al
-        let comments = await commentCacheModule.getPostComments(postId, commentDatabaseModule.getPostComments);
+        let comments = await commentCacheHandler.getPostComments(postId, commentDatabaseRepository.getPostComments);
 
         if (!comments || comments.length === 0) {
             return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı"));
@@ -49,7 +49,7 @@ export const getComments = async (req, res) => {
 
         const users = comments.map(comment => comment.author);
 
-        let userData = await multiGet(users, "user", userDatabaseModule.getMultiUserById);
+        let userData = await multiGet(users, "user", userDatabaseRepository.getMultiUserById);
         userData = userData.map(user => user.toObject ? user.toObject() : user);
 
         // Kullanıcı bilgilerini yorumlara entegre et
@@ -79,7 +79,7 @@ export const deleteComment = async (req, res) => {
     try {
         const { commentId } = req.params
 
-        const comment = await commentDatabaseModule.deleteComment(commentId, req.user.id)
+        const comment = await commentDatabaseRepository.deleteComment(commentId, req.user.id)
         if (!comment) {
             return res.status(404).json(ApiResponse.notFound("Yorum bulunamadı"))
         }

@@ -1,11 +1,11 @@
 import fs from "fs";
 import {Attachment} from "../database/models/attachmentModel.js";
 
-//Cache Modules
-import *as attachmentCacheModule from "../cache/modules/attachmentModule.js";
+//Cache Handlers
+import *as attachmentCacheHandler from "../cache/handlers/attachmentCacheHandler.js";
 
-//Database Modules
-import *as attachmentDatabaseModule from "../database/modules/attachmentModule.js";
+//Database Repositories
+import *as attachmentDatabaseRepository from "../database/repositories/attachmentRepository.js";
 
 export const processMedia = async (req) => {
     try {
@@ -32,7 +32,7 @@ export const processMedia = async (req) => {
 
         let fileIds = [];
         for (const file of files) {
-            const newAttach = await attachmentDatabaseModule.createAttachment(file);
+            const newAttach = await attachmentDatabaseRepository.createAttachment(file);
             fileIds.push(newAttach._id);
         }
 
@@ -47,7 +47,7 @@ export const deleteAttachment = async (attachmentId) => {
     try {
         if (!attachmentId) return;
         //Cacheden attachment bilgisini al
-        const attachment = await attachmentCacheModule.getCachedAttachmentData(attachmentId, attachmentDatabaseModule.getAttachmentById)
+        const attachment = await attachmentCacheHandler.getCachedAttachmentData(attachmentId, attachmentDatabaseRepository.getAttachmentById)
         //Resimi Sil
         fs.unlinkSync(attachment.path)
         // Veritabanından kaldır

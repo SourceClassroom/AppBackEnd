@@ -6,16 +6,16 @@ import * as fileService from "../services/fileService.js";
 import multiGet from "../cache/strategies/multiGet.js";
 import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
-//Cache Modules
-import * as conversationCacheModule from "../cache/modules/conversationModule.js";
-import * as userBlockCacheModule from "../cache/modules/userBlockModule.js";
-import * as conversationReadCacheModule from "../cache/modules/conversationReadModule.js";
+//Cache Handlers
+import * as conversationCacheHandler from "../cache/handlers/conversationCacheHandler.js";
+import * as userBlockCacheHandler from "../cache/handlers/userBlockCacheHandler.js";
+import * as conversationReadCacheHandler from "../cache/handlers/conversationReadCacheHandler.js";
 
-//Database Modules
-import * as userDatabaseModule from "../database/modules/userModule.js";
-import * as userBlockDatabaseModule from "../database/modules/userBlockModule.js";
-import * as conversationDatabaseModule from "../database/modules/conversationModule.js";
-import * as conversationReadDatabaseModule from "../database/modules/conversationReadModule.js";
+//Database Repositories
+import * as userDatabaseRepository from "../database/repositories/userRepository.js";
+import * as userBlockDatabaseRepository from "../database/repositories/userBlockRepository.js";
+import * as conversationDatabaseRepository from "../database/repositories/conversationRepository.js";
+import * as conversationReadDatabaseRepository from "../database/repositories/conversationReadRepository.js";
 
 /**
  * Create a new conversation
@@ -37,7 +37,7 @@ export const createConversation = async (req, res) => {
         const blockStatuses = await Promise.all(
             allParticipants.map(async participantId => {
                 if (participantId === creatorId.toString()) return false;
-                return await userBlockCacheModule.isBlockedBetween(creatorId, participantId, userBlockDatabaseModule.isBlockBetWeen);
+                return await userBlockCacheHandler.isBlockedBetween(creatorId, participantId, userBlockDatabaseRepository.isBlockBetWeen);
             })
         );
 
@@ -51,7 +51,7 @@ export const createConversation = async (req, res) => {
             }
 
             // Aynı konuşma varsa onu döndür
-            const existing = await conversationDatabaseModule.findPrivateConversation(allParticipants)
+            const existing = await conversationDatabaseRepository.findPrivateConversation(allParticipants)
 
             if (existing) return res.status(400).json(ApiResponse.error("Bu konuşma zaten var", existing));
         } else {
@@ -61,7 +61,7 @@ export const createConversation = async (req, res) => {
         }
 
         // Yeni konuşmayı oluştur
-        const conversation = await conversationDatabaseModule.createConversation(
+        const conversation = await conversationDatabaseRepository.createConversation(
             allParticipants,
             isGroup,
             groupName,
@@ -88,9 +88,9 @@ export const getConversations = async (req, res) => {
         const userId = req.user.id;
 
         // 1. Kullanıcının sohbetlerini al
-        const conversations = await conversationCacheModule.getUserConversations(
+        const conversations = await conversationCacheHandler.getUserConversations(
             userId,
-            conversationDatabaseModule.getUserConversations
+            conversationDatabaseRepository.getUserConversations
         );
 
         if (!conversations || conversations.length === 0) {
@@ -103,7 +103,7 @@ export const getConversations = async (req, res) => {
         const conversationData = await multiGet(
             conversations,
             "conversation",
-            conversationDatabaseModule.getMultiConversations
+            conversationDatabaseRepository.getMultiConversations
         );
 
         // 3. Her konuşma için katılımcıların bilgilerini al
@@ -112,7 +112,7 @@ export const getConversations = async (req, res) => {
                 multiGet(
                     conversation.participants,
                     "user",
-                    userDatabaseModule.getMultiUserById
+                    userDatabaseRepository.getMultiUserById
                 )
             )
         );
@@ -137,8 +137,8 @@ export const getConversations = async (req, res) => {
                 if (!conversation.isGroup) {
                     const otherUser = participants.find(p => p._id.toString() !== userId.toString());
                     if (otherUser) {
-                        isBlocked = await userBlockCacheModule.hasUserBlocked(otherUser._id, userId, userBlockDatabaseModule.getBlockData)
-                        isUserBlock = await userBlockCacheModule.hasUserBlocked(userId, otherUser._id, userBlockDatabaseModule.getBlockData)
+                        isBlocked = await userBlockCacheHandler.hasUserBlocked(otherUser._id, userId, userBlockDatabaseRepository.getBlockData)
+                        isUserBlock = await userBlockCacheHandler.hasUserBlocked(userId, otherUser._id, userBlockDatabaseRepository.getBlockData)
                     }
                 }
 
@@ -155,9 +155,9 @@ export const getConversations = async (req, res) => {
         // 5. Tüm konuşmalardaki tüm kullanıcıların okuma durumlarını getir
         const readStatuses = await Promise.all(
             updatedConversations.map(conversation =>
-                conversationReadCacheModule.getCachedReadStatus(
+                conversationReadCacheHandler.getCachedReadStatus(
                     conversation._id.toString(),
-                    conversationReadDatabaseModule.getReadStatus
+                    conversationReadDatabaseRepository.getReadStatus
                 )
             )
         );
@@ -189,8 +189,6 @@ export const getConversations = async (req, res) => {
     }
 };
 
-
-
 /**
  * Add a participant to a group conversation
  * @param {Object} req - Express request object
@@ -201,7 +199,7 @@ export const addParticipant = async (req, res) => {
         const { conversationId, userId } = req.body;
 
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
 
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
@@ -210,13 +208,13 @@ export const addParticipant = async (req, res) => {
         if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
 
         // Check block status between participants
-        const blockStatus = await userBlockCacheModule.isBlockedBetween(userId, req.user.id, userBlockDatabaseModule.isBlockBetWeen)
+        const blockStatus = await userBlockCacheHandler.isBlockedBetween(userId, req.user.id, userBlockDatabaseRepository.isBlockBetWeen)
 
         if (blockStatus) {
             return res.status(403).json(ApiResponse.forbidden("Engellenen veya sizi engelleyen kullanıcıları ekleyemezsiniz", null));
         }
 
-        const updatedConversation = await conversationDatabaseModule.addParticipant(conversationId, userId);
+        const updatedConversation = await conversationDatabaseRepository.addParticipant(conversationId, userId);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Kullanici sohbete eklendi", updatedConversation))
@@ -225,6 +223,7 @@ export const addParticipant = async (req, res) => {
         return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
     }
 };
+
 /**
  * Remove a participant from a group conversation
  * @param {Object} req - Express request object
@@ -235,13 +234,13 @@ export const removeParticipant = async (req, res) => {
         const { conversationId, userId } = req.body;
 
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
         if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
 
-        await conversationDatabaseModule.removeParticipant(conversationId, userId);
+        await conversationDatabaseRepository.removeParticipant(conversationId, userId);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Kullanici sohbetten cikarildi", {success: true}))
@@ -261,13 +260,13 @@ export const deleteConversation = async (req, res) => {
         const { conversationId } = req.params;
 
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
         if (conversation.isGroup && conversation.groupOwner.toString() !== req.user.id) return res.status(403).json(ApiResponse.forbidden("Sohbeti duzenleme yetkiniz yok", null))
 
-        await conversationDatabaseModule.deleteConversation(conversationId, req.user.id);
+        await conversationDatabaseRepository.deleteConversation(conversationId, req.user.id);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Sohbet silindi", {success: true}))
@@ -277,13 +276,12 @@ export const deleteConversation = async (req, res) => {
     }
 };
 
-
 export const changeGroupImage = async (req, res) => {
     try {
         const { conversationId } = req.params;
 
         // Get the conversation to check if the current user is a participant
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
@@ -292,7 +290,7 @@ export const changeGroupImage = async (req, res) => {
 
         const fileIds = await processMedia(req)
 
-        await conversationDatabaseModule.changeGroupImage(conversationId, fileIds[0]);
+        await conversationDatabaseRepository.changeGroupImage(conversationId, fileIds[0]);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Sohbet guncellendi", {success: true}))
@@ -306,13 +304,13 @@ export const leaveConversation = async (req, res) => {
     try {
         const { conversationId } = req.params;
 
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
         if (!conversation.isGroup) return res.status(403).json(ApiResponse.forbidden("Özel mesajlardan çıkamazsın.", null))
 
-        await conversationDatabaseModule.removeParticipant(conversationId, req.user.id);
+        await conversationDatabaseRepository.removeParticipant(conversationId, req.user.id);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Sohbetten cikildi", {success: true}))
@@ -326,13 +324,13 @@ export const muteConversation = async (req, res) => {
     try {
         const { conversationId } = req.params;
 
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
         if (conversation.mutedBy.includes(req.user.id)) return res.status(400).json(ApiResponse.error("Zaten bu sohbeti susturmuşsın."))
 
-        await conversationDatabaseModule.muteConversation(conversationId, req.user.id);
+        await conversationDatabaseRepository.muteConversation(conversationId, req.user.id);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Sohbet kapatildi", {success: true}))
@@ -346,13 +344,13 @@ export const unmuteConversation = async (req, res) => {
     try {
         const { conversationId } = req.params;
 
-        const conversation = await conversationCacheModule.getCachedConversation(conversationId, conversationDatabaseModule.getConversationById)
+        const conversation = await conversationCacheHandler.getCachedConversation(conversationId, conversationDatabaseRepository.getConversationById)
         if (!conversation) {
             return res.status(404).json(ApiResponse.notFound("Sohbet bunulamadi"))
         }
         if (!conversation.mutedBy.includes(req.user.id)) return res.status(400).json(ApiResponse.error("Zaten bu sohbeti susturmamışsın."))
 
-        await conversationDatabaseModule.unmuteConversation(conversationId, req.user.id);
+        await conversationDatabaseRepository.unmuteConversation(conversationId, req.user.id);
         await invalidateKey(`conversation:${conversationId}`)
 
         return res.status(200).json(ApiResponse.success("Sohbet acildi", {success: true}))

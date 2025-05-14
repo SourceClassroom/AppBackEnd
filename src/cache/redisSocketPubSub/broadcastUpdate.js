@@ -1,12 +1,12 @@
-import {getUserSockets} from "../modules/onlineUserModule.js";
+import {getUserSockets} from "../handlers/onlineUserCacheHandler.js";
 
 export default async (emit, recipients, data, io) => {
     try {
-        // Get all socket IDs in parallel
+        // Get all redisSocketPubSub IDs in parallel
         const socketPromises = recipients.map(userId => getUserSockets(userId));
         const allSocketIds = await Promise.all(socketPromises);
 
-        // Flatten and remove duplicate socket IDs
+        // Flatten and remove duplicate redisSocketPubSub IDs
         const uniqueSocketIds = [...new Set(allSocketIds.flat())];
         // Emit to all sockets at once
         if (uniqueSocketIds.length > 0) {

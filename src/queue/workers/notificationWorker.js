@@ -2,8 +2,8 @@ import { Worker } from "bullmq";
 import { client } from "../../cache/client/redisClient.js";
 import { getSocketServer } from "../../sockets/socketInstance.js";
 import { invalidateKey } from "../../cache/strategies/invalidate.js"
-import { getUserSockets } from "../../cache/modules/onlineUserModule.js";
-import { createNotification } from "../../database/modules/notificationModule.js";
+import { getUserSockets } from "../../cache/handlers/onlineUserCacheHandler.js";
+import { createNotification } from "../../database/repositories/notificationRepository.js";
 
 const notificationWorker = new Worker("notificationQueue", async (job) => {
     const { userId, notificationData, allowPush } = job.data;
