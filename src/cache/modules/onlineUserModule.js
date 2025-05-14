@@ -3,34 +3,35 @@ import { client } from "../client/redisClient.js";
 const SOCKETS_PREFIX = "sockets:";
 
 export const addUserSocket = async (userId, socketId) => {
-    if (!userId || !socketId) {
-        throw new Error("addUserSocket: userId and socketId are required.");
+    try {
+        const key = `${SOCKETS_PREFIX}${userId}`;
+        await client.sadd(key, socketId);
+        await client.expire(key, 24 * 60 * 60); // 24 hours in seconds
+    } catch (error) {
+        throw new Error(`Kullanıcı soketi eklenemedi: ${error.message}`);
     }
-    const key = `${SOCKETS_PREFIX}${userId}`;
-    await client.sadd(key, socketId);
-    await client.expire(key, 24 * 60 * 60); // 24 hours in seconds
 }
 
 export const getUserSockets = async (userId) => {
-    if (!userId) {
-        throw new Error("getUserSockets: userId is required.");
+    try {
+        return await client.smembers(`${SOCKETS_PREFIX}${userId}`);
+    } catch (error) {
+        throw new Error(`Kullanıcı soketleri alınamadı: ${error.message}`);
     }
-
-    return await client.smembers(`${SOCKETS_PREFIX}${userId}`);
 }
 
 export const removeUserSocket = async (userId, socketId) => {
-    if (!userId || !socketId) {
-        throw new Error("removeUserSocket: userId and socketId are required.");
+    try {
+        await client.srem(`${SOCKETS_PREFIX}${userId}`, socketId);
+    } catch (error) {
+        throw new Error(`Kullanıcı soketi silinemedi: ${error.message}`);
     }
-
-    await client.srem(`${SOCKETS_PREFIX}${userId}`, socketId);
 }
 
 export const removeAllUserSockets = async (userId) => {
-    if (!userId) {
-        throw new Error("removeAllUserSockets: userId is required.");
+    try {
+        await client.del(`${SOCKETS_PREFIX}${userId}`);
+    } catch (error) {
+        throw new Error(`Tüm kullanıcı soketleri silinemedi: ${error.message}`);
     }
-
-    await client.del(`${SOCKETS_PREFIX}${userId}`);
 }

@@ -14,12 +14,16 @@ import {invalidateKey, invalidateKeys} from "../cache/strategies/invalidate.js";
 
 //Cache Modules
 import * as userCacheModule from "../cache/modules/userModule.js";
+import * as userBlockCacheModule from "../cache/modules/userBlockModule.js";
 import * as onlineUserCacheModule from "../cache/modules/onlineUserModule.js";
 import * as mailVerificationCacheModule from "../cache/modules/mailVerificationModule.js";
 
 //Database Modules
 import * as userDatabaseModule from "../database/modules/userModule.js";
 import * as classDatabaseModule from "../database/modules/classModule.js";
+import * as userBlockDatabaseModule from "../database/modules/userBlockModule.js";
+import {isBlockBetWeen} from "../database/modules/userBlockModule.js";
+import {isBlockedBetween} from "../cache/modules/userBlockModule.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -28,6 +32,7 @@ import * as classDatabaseModule from "../database/modules/classModule.js";
  * */
 export const getUserProfile = async (req, res) => {
     try {
+        const reqUser = req.user.id
         const userId = req.params.id;
         const userData = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
 
@@ -35,14 +40,19 @@ export const getUserProfile = async (req, res) => {
             return res.status(404).jsonp(ApiResponse.notFound("Bu id ile bir kullanic bulunamadi"))
         }
 
+        const isUserBlock = await userBlockCacheModule.hasUserBlocked(reqUser, userId, userBlockDatabaseModule.getBlockData)
+        const isBlocked = await userBlockCacheModule.hasUserBlocked(userId, reqUser, userBlockDatabaseModule.getBlockData)
+        const isUserOnline = (await onlineUserCacheModule.getUserSockets(userId)) > 0
+
         const formattedData = {
             profile: userData.profile,
             name: userData.name,
             surname: userData.surname,
             role: userData.role,
-            accountStatus: userData.accountStatus,
-            createdAt: userData.createdAt,
-            lastLogin: userData.lastLogin
+            lastLogin: userData.lastLogin,
+            isUserOnline,
+            isBlocked,
+            isUserBlock
         };
 
         return res.status(200).json(ApiResponse.success("Kullanıcı bilgisi.", formattedData, 200));
@@ -544,3 +554,47 @@ export const userDashboard = async (req, res) => {
         );
     }
 };
+
+export const blockUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const currentUser = req.user.id
+
+        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        if (!user) return res.status(404).json(ApiResponse.notFound("Kullanici bulunamadi."))
+        const getBlockData = await userBlockDatabaseModule.getBlockData(currentUser, userId)
+        if (getBlockData) return res.status(400).json(ApiResponse.error("Kullanıcı zaten engellenmiş."))
+
+        await userBlockDatabaseModule.blockUser(currentUser, userId)
+        await userBlockCacheModule.addBlock(currentUser, userId)
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı engellendi.", user))
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json(
+            ApiResponse.serverError("Kullanıcı engellenirken bir hata meydana geldi.", error)
+        );
+    }
+}
+
+export const unblockUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const currentUser = req.user.id
+
+        const user = await userCacheModule.getCachedUserData(userId, userDatabaseModule.getUserById)
+        if (!user) return res.status(404).json(ApiResponse.notFound("Kullanici bulunamadi."))
+        const getBlockData = await await userBlockDatabaseModule.getBlockData(currentUser, userId)
+        if (!getBlockData) return res.status(400).json(ApiResponse.error("Kullanıcı zaten engellenmemiş."))
+
+        await userBlockDatabaseModule.unblockUser(currentUser, userId)
+        await userBlockCacheModule.removeBlock(currentUser, userId)
+
+        return res.status(200).json(ApiResponse.success("Kullanıcı engeli kaldırıldı.", user))
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json(
+            ApiResponse.serverError("Kullanıcı engeli kaldırılırken bir hata meydana geldi.", error)
+        );
+    }
+}

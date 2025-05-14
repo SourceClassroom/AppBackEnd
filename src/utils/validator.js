@@ -32,23 +32,23 @@ export const newEmailValidator = [
 ]
 
 export const validateNotificationPreferences = [
-    body('notificationPreferences').isObject().withMessage('notificationPreferences must be an object'),
+    body('notificationPreferences').isObject().withMessage('notificationPreferences bir nesne olmalıdır'),
     body('notificationPreferences.new_assignment')
-        .optional().isBoolean().withMessage('new_assignment must be a boolean'),
+        .optional().isBoolean().withMessage('new_assignment boolean bir değer olmalıdır'),
     body('notificationPreferences.assignment_graded')
-        .optional().isBoolean().withMessage('assignment_graded must be a boolean'),
-    body('notificationPreferences.new_announcement')
-        .optional().isBoolean().withMessage('new_announcement must be a boolean'),
+        .optional().isBoolean().withMessage('assignment_graded boolean bir değer olmalıdır'),
+    body('notificationPreferences.new_post')
+        .optional().isBoolean().withMessage('new_post boolean bir değer olmalıdır'),
     body('notificationPreferences.new_material')
-        .optional().isBoolean().withMessage('new_material must be a boolean'),
-    body('notificationPreferences.new_comment')
-        .optional().isBoolean().withMessage('new_comment must be a boolean'),
-    body('notificationPreferences.assignment_due_reminder')
-        .optional().isBoolean().withMessage('assignment_due_reminder must be a boolean'),
-    body('notificationPreferences.submission_reminder')
-        .optional().isBoolean().withMessage('submission_reminder must be a boolean'),
+        .optional().isBoolean().withMessage('new_material boolean bir değer olmalıdır'),
+    body('notificationPreferences.new_lesson')
+        .optional().isBoolean().withMessage('new_lesson boolean bir değer olmalıdır'),
+    body('notificationPreferences.lesson_reminder')
+        .optional().isBoolean().withMessage('lesson_reminder boolean bir değer olmalıdır'),
     body('notificationPreferences.email_notifications')
-        .optional().isBoolean().withMessage('email_notifications must be a boolean'),
+        .optional().isBoolean().withMessage('email_notifications boolean bir değer olmalıdır'),
+    body('notificationPreferences.push_notifications')
+        .optional().isBoolean().withMessage('push_notifications boolean bir değer olmalıdır'),
 ];
 
 export const userCreateValidationRules = [

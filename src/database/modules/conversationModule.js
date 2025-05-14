@@ -60,12 +60,29 @@ export const changeGroupImage = async (conversationId, groupImage) => {
 export const getMultiConversations = async (conversationIds) => {
     try {
         return await Conversation.find({ _id: { $in: conversationIds }, isDeleted: { $ne: true } })
+            .select('_id isGroup groupName groupImage groupOwner participants lastMessage mutedBy')
             .populate({
                 path: 'lastMessage',
                 model: 'Message'
             }).lean();
     } catch (error) {
         throw new Error(`Error getting conversations: ${error.message}`);
+    }
+};
+
+export const muteConversation = async (conversationId, userId) => {
+    try {
+        return await Conversation.findByIdAndUpdate(conversationId, {$push: {mutedBy: userId}}, {new: true});
+    } catch (error) {
+        throw new Error(`Error muting conversation: ${error.message}`);
+    }
+};
+
+export const unmuteConversation = async (conversationId, userId) => {
+    try {
+        return await Conversation.findByIdAndUpdate(conversationId, {$pull: {mutedBy: userId}}, {new: true});
+    } catch (error) {
+        throw new Error(`Error unmuting conversation: ${error.message}`);
     }
 };
 

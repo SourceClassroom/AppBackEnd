@@ -47,16 +47,12 @@ const UserSchema = new Schema({
     notificationPreferences: {
         type: Object,
         default: {
-            // Bildirim türlerine göre tercihler (varsayılan olarak hepsi açık)
             new_assignment: true,
             assignment_graded: true,
             new_post: true,
             new_material: true,
             new_lesson: true,
             lesson_reminder: true,
-            assignment_due_reminder: true,
-            submission_reminder: true,
-            // Bildirim kanalları için tercihler
             email_notifications: true,
             push_notifications: true
         }

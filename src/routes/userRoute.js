@@ -78,4 +78,18 @@ router.route("/change-avatar").put(
     userController.changeAvatar
 )
 
+router.route("/block/:userId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("userId"),
+    apiValidator.validate,
+    userController.blockUser
+)
+
+router.route("/unblock/:userId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("userId"),
+    apiValidator.validate,
+    userController.unblockUser
+)
+
 export default router;
