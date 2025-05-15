@@ -111,7 +111,7 @@ class TokenService {
                         if (
                             decoded.version !== undefined &&
                             user.tokenVersion !== undefined &&
-                            decoded.version < user.tokenVersion
+                            decoded.version !== user.tokenVersion
                         ) {
                             return reject(new Error("Token geçersiz: Şifre değiştirilmiş veya çıkış yapılmış"));
                         }
