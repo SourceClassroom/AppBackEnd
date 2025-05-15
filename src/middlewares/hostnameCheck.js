@@ -7,7 +7,7 @@ export default (req, res, next) => {
     const host = req.headers["host"] || req.headers["x-forwarded-host"] || req.hostname;
 
     if (host !== trustedHostname) {
-        return res.status(403).json(ApiResponse.forbidden("Forbidden - Invalid Jostname"))
+        return res.status(403).json(ApiResponse.forbidden("Forbidden - Invalid Hostname"))
     }
 
     next();
