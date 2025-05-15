@@ -42,8 +42,8 @@ export const getUserProfile = async (req, res) => {
 
         const isUserBlock = await userBlockCacheHandler.hasUserBlocked(reqUser, userId, userBlockDatabaseRepository.getBlockData)
         const isBlocked = await userBlockCacheHandler.hasUserBlocked(userId, reqUser, userBlockDatabaseRepository.getBlockData)
-        const socketCount = await onlineUserCacheHandler.getUserSockets(userId);
-        const isUserOnline = socketCount > 0;
+        const sockets = await onlineUserCacheHandler.getUserSockets(userId);
+        const isUserOnline = sockets.length > 0;
 
         const formattedData = {
             profile: userData.profile,
@@ -564,6 +564,7 @@ export const blockUser = async (req, res) => {
 
         const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         if (!user) return res.status(404).json(ApiResponse.notFound("Kullanici bulunamadi."))
+        if (user.role === "teacher" || user.role === "sysadmin") return res.status(400).json(ApiResponse.error("Bu roldeki kullanıcıyı engelleyemezsin."))
         const getBlockData = await userBlockDatabaseRepository.getBlockData(currentUser, userId)
         if (getBlockData) return res.status(400).json(ApiResponse.error("Kullanıcı zaten engellenmiş."))
 

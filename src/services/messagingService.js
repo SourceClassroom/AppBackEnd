@@ -34,7 +34,7 @@ export const sendMessage = async (conversationId, senderId, content, attachments
         );
 
         if (!conversation) throw new Error("Konuşma bulunamadı");
-        if (conversation.isPending) throw new Error("Bu konuşma onay bekliyor.");
+        if (conversation.isPending && conversation.lastMessage) throw new Error("Bu konuşma onay bekliyor.");
 
         const recipientIds = conversation.participants
             .filter(p => {

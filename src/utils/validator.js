@@ -393,6 +393,17 @@ export const validateAddRemoveParticipant = [
         .notEmpty().withMessage('Kullanıcı ID alanı boş olamaz')
         .isMongoId().withMessage('Geçerli bir kullanıcı ID giriniz'),
 ]
+
+export const validateGroupName = [
+    body('conversationId')
+        .notEmpty().withMessage('Sohbet ID alanı boş olamaz')
+        .isMongoId().withMessage('Geçerli bir sohbet ID giriniz'),
+    body('groupName')
+        .notEmpty().withMessage('Grup adı boş olamaz')
+        .isString().withMessage('Grup adı bir metin olmalıdır')
+        .isLength({ min: 1, max: 32 }).withMessage('Grup adı 1-32 karakter arasında olmalıdır'),
+]
+
 /**
  * MongoDB ID formatını doğrulama
  */

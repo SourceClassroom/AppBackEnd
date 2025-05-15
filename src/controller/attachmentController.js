@@ -100,3 +100,14 @@ export const viewUserAvatar = async (req, res) => {
         res.status(500).json(ApiResponse.serverError("Avatar görüntülenirken bir hata meydana geldi.", error));
     }
 }
+
+export const uploadAttachment = async (req, res) => {
+    try {
+        const fileIds = await processMedia(req)
+
+        return res.status(200).json(ApiResponse.success("Yükleme başarılı", {fileIds}))
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(ApiResponse.serverError("Sunucu hatası", error))
+    }
+}

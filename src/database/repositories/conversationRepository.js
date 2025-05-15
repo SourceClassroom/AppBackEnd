@@ -1,7 +1,5 @@
 import {Conversation} from "../models/conversationModel.js";
 import {ConversationRead} from "../models/conversationReadModel.js";
-import setWithTtl from "../../cache/strategies/setWithTtl.js";
-
 
 /**
  * Create a new conversation between users
@@ -11,7 +9,7 @@ import setWithTtl from "../../cache/strategies/setWithTtl.js";
  * @param groupOwner
  * @returns {Promise<Object>} - The created conversation
  */
-export const createConversation = async (participants, isGroup = false, groupName = null, groupOwner) => {
+export const createConversation = async (participants, isGroup = false, groupName = null, groupOwner, isPending) => {
     try {
        if (isGroup) {
            return await Conversation.create({
@@ -23,7 +21,8 @@ export const createConversation = async (participants, isGroup = false, groupNam
        } else {
            return await Conversation.create({
                participants,
-               isGroup
+               isGroup,
+               isPending
            });
        }
     } catch (error) {
@@ -52,6 +51,22 @@ export const changeGroupImage = async (conversationId, groupImage) => {
     }
 };
 
+export const changeGroupName = async (conversationId, groupName) => {
+    try {
+        return await Conversation.findByIdAndUpdate(conversationId, {groupName}, {new: true});
+    } catch (error) {
+        throw new Error(`Error changing group name: ${error.message}`);
+    }
+};
+
+export const approveConversation = async (conversationId) => {
+    try {
+        return await Conversation.findByIdAndUpdate(conversationId, {isPending: false}, {new: true});
+    } catch (error) {
+        throw new Error(`Error approving conversation: ${error.message}`);
+    }
+};
+
 /**
  * Get a conversation by ID
  * @returns {Promise<Object>} - The conversation
@@ -60,7 +75,7 @@ export const changeGroupImage = async (conversationId, groupImage) => {
 export const getMultiConversations = async (conversationIds) => {
     try {
         return await Conversation.find({ _id: { $in: conversationIds }, isDeleted: { $ne: true } })
-            .select('_id isGroup groupName groupImage groupOwner participants lastMessage mutedBy')
+            .select('_id isPending isGroup groupName groupImage groupOwner participants lastMessage mutedBy')
             .populate({
                 path: 'lastMessage',
                 model: 'Message'
@@ -141,7 +156,7 @@ export const updateLastMessage = async (conversationId, messageId) => {
         ).populate({
             path: 'lastMessage',
             model: 'Message'
-        }).lean();
+        }).select('_id isPending isGroup groupName groupImage groupOwner participants lastMessage mutedBy').lean();
     } catch (error) {
         throw new Error(`Error updating last message: ${error.message}`);
     }

@@ -55,10 +55,6 @@ export const createSubmission = async (req, res) => {
         const { assignmentId, description } = req.body;
         req.body.permission = 2
 
-        const getAssignment = await assignmentCacheHandler.getCachedAssignment(assignmentId, assignmentDatabaseRepository.getAssignmentById)
-        if (!getAssignment) return res.status(404).json(ApiResponse.notFound("Ödev bulunamadı"))
-
-        //Check assignment dueDate
         const currentDate = new Date();
         const dueDate = new Date(getAssignment.dueDate)
         if (currentDate > dueDate) {

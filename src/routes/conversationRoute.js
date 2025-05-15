@@ -49,6 +49,13 @@ router.route("/change-image/:conversationId").put(
     conversationController.changeGroupImage
 )
 
+router.route("/change-name").put(
+    authenticateToken,
+    apiValidator.validateGroupName,
+    apiValidator.validate,
+    conversationController.changeGroupName
+)
+
 router.route("/leave").put(
     authenticateToken,
     apiValidator.validateMongoId("conversationId"),
@@ -69,5 +76,13 @@ router.route("/unmute/:conversationId").put(
     apiValidator.validate,
     conversationController.unmuteConversation
 )
+
+router.route("/approve/:conversationId").put(
+    authenticateToken,
+    apiValidator.validateMongoId("conversationId"),
+    apiValidator.validate,
+    conversationController.approveConversation
+)
+
 
 export default router;

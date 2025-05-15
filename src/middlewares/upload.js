@@ -21,7 +21,8 @@ const createUploadDir = (dirPath) => {
 
 const uploadTypes = [
     "assignment", "submission", "avatar",
-    "chat", "material", "general", "post"
+    "chat", "material", "general", "post",
+    "groupIcon"
 ]
 
 // Önce memory storage kullan - kontrol için

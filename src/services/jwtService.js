@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import {client} from "../cache/client/redisClient.js";
 
 //Cache Handlers
+import *as userCacheHandler from '../cache/handlers/userCacheHandler.js';
 import *as tokenCacheHandler from '../cache/handlers/tokenCacheHandler.js';
 
 //Database Repositories
