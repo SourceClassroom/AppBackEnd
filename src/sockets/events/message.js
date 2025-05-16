@@ -16,7 +16,7 @@ export async function handleSendMessage(socket, data) {
         const message = await messagingService.sendMessage(
             conversationId,
             userId,
-            content || "",
+            content || 'Attachment',
             attachments || [],
             clientMessageId
         );
