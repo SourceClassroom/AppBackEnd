@@ -214,7 +214,7 @@ export const validateGrade = [
         .notEmpty().withMessage("Not alanı boş olamaz")
         .isFloat({ min: 0, max: 100 }).withMessage("Not değeri 0 ile 100 arasında olmalıdır."),
     body("feedback")
-        .notEmpty().withMessage("Feedback analı boş olamaz.")
+        .optional()
         .isLength({ max: 500 }).withMessage('Feedback en fazla 500 karakter olabilir.'),
 ]
 

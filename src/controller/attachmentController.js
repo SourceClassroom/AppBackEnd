@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import ApiResponse from "../utils/apiResponse.js";
 import { streamFile } from "../utils/fileHelper.js";
+import { processMedia } from "../services/fileService.js";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 //Cache repositories

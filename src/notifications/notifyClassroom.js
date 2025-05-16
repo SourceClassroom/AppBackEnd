@@ -5,8 +5,8 @@ import multiGet from "../cache/strategies/multiGet.js";
 import *as classCacheHandler from "../cache/handlers/classCacheHandler.js";
 
 //Database Repositories
-import *as userDatabaseModule from "../database/repositories/userRepository.js";
 import *as userDatabaseRepository from "../database/repositories/userRepository.js";
+import *as classDatabaseRepository from "../database/repositories/classRepository.js";
 
 // Queues
 import mailQueue from "../queue/queues/mailQueue.js";
@@ -15,7 +15,7 @@ import notificationQueue from "../queue/queues/notificationQueue.js";
 
 export default async (classId, notificationData) => {
     try {
-
+        console.log(classId)
         const classStudentList = await classCacheHandler.getCachedStudentList(classId, classDatabaseRepository.getStudentsByClassId)
         if (!classStudentList || classStudentList.length === 0) {
             return;

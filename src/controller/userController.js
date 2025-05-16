@@ -22,8 +22,6 @@ import * as mailVerificationCacheHandler from "../cache/handlers/mailVerificatio
 import * as userDatabaseRepository from "../database/repositories/userRepository.js";
 import * as classDatabaseRepository from "../database/repositories/classRepository.js";
 import * as userBlockDatabaseRepository from "../database/repositories/userBlockRepository.js";
-import {isBlockBetWeen} from "../database/repositories/userBlockRepository.js";
-import {isBlockedBetween} from "../cache/handlers/userBlockCacheHandler.js";
 
 /**
  * Kullanıcı bilgisi alma
@@ -470,7 +468,7 @@ export const updateProfile = async (req, res) => {
             name: name ?? user.name,
             surname: surname ?? user.surname,
             profile: {
-                avatar: user.profile.avatar,  // Eski avatarı koru
+                avatar: user.profile?.avatar,
                 bio: profile?.bio ?? user.profile.bio,
                 institutionId: profile?.institutionId ?? user.profile.institutionId,
             }
@@ -482,6 +480,7 @@ export const updateProfile = async (req, res) => {
 
         return res.status(200).json(ApiResponse.success("Profil başarıyla güncellendi.", user));
     } catch (error) {
+        console.error(error)
         res.status(500).json(
             ApiResponse.serverError("Profil güncellenirken bir hata meydana geldi.", error)
         );
@@ -494,7 +493,7 @@ export const updateNotificationPreferences = async (req, res) => {
         const { notificationPreferences } = req.body;
 
         // Kullanıcıyı bul
-        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById(userId))
+        const user = await userCacheHandler.getCachedUserData(userId, userDatabaseRepository.getUserById)
         if (!user) {
             return res.status(404).json(ApiResponse.notFound("Kullanıcı bulunamadı."));
         }

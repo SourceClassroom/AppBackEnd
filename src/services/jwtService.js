@@ -102,7 +102,8 @@ class TokenService {
                     try {
                         // Kullanıcıyı bul
                         //const user = await User.findById(decoded.id);
-                        const user = await userDatabaseRepository.getUserById(decoded.id);
+                        //const user = await userDatabaseRepository.getUserById(decoded.id);
+                        const user = await userCacheHandler.getCachedUserData(decoded.id, userDatabaseRepository.getUserById);
 
                         if (!user) {
                             return reject(new Error("Kullanıcı bulunamadı"));

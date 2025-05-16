@@ -10,12 +10,17 @@ import {Message} from "../models/messageModel.js";
  */
 export const createMessage = async (conversationId, senderId, content, attachments = [], clientMessageId) => {
     try {
-        return await Message.create({
+        const message = await Message.create({
             conversation: conversationId,
             sender: senderId,
             content,
             attachments,
             clientMessageId
+        });
+
+        return await message.populate({
+            path: "attachments",
+            select: "originalname size mimetype"
         });
     } catch (error) {
         throw new Error(`Error creating message: ${error.message}`);

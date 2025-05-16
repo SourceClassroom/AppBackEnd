@@ -6,7 +6,7 @@ export async function handleSendMessage(socket, data) {
 
     const { conversationId, content, attachments } = data;
 
-    if (!conversationId || !content) {
+    if (!conversationId || (!content && (!attachments || attachments.length === 0))) {
         return socket.emit("error", { message: "Missing required fields" });
     }
 
@@ -16,7 +16,7 @@ export async function handleSendMessage(socket, data) {
         const message = await messagingService.sendMessage(
             conversationId,
             userId,
-            content,
+            content || "",
             attachments || [],
             clientMessageId
         );
