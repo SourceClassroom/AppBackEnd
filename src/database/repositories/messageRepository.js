@@ -56,7 +56,7 @@ export const getConversationMessages = async (conversationId, limit = 50, skip =
     try {
         return await Message.find({
             conversation: conversationId,
-        }).sort({createdAt: 1}).skip(skip).limit(limit).lean();
+        }).sort({createdAt: -1}).skip(skip).limit(limit).lean();
     } catch (error) {
         throw new Error(`Error getting conversation messages: ${error.message}`);
     }

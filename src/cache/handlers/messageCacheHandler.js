@@ -40,11 +40,12 @@ export const cacheMessage = async (conversationId, message) => {
 export const getCachedMessages = async (conversationId, limit = 100, skip = 0, fetchFn = null) => {
     try {
         const key = MESSAGE_KEY(conversationId);
-        let messages = await client.lrange(key, -(limit + skip), -1 - skip);
+        let messages = await client.lrange(key, skip, skip + limit - 1);
 
         if (messages.length === 0) {
             messages = await fetchFn(conversationId, limit, skip);
             const pipeline = client.pipeline();
+            // Veritabanından gelen mesajları ters çevirip kaydediyoruz
             for (const msg of [...messages].reverse()) {
                 pipeline.rpush(MESSAGE_KEY(conversationId), JSON.stringify(msg));
             }
